@@ -1,21 +1,23 @@
+from __future__ import annotations
+
 import functools
 import typing
 
 
-Vertex = typing.TypeVar("Vertex", bound = typing.Hashable)
-Weight = typing.TypeVar("Weight", bound = typing.Any)
+Vert = typing.TypeVar("Vert", bound = typing.Hashable)
+Data = typing.TypeVar("Data", bound = typing.Any)
 
 
 @functools.total_ordering
 class Node(
 	dict[
-		Vertex,
-		Weight,
+		Vert,
+		Data,
 	]
 ):
 
-	def __le__(self, node: typing.Self) -> bool:
-		return self.keys() <= node.keys() and all(node[vertex] == weight for vertex, weight in self.items())
+	def __le__(self, node: Node) -> bool:
+		return self.keys() <= node.keys() and all(weight == node[vert] for vert, weight in self.items())
 
 
 	@property
@@ -24,25 +26,41 @@ class Node(
 
 
 Edge: typing.TypeAlias = tuple[
-	Vertex,
-	Vertex,
-	Weight,
+	Vert,
+	Vert,
+	Data,
 ]
 
 
 @functools.total_ordering
 class Graph(
 	Node[
-		Vertex,
+		Vert,
 		Node[
-			Vertex,
-			Weight,
+			Vert,
+			Data,
 		],
 	]
 ):
 
-	def __le__(self, graph: typing.Self) -> bool:
-		return self.keys() <= graph.keys() and all(self[vertex] <= graph[vertex] for vertex in self)
+	@classmethod
+	def from_edges(cls,
+		edges: set[Edge]
+	) -> Graph:
+		graph = Graph()
+
+		for tail, head, edge in edges:
+			graph.addEdge(
+				tail,
+				head,
+				edge,
+			)
+
+		return graph
+
+
+	def __le__(self, graph: Graph) -> bool:
+		return self.keys() <= graph.keys() and all(data <= graph[vert] for vert, data in self.items())
 
 
 	@property
@@ -51,55 +69,63 @@ class Graph(
 
 	@property
 	def size(self) -> int:
-		return sum(bool(self[tail][head]) for tail in self for head in self[tail])
+		return sum(bool(edge) for node in self.values() for edge in node.values())
+
+	@property
+	def edges(self) -> set[Edge]:
+		return set((tail, head, edge) for tail, node in self.items() for head, edge in node.items())
 
 
 	def adjacent(self,
-		tail: Vertex,
-		head: Vertex,
+		tail: Vert,
+		head: Vert,
 	) -> bool:
 		return tail in self[head]
 
 	def neighbors(self,
-		tail: Vertex,
+		tail: Vert,
 	) -> Node:
 		return self[tail]
 
 	def addNode(self,
-		tail: Vertex,
+		tail: Vert,
 	) -> None:
 		self.setdefault(tail, Node())
 
 	def addEdge(self,
-		tail: Vertex,
-		head: Vertex,
-		edge: Weight,
+		tail: Vert,
+		head: Vert,
+		edge: Data,
 	) -> None:
+		self.addNode(tail)
+		self.addNode(head)
+
 		self[tail][head] = edge
 
 	def delNode(self,
-		tail: Vertex,
+		tail: Vert,
 	) -> None:
-		del self[tail]
+		if not self[tail]:
+			del self[tail]
 
 	def delEdge(self,
-		tail: Vertex,
-		head: Vertex,
+		tail: Vert,
+		head: Vert,
 	) -> None:
 		del self[tail][head]
 
 
 class BiGraph(
 	Graph[
-		Vertex,
-		Weight,
+		Vert,
+		Data,
 	]
 ):
 
 	def addEdge(self,
-		tail: Vertex,
-		head: Vertex,
-		edge: Weight,
+		tail: Vert,
+		head: Vert,
+		edge: Data,
 	) -> None:
 		super().addEdge(
 			tail,
@@ -113,7 +139,7 @@ class BiGraph(
 		)
 
 	def delNode(self,
-		tail: Vertex,
+		tail: Vert,
 	) -> None:
 		for head in self[tail]:
 			super().delEdge(
@@ -124,8 +150,8 @@ class BiGraph(
 		super().delNode(tail)
 
 	def delEdge(self,
-		tail: Vertex,
-		head: Vertex,
+		tail: Vert,
+		head: Vert,
 	) -> None:
 		super().delEdge(
 			tail,
