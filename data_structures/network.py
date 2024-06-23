@@ -9,7 +9,10 @@ Data = typing.TypeVar("Data", bound = typing.Any)
 
 
 @functools.total_ordering
-class Node(
+class Node[
+	Vert,
+	Data,
+](
 	dict[
 		Vert,
 		Data,
@@ -33,7 +36,10 @@ Edge: typing.TypeAlias = tuple[
 
 
 @functools.total_ordering
-class Graph(
+class Graph[
+	Vert,
+	Data,
+](
 	Node[
 		Vert,
 		Node[
@@ -115,7 +121,10 @@ class Graph(
 		del self[tail][head]
 
 
-class BiGraph(
+class BiGraph[
+	Vert,
+	Data,
+](
 	Graph[
 		Vert,
 		Data,

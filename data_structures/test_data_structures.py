@@ -1,6 +1,6 @@
 import json
 
-from graph import *
+from data_structures.network import *
 
 
 class TestGraph:
