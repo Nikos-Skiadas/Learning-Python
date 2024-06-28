@@ -18,6 +18,6 @@ class TestGraph:
 			(3, 5, 8),
 			(4, 5, 9),
 		}
-		graph = Graph.from_edges(edges)
+	#	graph = Graph.from_edges(edges)
 
-		print(json.dumps(graph))
+	#	print(json.dumps(graph))

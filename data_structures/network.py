@@ -1,72 +1,37 @@
 from __future__ import annotations
 
-import functools
+import abc
 import typing
 
 
-Vert = typing.TypeVar("Vert", bound = typing.Hashable)
-Data = typing.TypeVar("Data", bound = typing.Any)
-
-
-@functools.total_ordering
 class Node[
-	Vert,
-	Data,
+	Vert: typing.Hashable,
 ](
-	dict[
+	typing.Collection[
 		Vert,
-		Data,
 	]
 ):
-
-	def __le__(self, node: Node) -> bool:
-		return self.keys() <= node.keys() and all(weight == node[vert] for vert, weight in self.items())
-
 
 	@property
 	def degree(self) -> int:
 		return len(self)
 
 
-Edge: typing.TypeAlias = tuple[
-	Vert,
-	Vert,
-	Data,
-]
-
-
-@functools.total_ordering
 class Graph[
-	Vert,
-	Data,
+	Vert: typing.Hashable,
+	Node: typing.Collection,
 ](
-	Node[
+	dict[
 		Vert,
-		Node[
-			Vert,
-			Data,
-		],
-	]
+		Node,
+	],
+	metaclass = abc.ABCMeta,
 ):
 
-	@classmethod
-	def from_edges(cls,
-		edges: set[Edge]
-	) -> Graph:
-		graph = Graph()
+	def __init__(self, default_factory: type[Node], *args, **kwargs):
+		super().__init__(*args, **kwargs)
 
-		for tail, head, edge in edges:
-			graph.addEdge(
-				tail,
-				head,
-				edge,
-			)
-
-		return graph
-
-
-	def __le__(self, graph: Graph) -> bool:
-		return self.keys() <= graph.keys() and all(data <= graph[vert] for vert, data in self.items())
+		self.default_factory = default_factory
 
 
 	@property
@@ -75,11 +40,7 @@ class Graph[
 
 	@property
 	def size(self) -> int:
-		return sum(bool(edge) for node in self.values() for edge in node.values())
-
-	@property
-	def edges(self) -> set[Edge]:
-		return set((tail, head, edge) for tail, node in self.items() for head, edge in node.items())
+		return sum([len(node) for node in self.values()])
 
 
 	def adjacent(self,
@@ -93,80 +54,94 @@ class Graph[
 	) -> Node:
 		return self[tail]
 
-	def addNode(self,
+	def setVert(self,
 		tail: Vert,
 	) -> None:
-		self.setdefault(tail, Node())
+		self.setdefault(tail, self.default_factory())
 
-	def addEdge(self,
+	def delVert(self,
+		tail: Vert,
+	) -> None:
+		self.pop(tail, None)
+
+		for head in self:
+			self.delEdge(head, tail)
+
+	@abc.abstractmethod
+	def setEdge(self,
 		tail: Vert,
 		head: Vert,
-		edge: Data,
 	) -> None:
-		self.addNode(tail)
-		self.addNode(head)
+		self.setVert(tail)
+		self.setVert(head)
 
-		self[tail][head] = edge
-
-	def delNode(self,
-		tail: Vert,
-	) -> None:
-		if not self[tail]:
-			del self[tail]
-
+	@abc.abstractmethod
 	def delEdge(self,
 		tail: Vert,
 		head: Vert,
 	) -> None:
-		del self[tail][head]
+		...
 
-
-class BiGraph[
-	Vert,
-	Data,
+class DictGraph[
+	Vert: typing.Hashable,
+	Edge: typing.Any,
 ](
 	Graph[
 		Vert,
-		Data,
+		dict[
+			Vert,
+			Edge,
+		]
 	]
 ):
 
-	def addEdge(self,
+	def __init__(self, *args, **kwargs):
+		super().__init__(dict, *args, **kwargs)
+
+
+	def setEdge(self,
 		tail: Vert,
 		head: Vert,
-		edge: Data,
+		edge: Edge,
 	) -> None:
-		super().addEdge(
-			tail,
-			head,
-			edge,
-		)
-		super().addEdge(
-			head,
-			tail,
-			edge,
-		)
+		super().setEdge(tail, head)
 
-	def delNode(self,
-		tail: Vert,
-	) -> None:
-		for head in self[tail]:
-			super().delEdge(
-				head,
-				tail,
-			)
-
-		super().delNode(tail)
+		self[tail][head] = edge
 
 	def delEdge(self,
 		tail: Vert,
 		head: Vert,
 	) -> None:
-		super().delEdge(
-			tail,
-			head,
-		)
-		super().delEdge(
-			head,
-			tail,
-		)
+		self[tail].pop(head, None)
+
+
+class SetGraph[
+	Vert,
+](
+	Graph[
+		Vert,
+		set[
+			Vert,
+		],
+	]
+):
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(set, *args, **kwargs)
+
+
+	def setEdge(self,
+		tail: Vert,
+		head: Vert,
+	) -> None:
+		super().setEdge(tail, head)
+
+		self[tail].add(head)
+
+	def delEdge(self,
+		tail: Vert,
+		head: Vert,
+	) -> None:
+		self[tail].discard(head)
+
+
