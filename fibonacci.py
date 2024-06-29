@@ -1,12 +1,26 @@
-def fibonacci(upper_limit):
-	a = 0
-	b = 1
+def fibonacci(n: int, *, a: int = 0, b: int = 1) -> list[int]:
+	"""Calculate the fibonnaci sequence up to a number.
 
-	while a < upper_limit:
-		print(a)
-		a, b = b, a + b
+	It stores all results in a list.
+	It also prints results are they are evaluated.
 
+	Arguments:
+		n: The maximum number to reach when calculating fibonacci terms.
+
+	Keyword arguments:
+		a: F_0
+		b: F_1
+
+	Returns:
+		The list of fibonacci terms up to given number.
+	"""
+	f = []
+
+	# Go on until number is reached:
+	while a < n:
+		f.append(a)
+		a, b = b, a + b  # advance by one term
+
+	# Return all terms up to number
 	else:
-		print("Reached the upper limit")
-
-	return a
+		return f
