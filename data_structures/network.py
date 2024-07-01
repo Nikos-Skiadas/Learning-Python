@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 import typing
 
 
@@ -17,7 +16,7 @@ class Node[
 		return len(self)
 
 
-class Graph[
+class Base[
 	Vert: typing.Hashable,
 	Node: typing.Collection,
 ](
@@ -25,8 +24,12 @@ class Graph[
 		Vert,
 		Node,
 	],
-	metaclass = abc.ABCMeta,
 ):
+
+	@classmethod
+	def from_edges(cls, edges: typing.Iterable):
+		raise NotImplementedError
+
 
 	def __init__(self, default_factory: type[Node], *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -67,26 +70,30 @@ class Graph[
 		for head in self:
 			self.delEdge(head, tail)
 
-	@abc.abstractmethod
 	def setEdge(self,
 		tail: Vert,
 		head: Vert,
-	) -> None:
+	*args) -> None:
 		self.setVert(tail)
 		self.setVert(head)
 
-	@abc.abstractmethod
+	def getEgde(self,
+		tail: Vert,
+		head: Vert,
+	):
+		raise NotImplementedError
+
 	def delEdge(self,
 		tail: Vert,
 		head: Vert,
 	) -> None:
-		...
+		raise NotImplementedError
 
-class DictGraph[
+class Weighted[
 	Vert: typing.Hashable,
 	Edge: typing.Any,
 ](
-	Graph[
+	Base[
 		Vert,
 		dict[
 			Vert,
@@ -108,6 +115,12 @@ class DictGraph[
 
 		self[tail][head] = edge
 
+	def getEgde(self,
+		tail: Vert,
+		head: Vert,
+	) -> Edge:
+		return self[tail][head]
+
 	def delEdge(self,
 		tail: Vert,
 		head: Vert,
@@ -115,10 +128,10 @@ class DictGraph[
 		self[tail].pop(head, None)
 
 
-class SetGraph[
+class Unweighted[
 	Vert,
 ](
-	Graph[
+	Base[
 		Vert,
 		set[
 			Vert,
@@ -138,6 +151,12 @@ class SetGraph[
 
 		self[tail].add(head)
 
+	def getEgde(self,
+		tail: Vert,
+		head: Vert,
+	) -> bool:
+		return head in self[tail]
+
 	def delEdge(self,
 		tail: Vert,
 		head: Vert,
@@ -145,3 +164,43 @@ class SetGraph[
 		self[tail].discard(head)
 
 
+class Undirected[
+	Vert: typing.Hashable,
+	Node: typing.Collection,
+](
+	Base[
+		Vert,
+		Node,
+	],
+):
+
+	def setEdge(self,
+		tail: Vert,
+		head: Vert,
+	) -> None:
+		super().setEdge(tail, head)
+		super().setEdge(head, tail)
+
+	def delEdge(self,
+		tail: Vert,
+		head: Vert,
+	) -> None:
+		super().delEdge(tail, head)
+		super().delEdge(head, tail)
+
+
+
+class Graph(Weighted):
+	...
+
+
+class UnweightedGraph(Unweighted):
+	...
+
+
+class UndirectedGraph(Undirected, Weighted):
+	...
+
+
+class UndirectedUnweightedGraph(Undirected, Unweighted):
+	...
