@@ -1,41 +1,43 @@
 from __future__ import annotations
 
+import collections
 import typing
 
 
-class Node[
-	Vert: typing.Hashable,
-](
-	typing.Collection[
-		Vert,
-	]
-):
+class Collection(typing.Collection):
 
 	@property
 	def degree(self) -> int:
 		return len(self)
 
 
-class Base[
-	Vert: typing.Hashable,
-	Node: typing.Collection,
-](
-	dict[
-		Vert,
-		Node,
-	],
-):
+class Set[Key](set[Key], Collection):
+	...
+
+
+class Dict[Key, Value](dict[Key, Value], Collection):
+	...
+
+
+class Base[Vert: typing.Hashable, Neighborhood: Collection](collections.defaultdict[Vert, Neighborhood]):
 
 	@classmethod
-	def from_edges(cls, edges: typing.Iterable):
-		raise NotImplementedError
+	def fromIterable(cls, *edges: tuple):
+		graph = cls()
+
+		for edge in edges:
+			graph.setEdge(*edge)
+
+		return graph
 
 
-	def __init__(self, default_factory: type[Node], *args, **kwargs):
-		super().__init__(*args, **kwargs)
+	@property
+	def vertices(self) -> set[Vert]:
+		return set(self.keys())
 
-		self.default_factory = default_factory
-
+	@property
+	def neighborhoods(self) -> list[Neighborhood]:
+		return list(self.values())
 
 	@property
 	def order(self) -> int:
@@ -43,24 +45,25 @@ class Base[
 
 	@property
 	def size(self) -> int:
-		return sum([len(node) for node in self.values()])
+		return sum([neighborhood.degree for neighborhood in self.neighborhoods])
 
+
+	def neighbors(self,
+		tail: Vert,
+	) -> Neighborhood:
+		return self[tail]
 
 	def adjacent(self,
 		tail: Vert,
 		head: Vert,
 	) -> bool:
-		return tail in self[head]
+		return head in self.neighbors(tail)
 
-	def neighbors(self,
-		tail: Vert,
-	) -> Node:
-		return self[tail]
 
 	def setVert(self,
 		tail: Vert,
 	) -> None:
-		self.setdefault(tail, self.default_factory())
+		self.neighbors(tail)
 
 	def delVert(self,
 		tail: Vert,
@@ -74,8 +77,7 @@ class Base[
 		tail: Vert,
 		head: Vert,
 	*args) -> None:
-		self.setVert(tail)
-		self.setVert(head)
+		raise NotImplementedError
 
 	def getEgde(self,
 		tail: Vert,
@@ -89,21 +91,10 @@ class Base[
 	) -> None:
 		raise NotImplementedError
 
-class Weighted[
-	Vert: typing.Hashable,
-	Edge: typing.Any,
-](
-	Base[
-		Vert,
-		dict[
-			Vert,
-			Edge,
-		]
-	]
-):
+class DictGraph[Vert: typing.Hashable, Edge: typing.Any](Base[Vert, Dict[Vert, Edge]]):
 
-	def __init__(self, *args, **kwargs):
-		super().__init__(dict, *args, **kwargs)
+	def __init__(self, *args, **kwargs) -> None:
+		super().__init__(Dict, *args, **kwargs)
 
 
 	def setEdge(self,
@@ -111,8 +102,6 @@ class Weighted[
 		head: Vert,
 		edge: Edge,
 	) -> None:
-		super().setEdge(tail, head)
-
 		self[tail][head] = edge
 
 	def getEgde(self,
@@ -128,58 +117,42 @@ class Weighted[
 		self[tail].pop(head, None)
 
 
-class Unweighted[
-	Vert,
-](
-	Base[
-		Vert,
-		set[
-			Vert,
-		],
-	]
-):
+class SetGraph[Vert](Base[Vert, Set[Vert]]):
 
-	def __init__(self, *args, **kwargs):
-		super().__init__(set, *args, **kwargs)
+	def __init__(self, *args, **kwargs) -> None:
+		super().__init__(Set, *args, **kwargs)
 
 
 	def setEdge(self,
 		tail: Vert,
 		head: Vert,
 	) -> None:
-		super().setEdge(tail, head)
-
-		self[tail].add(head)
+		self.neighbors(tail).add(head)
 
 	def getEgde(self,
 		tail: Vert,
 		head: Vert,
 	) -> bool:
-		return head in self[tail]
+		return self.adjacent(
+			tail,
+			head,
+		)
 
 	def delEdge(self,
 		tail: Vert,
 		head: Vert,
 	) -> None:
-		self[tail].discard(head)
+		self.neighbors(tail).discard(head)
 
 
-class Undirected[
-	Vert: typing.Hashable,
-	Node: typing.Collection,
-](
-	Base[
-		Vert,
-		Node,
-	],
-):
+class Undirected[Vert: typing.Hashable, Neighborhood: Collection](Base[Vert, Neighborhood]):
 
 	def setEdge(self,
 		tail: Vert,
 		head: Vert,
-	) -> None:
-		super().setEdge(tail, head)
-		super().setEdge(head, tail)
+	*args) -> None:
+		super().setEdge(tail, head, *args)
+		super().setEdge(head, tail, *args)
 
 	def delEdge(self,
 		tail: Vert,
@@ -190,17 +163,17 @@ class Undirected[
 
 
 
-class Graph(Weighted):
+class Graph(DictGraph):
 	...
 
 
-class UnweightedGraph(Unweighted):
+class UnweightedGraph(SetGraph):
 	...
 
 
-class UndirectedGraph(Undirected, Weighted):
+class UndirectedGraph(Undirected, Graph):
 	...
 
 
-class UndirectedUnweightedGraph(Undirected, Unweighted):
+class UndirectedUnweightedGraph(Undirected, UnweightedGraph):
 	...

@@ -18,6 +18,14 @@ class TestGraph:
 			(3, 5, 8),
 			(4, 5, 9),
 		}
-	#	graph = Graph.from_edges(edges)
+		graph = UndirectedGraph.fromIterable(*edges)
 
-	#	print(json.dumps(graph))
+		print()
+		print()
+		print(
+			json.dumps(graph,
+				indent = 4,
+			).replace('"', ''),
+		)
+
+		...
