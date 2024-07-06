@@ -62,10 +62,16 @@ def mul(left: list[list], right: list[list[int]]) -> list[list[int]]:
 	product = []
 
 	for i, left_row in enumerate(left):
-		product_row = []
+		...
 
-		for k, right_row in enumerate(right):
-			for j, right_item in enumerate(right_row):
+		for j, right_column in enumerate(...):
+			...
+
+			for k, item in enumerate(...):
 				...
+
+			...
+
+		...
 
 	return product
