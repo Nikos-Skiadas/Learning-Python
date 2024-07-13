@@ -9,6 +9,7 @@ mutable: means all of the above supports support setting an item at key
 
 
 from typing import Sized, Iterable, Container, Collection, Mapping, MutableMapping
+from numpy import inf
 
 
 if __name__ == "__main__":
@@ -39,3 +40,23 @@ if __name__ == "__main__":
 	b = x != y  # x is not equal to y
 
 	z = x | y  # z = x.copy(); z.update(y)
+
+
+def dijkstra(graph: dict[str, dict[str, float]]):
+	dist = dict.fromkeys(graph.keys(), inf)
+	prev = {}
+	vertices = set(graph.keys())
+
+	while vertices:
+		u = min(vertices)
+		vertices.remove(u)
+
+		for v, weight in graph[u].items():
+			if v in vertices:
+				alt = dist[v] + weight
+
+				if alt < dist[v]:
+					dist[v] = alt
+					prev[v] = u
+
+	return dist, prev
