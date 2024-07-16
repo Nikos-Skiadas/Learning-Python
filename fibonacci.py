@@ -17,10 +17,14 @@ def fibonacci(n: int, *, a: int = 0, b: int = 1) -> list[int]:
 	f = []
 
 	# Go on until number is reached:
-	while a < n:
+	for _ in range(n):
 		f.append(a)
 		a, b = b, a + b  # advance by one term
 
 	# Return all terms up to number
 	else:
 		return f
+
+
+if __name__ == "__main__":
+	print(*fibonacci(42), end = "\n")
