@@ -12,51 +12,43 @@ from typing import Sized, Iterable, Container, Collection, Mapping, MutableMappi
 from numpy import inf
 
 
-if __name__ == "__main__":
-	x = {
-		"c": 2,
-		"a": 3,
-		"b": 5,
-	}
-	y = {
-		"c": 3,
-		"d": 5,
-		"e": 7,
-	}
-
-	x_item = x["a"]  # get value at key
-	x["a"] = 11  # set value at key (if it exists ovewrite it else add the key!)
-	del x["a"]  # remove key (and value) from dict if there
-
-	x_item = x.get("a", 0)  # get value at key if there else return default value
-	x.setdefault("a", 11)  # set value at key (if it exists do nothing it else add the key!)
-	x_item = x.pop("a", 0)  # remove key and return value from dict if there else return default value
-
-	x.update(y)  # update values of x at keys of y with values from y (mutate x with y)
-	x.clear()  # empty the dict
-	z = x.copy()  # copy of dict
-
-	b = x == y  # x is equal to y
-	b = x != y  # x is not equal to y
-
-	z = x | y  # z = x.copy(); z.update(y)
-
-
-def dijkstra(graph: dict[str, dict[str, float]]):
+def dijkstra(graph: dict[str, dict[str, float]], source: str, target: str | None = None):
 	dist = dict.fromkeys(graph.keys(), inf)
 	prev = {}
 	vertices = set(graph.keys())
+	dist[source] = 0.
 
 	while vertices:
-		u = min(vertices)
+		u = min(vertices, key = dist.get)  # type: ignore
 		vertices.remove(u)
 
 		for v, weight in graph[u].items():
 			if v in vertices:
-				alt = dist[v] + weight
+				alt = dist[u] + weight
 
 				if alt < dist[v]:
 					dist[v] = alt
 					prev[v] = u
 
 	return dist, prev
+
+
+if __name__ == "__main__":
+	graph = {
+		"A": {
+			"B": 2.,
+			"C": 3.,
+			"D": 5.,
+		},
+		"B": {
+			"C": 7.,
+			"D": 2.,
+		},
+		"C": {
+			"D": 3.,
+		},
+		"D": {
+		},
+	}
+
+	print(*dijkstra(graph, "A"))

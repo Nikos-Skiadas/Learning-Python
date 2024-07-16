@@ -115,7 +115,7 @@ C_{m1} & \cdots & C_{ml}
 \begin_layout Standard
 \begin_inset Formula 
 \[
-C_{ij}=\sum_{k}A_{ik}B_{kj}
+C_{ij}=\sum_{k}A_{ik}B_{kj}=\sum_{k}A_{ik}B_{jk}^{\top}
 \]
 
 \end_inset
@@ -127,6 +127,14 @@ C_{ij}=\sum_{k}A_{ik}B_{kj}
 \begin_inset Formula 
 \[
 \text{tr}A=\sum_{i}A_{ii}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+A_{ij}^{\top}=A_{ji}
 \]
 
 \end_inset
