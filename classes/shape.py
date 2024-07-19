@@ -10,11 +10,23 @@ class Rectangle:
 		self.length = float(length)
 		self.height = float(height)
 
+	def __repr__(self) -> str:
+		return f"{self.length} × {self.height}"
+
 	def __add__(self, other: Rectangle) -> Rectangle:
-		return self.add(other)
+		return Rectangle(
+			self.length + other.length,
+			self.height + other.height,
+		)
 
 	def __mul__(self, factor: float | int) -> Rectangle:
-		return self.mul(factor)
+		return Rectangle(
+			self.length * factor,
+			self.height * factor,
+		)
+
+	def __rmul__(self, factor: float | int) -> Rectangle:
+		return self.__mul__(factor)
 
 	@property
 	def perimeter(self) -> float:
@@ -23,15 +35,3 @@ class Rectangle:
 	@property
 	def area(self) -> float:
 		return self.length * self.height
-
-	def add(self, other: Rectangle) -> Rectangle:
-		return Rectangle(
-			self.length + other.length,
-			self.height + other.height,
-		)
-
-	def mul(self, factor: float | int) -> Rectangle:
-		return Rectangle(
-			self.length * factor,
-			self.height * factor,
-		)
