@@ -26,7 +26,7 @@ class Rectangle:
 		)
 
 	def __rmul__(self, factor: float | int) -> Rectangle:
-		return self.__mul__(factor)
+		return self * factor
 
 	@property
 	def perimeter(self) -> float:
