@@ -35,3 +35,8 @@ class Rectangle:
 	@property
 	def area(self) -> float:
 		return self.length * self.height
+
+
+class Isosceles:  # triangle with two sides equal
+
+	...
