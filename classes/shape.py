@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Rectangle:
 
 	def __init__(self,
@@ -15,6 +18,14 @@ class Rectangle:
 	def area(self) -> float:
 		return self.length * self.height
 
-	def scale(self, factor: float | int):
-		self.length *= factor
-		self.height *= factor
+	def add(self, other: Rectangle) -> Rectangle:
+		return Rectangle(
+			self.length + other.length,
+			self.height + other.height,
+		)
+
+	def mul(self, factor: float | int) -> Rectangle:
+		return Rectangle(
+			self.length * factor,
+			self.height * factor,
+		)
