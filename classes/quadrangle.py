@@ -4,7 +4,22 @@ from __future__ import annotations
 import math
 
 
-class Rectangle:
+class Quadrangle:
+
+	...
+
+
+class Parallelogram():
+
+	...
+
+
+class Rombus():
+
+	...
+
+
+class Rectangle():
 
 	def __init__(self,
 		length: float | int = 0.,
@@ -40,41 +55,16 @@ class Rectangle:
 		return self.length * self.height
 
 
-class Isosceles:
+class Square(Rectangle):
 
 	def __init__(self,
-		side: float | int = 0.,
-		base: float | int = 0.,
+		length: float | int = 0.,
 	):
-		self.side = float(side)
-		self.base = float(base)
-
-	def __repr__(self) -> str:
-		return f"{self.base} × {self.height}"
-
-	def __add__(self, other: Isosceles) -> Isosceles:
-		return Isosceles(
-			self.side + other.side,
-			self.base + other.base,
+		super().__init__(
+			length,
+			length,
 		)
 
-	def __mul__(self, factor: float | int) -> Isosceles:
-		return Isosceles(
-			self.side * factor,
-			self.base * factor,
-		)
 
-	def __rmul__(self, factor: float | int) -> Isosceles:
-		return self * factor
-
-	@property
-	def height(self) -> float:
-		return math.sqrt((self.side ** 2) - (self.base / 2) ** 2)
-
-	@property
-	def perimeter(self) -> float:
-		return 2 * self.side + self.base
-
-	@property
-	def area(self) -> float:
-		return self.base / 2 * self.height
+if __name__ == "__main__":
+	x = Square(7)
