@@ -1,0 +1,35 @@
+{
+	"python.testing.unittestEnabled": false, // no `unittest`
+	"python.testing.pytestEnabled": true, // yes `pytest`
+	"python.testing.pytestArgs": [
+    	"-s"
+	],
+
+//	indendation:
+	"[python]": {
+	//	"editor.tabSize": 4, // optional
+		"editor.insertSpaces": false, // use tabs
+		"editor.detectIndentation": false, // persistently
+		"editor.formatOnType": true, // apply tabs intuitively
+	},
+
+//	`pylint` exceptions:
+	"pylint.args": [
+		"--disable=attribute-defined-outside-init", // remember to catch all attribute errors
+		"--disable=arguments-differ", // bad practice to change the signature in override but acceptable currently
+		"--disable=bad-indentation", // lets use tabs
+		"--disable=dangerous-default-value", // safe if it is read only
+		"--disable=line-too-long", // proposed line length 132 which is is the free form standard
+		"--disable=no-else-return", // allow playing with the flow of the `return` statement
+		"--not-callable",
+		"--disable=protected-access",
+		"--disable=redefined-builtin",
+		"--disable=too-few-public-methods", // who can tell
+		"--disable=too-many-instance-attributes", // who can tell
+		"--disable=unreachable", // vscode will grey it out already so no need
+		"--disable=unused-argument", // vscode will grey it out already so no need
+		"--disable=unused-import", // vscode will grey it out already so no need
+		"--disable=unused-variable", // vscode will grey it out already so no need
+    ],
+    "editor.insertSpaces": false,
+}
