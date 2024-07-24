@@ -4,65 +4,171 @@ from __future__ import annotations
 import math
 
 
-class Quadrangle:
-
-	...
-
-
-class Parallelogram():
-
-	...
-
-
-class Rombus():
-
-	...
-
-
-class Rectangle():
+class Quadrilateral:
 
 	def __init__(self,
-		length: float | int = 0.,
-		height: float | int = 0.,
+		side_0: float | int = 0.,
+		side_1: float | int = 0.,
+		side_2: float | int = 0.,
+
+		angle_0: float | int = 0.,
+		angle_1: float | int = 0.,
 	):
-		self.length = float(length)
-		self.height = float(height)
+		self.side_0 = float(side_0)
+		self.side_1 = float(side_1)
+		self.side_2 = float(side_2)
+
+		self.angle_0 = float(angle_0)
+		self.angle_1 = float(angle_1)
 
 	def __repr__(self) -> str:
-		return f"{self.length} × {self.height}"
+		return ":".join(vars(self).values())
 
-	def __add__(self, other: Rectangle) -> Rectangle:
-		return Rectangle(
-			self.length + other.length,
-			self.height + other.height,
+
+	@property
+	def side_3(self):
+		trigonomatric = self.side_0 * math.cos(self.angle_1)
+
+		return trigonomatric + math.sqrt((trigonomatric * trigonomatric - (
+					self.side_1 * self.side_1 +
+					self.side_2 * self.side_2 -
+					self.side_0 * self.side_0 -
+					self.side_1 * self.side_2 * math.cos(self.angle_1) * 2
+				)
+			)
 		)
 
-	def __mul__(self, factor: float | int) -> Rectangle:
-		return Rectangle(
-			self.length * factor,
-			self.height * factor,
+	@property
+	def angle_2(self) -> float:
+		return math.acos((
+				self.side_0 * self.side_0 +
+				self.side_1 * self.side_1 -
+				self.side_2 * self.side_2 -
+				self.side_3 * self.side_3 -
+				self.side_0 * self.side_1 * 2 * math.cos(self.angle_0)
+			) / self.side_2 / self.side_3 / 2
 		)
 
-	def __rmul__(self, factor: float | int) -> Rectangle:
-		return self * factor
+	@property
+	def angle_3(self) -> float:
+		return 2 * math.pi - (self.angle_0 + self.angle_1 + self.angle_2)
 
 	@property
 	def perimeter(self) -> float:
-		return 2 * (self.length + self.height)
+		return self.side_0 + self.side_1 + self.side_2 + self.side_3
 
 	@property
 	def area(self) -> float:
-		return self.length * self.height
+		semiperimeter = self.perimeter / 2
+
+		return math.sqrt(
+			(semiperimeter / 2 - self.side_0) *
+			(semiperimeter / 2 - self.side_1) *
+			(semiperimeter / 2 - self.side_2) *
+			(semiperimeter / 2 - self.side_3) +
+
+			self.side_0 *
+			self.side_1 *
+			self.side_2 *
+			self.side_3 * math.cos((self.angle_0 + self.angle_1) / 2)
+		)
 
 
-class Square(Rectangle):
+class Trapezoid(Quadrilateral):
 
 	def __init__(self,
-		length: float | int = 0.,
+		side_0: float | int = 0.,
+		side_1: float | int = 0.,
+		side_2: float | int = 0.,
+
+		angle_0: float | int = 0.,
 	):
 		super().__init__(
-			length,
-			length,
+			side_0 = side_0,
+			side_1 = side_1,
+			side_2 = side_2,
+
+			angle_0 = angle_0,
+			angle_1 = math.atan(side_0 * math.sin(angle_0) / (side_2 - side_0 * math.cos(angle_0))),
+		)
+
+
+	@property
+	def angle_2(self) -> float:
+		return math.pi - self.angle_1
+
+	@property
+	def side_3(self) -> float:
+		return self.side_1 - self.side_0 * math.sin(self.angle_0) - self.side_2 * math.sin(self.angle_1)
+
+	@property
+	def area(self) -> float:
+		return (self.side_1 + self.side_3) * self.side_0 * math.cos(self.angle_0) / 2
+
+
+class Parallelogram(Trapezoid):
+
+	def __init__(self,
+		side_0: float | int = 0.,
+		side_1: float | int = 0.,
+
+		angle_0: float | int = 0.,
+	):
+		super().__init__(
+			side_0 = side_0,
+			side_1 = side_1,
+			side_2 = side_0,
+
+			angle_0 = angle_0,
+		)
+
+
+	@property
+	def area(self) -> float:
+		return self.side_1 * self.side_0 * math.sin(self.angle_0)
+
+
+class Rombus(Parallelogram):
+
+	def __init__(self,
+		side_0: float | int = 0.,
+
+		angle_0: float | int = 0.,
+	):
+		super().__init__(
+			side_0 = side_0,
+			side_1 = side_0,
+
+			angle_0 = angle_0,
+		)
+
+
+class Rectangle(Parallelogram):
+
+	def __init__(self,
+		side_0: float | int = 0.,
+		side_1: float | int = 0.,
+	):
+		super().__init__(
+			side_0 = side_0,
+			side_1 = side_1,
+
+			angle_0 = math.pi / 2,
+		)
+
+	@property
+	def area(self) -> float:
+		return self.side_0 * self.side_1
+
+
+class Square(Rectangle):  # Rombus
+
+	def __init__(self,
+		side_0: float | int = 0.,
+	):
+		super().__init__(
+			side_0 = side_0,
+			side_1 = side_0,
 		)
 
 
