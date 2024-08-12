@@ -6,26 +6,22 @@ from data_structures.network import *
 class TestGraph:
 
 	def test_representations(self):
-		edges = {
-			(1, 2, 3),
-			(1, 3, 4),
-			(1, 4, 5),
-			(1, 5, 6),
-			(2, 3, 5),
-			(2, 4, 6),
-			(2, 5, 7),
-			(3, 4, 7),
-			(3, 5, 8),
-			(4, 5, 9),
+		unweighted_edges = {
+			(1, 2),
+			(1, 3),
+			(1, 4),
+			(1, 5),
+			(2, 3),
+			(2, 4),
+			(2, 5),
+			(3, 4),
+			(3, 5),
+			(4, 5),
 		}
-		graph = UndirectedGraph.fromIterable(*edges)
+		graph = UndirectedUnweightedGraph.from_edges(*unweighted_edges)
 
 		print()
 		print()
-		print(
-			json.dumps(graph,
-				indent = 4,
-			).replace('"', ''),
-		)
+		print(graph)
 
 		...
