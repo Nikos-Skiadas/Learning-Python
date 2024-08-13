@@ -26,7 +26,7 @@ class Quadrilateral:
 
 
 	@property
-	def side_3(self):
+	def side_3(self) -> float:
 		trigonomatric = self.side_0 * math.cos(self.angle_1)
 
 		return trigonomatric + math.sqrt((trigonomatric * trigonomatric - (

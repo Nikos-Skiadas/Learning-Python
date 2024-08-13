@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 """EXERCISE:
 
 Fill the classes below with
@@ -9,78 +12,119 @@ Fill the classes below with
 Aims:
 -	Make it functional, which means to give correct results.
 -	Make it optimal, which means to truncate any trigonometric computations where applicable.
+
+NOTE: The `super()` function in Python is used to give access to methods and properties of a parent or sibling class.
+It is especially useful in a scenario involving class inheritance, where a class inherits from one or more base classes.
 """
-
-
-
-"""
-The super() function in Python is used to give access to methods and properties of a parent or sibling class. 
-It is especially useful in a scenario involving class inheritance, where a class inherits from one or more base classes
-"""
-
-from __future__ import annotations
 
 
 import math
 
 
 class Triangle:
-    def __init__(self, side_a: float, side_b: float, side_c: float):
-        self.side_a = side_a
-        self.side_b = side_b
-        self.side_c = side_c
 
-    @property
-    def perimeter(self) -> float:
-        return self.side_a + self.side_b + self.side_c
+	def __init__(self,
+		side_0: float | int = 0,
+		side_1: float | int = 0,
 
-    @property
-    def area(self) -> float:
-        s = self.perimeter / 2
-        return math.sqrt(s * (s - self.side_a) * (s - self.side_b) * (s - self.side_c))
+		angle_0: float | int = 0,
+	):
+		self.side_0 = float(side_0)
+		self.side_1 = float(side_1)
+
+		self.angle_0 = float(angle_0)
+
+
+	@property
+	def side_2(self) -> float:
+		return math.sqrt(
+			self.side_0 * self.side_0 +
+			self.side_1 * self.side_1 -
+			self.side_0 * self.side_1 * math.cos(self.angle_0) * 2
+		)
+
+	@property
+	def perimeter(self) -> float:
+		return self.side_0 + self.side_1 + self.side_2
+
+	@property
+	def area(self) -> float:
+		return self.side_0 * self.side_1 * math.cos(self.angle_0) / 2
 
 
 class Right(Triangle):
-    def __init__(self, base: float, height: float):
-        hypotenuse = math.sqrt(base**2 + height**2)
-        super().__init__(base, height, hypotenuse)
 
-    @property
-    def area(self) -> float:
-        return (self.side_a * self.side_b) / 2
+	def __init__(self,
+		side_0: float | int = 0,
+		side_1: float | int = 0,
+	):
+		super().__init__(
+			side_0,
+			side_1,
+
+			math.pi / 2,
+		)
+
+
+	@property
+	def side_2(self) -> float:
+		return math.sqrt(
+			self.side_0 * self.side_0 +
+			self.side_1 * self.side_1
+		)
+
+	@property
+	def area(self) -> float:
+		return self.side_0 * self.side_1 / 2
 
 
 class Isosceles(Triangle):
-    def __init__(self, equal_side: float, base: float):
-        super().__init__(equal_side, equal_side, base)
 
-    @property
-    def height(self) -> float:
-        return math.sqrt(self.side_a**2 - (self.side_c / 2)**2) # From Pythagorean theorem
+	def __init__(self,
+		side_0: float | int = 0,
 
-    @property
-    def area(self) -> float:
-        return (self.side_c * self.height) / 2
+		angle_0: float | int = 0,
+	):
+		super().__init__(
+			side_0,
+			side_0,
+
+			angle_0,
+		)
+
+
+	@property
+	def side_2(self) -> float:
+		return self.side_0 * math.sin(self.angle_0 / 2) * 2
+
+	@property
+	def area(self) -> float:
+		return self.side_0 * self.side_0 * math.sin(self.angle_0) / 2
 
 
 class Equilateral(Isosceles):
-    def __init__(self, side: float):
-        super().__init__(side, side)
 
-    @property
-    def height(self) -> float:
-        return (math.sqrt(3) / 2) * self.side_a
+	def __init__(self,
+		side_0: float | int = 0,
+	):
+		super().__init__(
+			side_0,
 
-    @property
-    def area(self) -> float:
-        return (self.side_a**2 * math.sqrt(3)) / 4
+			math.pi / 3,
+		)
 
 
-class IsoscelesRight(Isosceles, Right):
-    def __init__(self, equal_side: float):
-        base = equal_side * math.sqrt(2)   ????
-        super().__init__(equal_side, base)
+	@property
+	def area(self) -> float:
+		return self.side_0 * self.side_0 * math.sqrt(3) / 4
 
-    @property
-    def area(self) -> float:
-        return (self.side_a**2)
+
+class IsoscelesRight(Right):
+
+	def __init__(self,
+		side_0: float | int,
+	):
+		super().__init__(
+			side_0,
+			side_0,
+		)
