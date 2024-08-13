@@ -1,23 +1,5 @@
 from __future__ import annotations
 
-
-"""EXERCISE:
-
-Fill the classes below with
--	proper initializations,
--	perimeter and area methods
--	any other helping methods like the renaining sides or angles
--	whatever other method you think may better stand alone
-
-Aims:
--	Make it functional, which means to give correct results.
--	Make it optimal, which means to truncate any trigonometric computations where applicable.
-
-NOTE: The `super()` function in Python is used to give access to methods and properties of a parent or sibling class.
-It is especially useful in a scenario involving class inheritance, where a class inherits from one or more base classes.
-"""
-
-
 import math
 
 
@@ -33,6 +15,9 @@ class Triangle:
 		self.side_1 = float(side_1)
 
 		self.angle_0 = float(angle_0)
+
+	def __repr__(self) -> str:
+		return ":".join(vars(self).values())
 
 
 	@property
