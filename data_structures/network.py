@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import abc
 import collections
 import json
 import typing
@@ -9,8 +8,9 @@ import typing
 class NeighborhoodBase(typing.Collection):
 
 	def __repr__(self):
-		return json.dumps(self if isinstance(self, typing.Mapping) else list(self),
+		return json.dumps(self,
 			indent = 4,
+			default = self.serialize,
 		).replace('"', '')
 
 
@@ -19,48 +19,70 @@ class NeighborhoodBase(typing.Collection):
 		return len(self)
 
 
-class Neighborhood[
-	Vertex,
-	Weight,
-](
-	NeighborhoodBase,
-	dict[
-		Vertex,
-		Weight,
-	],
-):
+	@classmethod
+	def serialize(cls, neighborhood: typing.Self):
+		raise NotImplementedError
 
-	...
 
 class UnweightedNeighborhood[
-	Vertex,
+	VertexType,
 ](
-	NeighborhoodBase,
 	set[
-		Vertex,
+		VertexType,
 	],
+	NeighborhoodBase,
 ):
 
-	...
+	@classmethod
+	def serialize(cls, neighborhood: typing.Self) -> list[
+		VertexType,
+	]:
+		return list(neighborhood)
+
+
+	def __getitem__(self, key: VertexType) -> bool:
+		return key in self
+
+
+class Neighborhood[
+	VertexType,
+	WeightType,
+](
+	dict[
+		VertexType,
+		WeightType,
+	],
+	NeighborhoodBase,
+):
+
+	@classmethod
+	def serialize(cls, neighborhood: typing.Self) -> dict[
+		VertexType,
+		WeightType,
+	]:
+		return neighborhood
 
 
 class GraphBase[
-	Vertex: typing.Hashable,
-	Neighborhood: NeighborhoodBase,
+	VertexType: typing.Hashable,
+	NeighborhoodType: NeighborhoodBase,
 ](
 	collections.defaultdict[
-		Vertex,
-		Neighborhood
+		VertexType,
+		NeighborhoodType
 	],
-	metaclass = abc.ABCMeta,
 ):
+
+	@classmethod
+	def serialize(cls, neighborhood: NeighborhoodType):
+		return neighborhood.serialize(neighborhood)
 
 	@classmethod
 	def from_edges(cls, *edges: tuple):
 		graph = cls()
 
 		for edge in edges:
-			graph.setEdge(*edge)
+			graph.add(*edge)
 
 		return graph
 
@@ -68,26 +90,32 @@ class GraphBase[
 	def __init__(self, *args, **kwargs):
 		super().__init__(self.default_factory, *args, **kwargs)
 
+	def __call__(self, *args):
+		return self.weight(*args)
+
 	def __repr__(self):
 		return json.dumps(self,
 			indent = 4,
+			default = self.serialize
 		).replace('"', '')
 
-	def __delitem__(self, key: Vertex) -> None:
-		self.delVert(key)
+	def __delitem__(self, key: VertexType):
+		self.pop(key, None)
+
+		for vert in self:
+			self.discard(vert, key)
 
 
 	@property
-	@abc.abstractmethod
 	def default_factory(self) -> type:
-		...
+		raise NotImplementedError
 
 	@property
-	def vertices(self) -> typing.Collection[Vertex]:
+	def vertices(self) -> typing.Collection[VertexType]:
 		return self.keys()
 
 	@property
-	def neighborhoods(self) -> typing.Collection[Neighborhood]:
+	def neighborhoods(self) -> typing.Collection[NeighborhoodType]:
 		return self.values()
 
 	@property
@@ -100,70 +128,57 @@ class GraphBase[
 
 
 	def adjacent(self,
-		tail: Vertex,
-		head: Vertex,
+		tail: VertexType,
+		head: VertexType,
 	) -> bool:
 		return head in self[tail]
 
 
-	def addVert(self,vert: Vertex) -> None:
-		self[vert]
-
-	def setVert(self, vert: Vertex, neighborhood: Neighborhood) -> None:
-		self[vert] = neighborhood
-
-	def getVert(self, vert: Vertex) -> Neighborhood:
-		return self[vert]
-
-	def delVert(self, vert: Vertex) -> None:
-		self.pop(vert, None)
-
-		for head in self:
-			self.delEdge(head, vert)
-
-	def setEdge(self,
-		tail: Vertex,
-		head: Vertex,
-	*args) -> None:
+	def add(self, *args):
 		raise NotImplementedError
 
-	def getEgde(self,
-		tail: Vertex,
-		head: Vertex,
-	):
+	def weight(self, *args):
 		raise NotImplementedError
 
-	def delEdge(self,
-		tail: Vertex,
-		head: Vertex,
-	) -> None:
+	def discard(self, *args):
 		raise NotImplementedError
 
 
-class Graph[Vert: typing.Hashable, Edge](GraphBase[Vert, Neighborhood[Vert, Edge]]):
+class Graph[
+	VertexType: typing.Hashable,
+	WeightType,
+](
+	GraphBase[
+		VertexType,
+		Neighborhood[
+			VertexType,
+			WeightType,
+		]
+	]
+):
 
 	@property
 	def default_factory(self) -> type:
 		return Neighborhood
 
 
-	def setEdge(self,
-		tail: Vert,
-		head: Vert,
-		edge: Edge,
-	) -> None:
+	def add(self,
+		tail: VertexType,
+		head: VertexType,
+		edge: WeightType,
+	):
 		self[tail][head] = edge
 
-	def getEgde(self,
-		tail: Vert,
-		head: Vert,
-	) -> Edge:
+	def weight(self,
+		tail: VertexType,
+		head: VertexType,
+	) -> WeightType:
 		return self[tail][head]
 
-	def delEdge(self,
-		tail: Vert,
-		head: Vert,
-	) -> None:
+	def discard(self,
+		tail: VertexType,
+		head: VertexType,
+	):
 		self[tail].pop(head, None)
 
 
@@ -174,43 +189,40 @@ class UnweightedGraph[Vert: typing.Hashable](GraphBase[Vert, UnweightedNeighborh
 		return UnweightedNeighborhood
 
 
-	def setEdge(self,
+	def add(self,
 		tail: Vert,
 		head: Vert,
-	) -> None:
+	):
 		self[tail].add(head)
 
-	def getEgde(self,
+	def weight(self,
 		tail: Vert,
 		head: Vert,
 	) -> bool:
-		return self.adjacent(
-			tail,
-			head,
-		)
+		return self[tail][head]
 
-	def delEdge(self,
+	def discard(self,
 		tail: Vert,
 		head: Vert,
-	) -> None:
+	):
 		self[tail].discard(head)
 
 
 class Undirected[Vert: typing.Hashable, Collection: NeighborhoodBase](GraphBase[Vert, Collection]):
 
-	def setEdge(self,
+	def add(self,
 		tail: Vert,
 		head: Vert,
-	*args) -> None:
-		super().setEdge(tail, head, *args)
-		super().setEdge(head, tail, *args)
+	*args):
+		super().add(tail, head, *args)
+		super().add(head, tail, *args)
 
-	def delEdge(self,
+	def discard(self,
 		tail: Vert,
 		head: Vert,
-	) -> None:
-		super().delEdge(tail, head)
-		super().delEdge(head, tail)
+	):
+		super().discard(tail, head)
+		super().discard(head, tail)
 
 
 class UndirectedGraph(Undirected, Graph):
