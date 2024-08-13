@@ -22,7 +22,7 @@ class Triangle:
 
 	@property
 	def angle_1(self) -> float:
-		return math.asin(self.side_0 / self.side_2 * self.angle_0)
+		...
 
 	@property
 	def angle_2(self) -> float:

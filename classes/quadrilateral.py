@@ -26,27 +26,11 @@ class Quadrilateral:
 
 	@property
 	def side_3(self) -> float:
-		trigonomatric = self.side_0 * math.cos(self.angle_1)
-
-		return trigonomatric + math.sqrt((trigonomatric * trigonomatric - (
-					self.side_1 * self.side_1 +
-					self.side_2 * self.side_2 -
-					self.side_0 * self.side_0 -
-					self.side_1 * self.side_2 * math.cos(self.angle_1) * 2
-				)
-			)
-		)
+		...
 
 	@property
 	def angle_2(self) -> float:
-		return math.acos((
-				self.side_0 * self.side_0 +
-				self.side_1 * self.side_1 -
-				self.side_2 * self.side_2 -
-				self.side_3 * self.side_3 -
-				self.side_0 * self.side_1 * 2 * math.cos(self.angle_0)
-			) / self.side_2 / self.side_3 / 2
-		)
+		...
 
 	@property
 	def angle_3(self) -> float:
