@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from polygon import Scalene
+from polygon import Scalene, Regular
 
 
 class Quadrilateral(Scalene):
@@ -113,15 +113,17 @@ class Rectangle(Parallelogram):
 
 	@property
 	def area(self) -> float:
-		return self.side_last * self.sides[1]
+		return self.sides[0] * self.sides[1]
 
 
-class Square(Rectangle):  # Rombus
+class Square(Regular):
 
 	def __init__(self,
 		side_0: float | int = 0.,
 	):
-		super().__init__(
-			side_0 = side_0,
-			side_1 = side_0,
-		)
+		super().__init__(4, side_0)
+
+
+	@property
+	def area(self) -> float:
+		return self.sides[0] * self.sides[0]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 
-from polygon import Scalene
+from polygon import Scalene, Regular
 
 
 class Triangle(Scalene):
@@ -92,16 +92,12 @@ class Isosceles(Triangle):
 		return self.sides[0] * self.sides[0] * math.sin(self.angles[0]) / 2
 
 
-class Equilateral(Isosceles):
+class Equilateral(Regular):
 
 	def __init__(self,
 		side_0: float | int = 0,
 	):
-		super().__init__(
-			side_0,
-
-			math.pi / 3,
-		)
+		super().__init__(3,	side_0)
 
 
 	@property
