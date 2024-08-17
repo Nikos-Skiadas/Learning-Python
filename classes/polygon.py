@@ -5,6 +5,9 @@ import math
 
 class Scalene:
 
+	order: int
+
+
 	def __init__(self,
 		sides: list[float | int],
 
@@ -17,10 +20,12 @@ class Scalene:
 	def __repr__(self) -> str:
 		return ":".join(vars(self).values())
 
+	def __init_subclass__(cls, order: int | None = None, **kwargs) -> None:
+		super().__init_subclass__(**kwargs)
 
-	@property
-	def order(self) -> int:
-		return len(self.sides) + 1
+		if order is not None:
+			cls.order = order
+
 
 	@property
 	def side_last(self) -> float:

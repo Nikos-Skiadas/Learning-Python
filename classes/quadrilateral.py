@@ -5,7 +5,7 @@ import math
 from polygon import Scalene, Regular
 
 
-class Quadrilateral(Scalene):
+class Quadrilateral(Scalene, order = 4):
 
 	def __init__(self,
 		side_0: float | int = 0.,
