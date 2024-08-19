@@ -8,20 +8,22 @@ class SingleNode[Data]:
 
 	@classmethod
 	def insert(cls,
-		node: SingleNode[Data] | None,
-		data:            Data        ,
+		node: SingleNode[Data],
+		data:            Data ,
 	):
-		temp = SingleNode(
-			data = data,
-			next = node.next if node is not None else node
+		node.next = SingleNode(
+			data =      data,
+			next = node.next,
 		)
 
-		if node is not None:
-			node.next = temp
-
 	@classmethod
-	def delete(cls, node: SingleNode[Data]):
-		node.next = node.next.next if node.next is not None else node.next
+	def pop(cls, node: SingleNode[Data]) -> Data:
+		temp = node.next if node.next is not None else node
+
+		data = temp.data
+		node.next = temp.next
+
+		return data
 
 
 	def __init__(self,
@@ -29,7 +31,7 @@ class SingleNode[Data]:
 		next: SingleNode[Data] | None = None,
 	):
 		self.data = data
-		self.next = next
+		self.next = next if next is not None else self
 
 	def __next__(self):
 		if self.next is None:
@@ -74,6 +76,12 @@ class List[Data]:
 
 		return data
 
+	def append(self, data: Data):
+		self.head = SingleNode(
+			data =      data,
+			next = self.head,
+		)
+
 	def pop(self) -> Data:
 		if self.head is None:
 			raise IndexError(f"{self.pop.__name__}-ing from empty {self.__class__.__name__.lower()}")
@@ -87,25 +95,23 @@ class List[Data]:
 class Stack[Data](List[Data]):
 
 	def push(self, data: Data):
-		self.head = SingleNode(
-			data =      data,
-			next = self.head,
-		)
+		super().append(data)
 
 
 class Queue[Data](List[Data]):
 
 	def enqueue(self, data: Data):
-		SingleNode.insert(
-			data = data,
-			node = self.head,
-		)
+		if self.head is None:
+			super().append(data)
+
+		else:
+			SingleNode.insert(
+				data = data,
+				node = self.head,
+			)
 
 	def dequeue(self) -> Data:
 		if self.head is None:
 			raise IndexError(f"{self.pop.__name__}-ing from empty {self.__class__.__name__.lower()}")
 
-		data = self.head.data
-		SingleNode.delete(self.head)
-
-		return data
+		return SingleNode.pop(self.head)
