@@ -31,7 +31,7 @@ class SingleNode[Data]:
 		next: SingleNode[Data] | None = None,
 	):
 		self.data = data
-		self.next = next if next is not None else self
+		self.next = next
 
 	def __next__(self):
 		if self.next is None:
@@ -114,4 +114,4 @@ class Queue[Data](List[Data]):
 		if self.head is None:
 			raise IndexError(f"{self.pop.__name__}-ing from empty {self.__class__.__name__.lower()}")
 
-		return SingleNode.pop(self.head)
+		return SingleNode.pop(next(self.head))
