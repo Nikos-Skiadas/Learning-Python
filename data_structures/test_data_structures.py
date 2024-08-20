@@ -22,7 +22,7 @@ class TestSequential:
 		for item in self.items:
 			stack.push(item)
 
-		assert list(reversed(self.items)) == [item for item in stack]
+		assert list(reversed(self.items)) == list(stack)
 
 		for item in reversed(self.items):
 			assert item == stack.pop()
@@ -33,7 +33,7 @@ class TestSequential:
 		for item in self.items:
 			queue.enqueue(item)
 
-		assert self.items == [item for item in queue]
+		assert self.items == list(queue)
 
 		for item in self.items:
 			assert item == queue.dequeue()
