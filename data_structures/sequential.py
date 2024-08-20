@@ -1,93 +1,93 @@
 from __future__ import annotations
 
 
-import typing
-
-
-class SingleNode[Data]:
-
-	@classmethod
-	def insert(cls,
-		node: SingleNode[Data],
-		data:            Data ,
-	):
-		node.next = SingleNode(
-			data =      data,
-			next = node.next,
-		)
-
-	@classmethod
-	def pop(cls, node: SingleNode[Data]) -> Data:
-		temp = node.next if node.next is not None else node
-
-		data = temp.data
-		node.next = temp.next
-
-		return data
+class Node[Data]:
 
 
 	def __init__(self,
-		data:            Data               ,
-		next: SingleNode[Data] | None = None,
+		data:      Data               ,
+		next: Node[Data] | None = None,
 	):
 		self.data = data
-		self.next = next
+		self.next = next if next is not None else self
 
-	def __next__(self):
-		if self.next is None:
-			raise StopIteration
-
-		return self.next
+	def __bool__(self) -> bool:
+		return self.next is not self
 
 
 	@property
-	def next(self) -> SingleNode[Data] | None:
+	def next(self) -> Node[Data]:
 		return self._next
 
 	@next.setter
-	def next(self, node: SingleNode[Data] | None):
+	def next(self, node: Node[Data]):
 		self._next = node
 
 	@next.deleter
 	def next(self):
-		self.next = None
+		self.next = self
+
+
+	def append(self, data: Data):
+		self.next = Node(
+			data =      data,
+			next = self.next,
+		)
+
+	def remove(self) -> Data:
+		data      = self.next.data
+		self.next = self.next.next
+
+		return data
 
 
 class List[Data]:
 
 	def __init__(self):
-		self.head: SingleNode[Data] | None = None
-		self.node: SingleNode[Data] | None = self.head
+		self.head: Node[Data] | None = None
 
 	def __bool__(self) -> bool:
 		return self.head is not None
 
 	def __iter__(self):
-		self.node = self.head
+		self.tail = self.head
 
 		return self
 
 	def __next__(self):
-		if self.node is None:
+		if self.tail is None:
 			raise StopIteration
 
-		data      = self.node.data
-		self.node = self.node.next
+		self.tail = self.tail.next
+		data      = self.tail.data
+
+		if self.tail is self.head:
+			self.tail = None
 
 		return data
 
+
+	def wind(self):
+		if self.head is not None:
+			self.head = self.head.next
+
 	def append(self, data: Data):
-		self.head = SingleNode(
-			data =      data,
-			next = self.head,
-		)
-
-	def pop(self) -> Data:
 		if self.head is None:
-			raise IndexError(f"{self.pop.__name__}-ing from empty {self.__class__.__name__.lower()}")
+			self.head = Node(data)
 
-		data      = self.head.data
-		self.head = self.head.next
+		else:
+			self.head.append(data)
+
+	def remove(self) -> Data:
+		if self.head is None:
+			raise IndexError(f"Removing from an empty {self.__class__.__name__.lower()}")
+
+		if not self.head:
+			data = self.head.data
+			self.head = None
+
+		else:
+			data = self.head.remove()
 
 		return data
 
@@ -97,21 +97,15 @@ class Stack[Data](List[Data]):
 	def push(self, data: Data):
 		super().append(data)
 
+	def pop(self) -> Data:
+		return super().remove()
+
 
 class Queue[Data](List[Data]):
 
 	def enqueue(self, data: Data):
-		if self.head is None:
-			super().append(data)
-
-		else:
-			SingleNode.insert(
-				data = data,
-				node = self.head,
-			)
+		super().append(data)
+		self.wind()
 
 	def dequeue(self) -> Data:
-		if self.head is None:
-			raise IndexError(f"{self.pop.__name__}-ing from empty {self.__class__.__name__.lower()}")
-
-		return SingleNode.pop(next(self.head))
+		return super().remove()
