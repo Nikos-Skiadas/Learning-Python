@@ -12,11 +12,21 @@ class Node[Data]:
 
 
 	def insert(self, data: Data):
+		"""Implement function `insertAfter` as a `Node` method but with `data` instead of a `newNode`.
+
+		https://en.wikipedia.org/wiki/Linked_list#Singly_linked_lists
+		"""
 		self.next = Node(
 			data = data,
 			next = self.next,
 		)
 
+	def remove(self) -> Data:
+		"""Implement function `removeAfter` as a `Node` method.
+
+		https://en.wikipedia.org/wiki/Linked_list#Singly_linked_lists
+		"""
+		...
 
 
 class List[Data]:
@@ -29,7 +39,18 @@ class List[Data]:
 
 
 	def append(self, data: Data):
+		"""Implement function `insertBeginning` as a `List` method but with `data` instead of a `newNode`.
+
+		https://en.wikipedia.org/wiki/Linked_list#Singly_linked_lists
+		"""
 		self.head = Node(
 			data = data,
 			next = self.head,
 		)
+
+	def pop(self) -> Data:
+		"""Implement function `removeBeginning` as a `List` method.
+
+		https://en.wikipedia.org/wiki/Linked_list#Singly_linked_lists
+		"""
+		...
