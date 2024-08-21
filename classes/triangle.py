@@ -5,7 +5,7 @@ import math
 from polygon import Scalene, Regular
 
 
-class Triangle(Scalene):
+class Triangle(Scalene, order = 3):
 
 	def __init__(self,
 		side_0: float | int = 0,
