@@ -1,5 +1,5 @@
-from data_structures.sequential import *
-from data_structures.network import *
+from data_structures.linked import circle, single, double
+from data_structures import graph
 
 
 def empty(lines: int):
@@ -7,7 +7,7 @@ def empty(lines: int):
 		print()
 
 
-class TestSequential:
+class TestLinked:
 
 	items = [
 		2,
@@ -17,7 +17,7 @@ class TestSequential:
 	]
 
 	def test_stack(self):
-		stack = Stack()
+		stack = single.Stack()
 
 		for item in self.items:
 			stack.push(item)
@@ -28,7 +28,7 @@ class TestSequential:
 			assert item == stack.pop()
 
 	def test_queue(self):
-		queue = Queue()
+		queue = circle.Queue()
 
 		for item in self.items:
 			queue.enqueue(item)
@@ -37,6 +37,19 @@ class TestSequential:
 
 		for item in self.items:
 			assert item == queue.dequeue()
+
+	def test_deque(self):
+		deque = double.Deque()
+
+		for item in self.items:
+			deque.prepend(item)
+			deque.append(item)
+
+		assert list(reversed(self.items)) + self.items == list(deque)
+
+		for item in reversed(self.items):
+			assert item == deque.pull()
+			assert item == deque.pop()
 
 
 class TestGraph:
@@ -57,16 +70,16 @@ class TestGraph:
 
 	def test_graph(self):
 		empty(2)
-		print(Graph.from_edges(*self.edges))
+		print(graph.Graph.from_edges(*self.edges))
 
 	def test_unweighted_graph(self):
 		empty(2)
-		print(UnweightedGraph.from_edges(*self.unweighted_edges))
+		print(graph.UnweightedGraph.from_edges(*self.unweighted_edges))
 
 	def test_undirected_graph(self):
 		empty(2)
-		print(UndirectedGraph.from_edges(*self.edges))
+		print(graph.UndirectedGraph.from_edges(*self.edges))
 
 	def test_undirected_unweighted_graph(self):
 		empty(2)
-		print(UndirectedUnweightedGraph.from_edges(*self.unweighted_edges))
+		print(graph.UndirectedUnweightedGraph.from_edges(*self.unweighted_edges))
