@@ -12,7 +12,6 @@ class Node[Data]:
 		self.prev = prev
 
 	@property
-
 	def next(self) -> Node[Data] | None:
 		return self._next
 
@@ -50,6 +49,37 @@ class Node[Data]:
 			self.prev.index + 1 if self.prev is not None else \
 			self.next.index - 1 if self.next is not None else \
 			0
+
+	def insert_next(self, data: Data):
+		self.next = Node(data,
+			next = self.next,
+			prev = self
+		)
+
+	def remove_next(self) -> Data:
+		if self.next is None:
+			raise IndexError("Remove from orhpan node")
+
+		data      = self.next.data
+		self.next = self.next.next
+
+		return data
+
+
+	def insert_prev(self, data: Data):
+		self.prev = Node(data,
+			next = self,
+			prev = self.prev,
+		)
+
+	def remove_prev(self) -> Data:
+		if self.prev is None:
+			raise IndexError("Remove from orhpan node")
+
+		data      = self.prev.data
+		self.prev = self.prev.prev
+
+		return data
 
 
 class List[Data]:
