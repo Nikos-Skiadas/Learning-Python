@@ -51,9 +51,7 @@ class List[Data]:
 		self.tail: Node[Data] | None = None
 
 	def __bool__(self) -> bool:
-		return \
-			self.head is not None or \
-			self.tail is not None
+		return self.head is self.tail is None
 
 	def __iter__(self):
 		node = self.head
