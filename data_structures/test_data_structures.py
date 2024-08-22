@@ -1,4 +1,4 @@
-from data_structures.linked import circle, single, double
+from data_structures import sequential
 from data_structures import graph
 
 
@@ -17,18 +17,18 @@ class TestLinked:
 	]
 
 	def test_stack(self):
-		stack = single.Stack()
+		stack = sequential.Stack()
 
 		for item in self.items:
 			stack.push(item)
 
-		assert list(reversed(self.items)) == list(stack)
+		assert self.items == list(stack)
 
 		for item in reversed(self.items):
 			assert item == stack.pop()
 
 	def test_queue(self):
-		queue = circle.Queue()
+		queue = sequential.Queue()
 
 		for item in self.items:
 			queue.enqueue(item)
@@ -39,7 +39,7 @@ class TestLinked:
 			assert item == queue.dequeue()
 
 	def test_deque(self):
-		deque = double.Deque()
+		deque = sequential.Deque()
 
 		for item in self.items:
 			deque.prepend(item)

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 class Node[Data]:
 
-	def __init__(self,data: Data,
+	def __init__(self, data: Data,
 		next: Node[Data] | None = None,
 		prev: Node[Data] | None = None,
 	):
@@ -105,3 +105,18 @@ class Deque[Data](List[Data]):
 		self.tail = self.tail.prev
 
 		return data
+
+
+class Stack[Data](Deque[Data]):
+
+	def push(self, data: Data):
+		super().append(data)
+
+
+class Queue[Data](Deque[Data]):
+
+	def enqueue(self, data: Data):
+		super().append(data)
+
+	def dequeue(self) -> Data:
+		return super().pull()
