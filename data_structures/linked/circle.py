@@ -28,22 +28,15 @@ class List[Data]:
 	def __init__(self):
 		self.tail: Node[Data] | None = None
 
-	def __iter__(self) -> List[Data]:
-		self.node = self.tail
+	def __bool__(self) -> bool:
+		return self.tail is not None
 
-		return self
+	def __iter__(self):
+		node = self.tail.next if self.tail is not None else None
 
-	def __next__(self) -> Data:
-		if self.node is None:
-			raise StopIteration
-
-		self.node = self.node.next
-		data      = self.node.data
-
-		if self.node is self.tail:
-			self.node = None
-
-		return data
+		while node is not None:
+			yield node.data
+			node = node.next if node is not self.tail else None
 
 
 class Queue[Data](List[Data]):

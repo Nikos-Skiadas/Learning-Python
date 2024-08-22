@@ -31,19 +31,15 @@ class List[Data]:
 	def __init__(self):
 		self.head: Node[Data] | None = None
 
-	def __iter__(self) -> List[Data]:
-		self.node = self.head
+	def __bool__(self) -> bool:
+		return self.head is not None
 
-		return self
+	def __iter__(self):
+		node = self.head
 
-	def __next__(self) -> Data:
-		if self.node is None:
-			raise StopIteration
-
-		data      = self.node.data
-		self.node = self.node.next
-
-		return data
+		while node is not None:
+			yield node.data
+			node = node.next
 
 
 class Stack[Data](List[Data]):

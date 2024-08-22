@@ -50,19 +50,24 @@ class List[Data]:
 		self.head: Node[Data] | None = None
 		self.tail: Node[Data] | None = None
 
-	def __iter__(self) -> List[Data]:
-		self.node = self.head
+	def __bool__(self) -> bool:
+		return \
+			self.head is not None or \
+			self.tail is not None
 
-		return self
+	def __iter__(self):
+		node = self.head
 
-	def __next__(self) -> Data:
-		if self.node is None:
-			raise StopIteration
+		while node is not None:
+			yield node.data
+			node = node.next
 
-		data      = self.node.data
-		self.node = self.node.next
+	def __reversed__(self):
+		node = self.tail
 
-		return data
+		while node is not None:
+			yield node.data
+			node = node.prev
 
 
 class Deque[Data](List[Data]):
