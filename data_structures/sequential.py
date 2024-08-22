@@ -11,8 +11,8 @@ class Node[Data]:
 		self.next = next
 		self.prev = prev
 
-
 	@property
+
 	def next(self) -> Node[Data] | None:
 		return self._next
 
@@ -44,16 +44,24 @@ class Node[Data]:
 		self.prev = None
 
 
+	@property
+	def index(self) -> int:
+		return \
+			self.prev.index + 1 if self.prev is not None else \
+			self.next.index - 1 if self.next is not None else \
+			0
+
+
 class List[Data]:
 
 	def __init__(self):
 		self.head: Node[Data] | None = None
 		self.tail: Node[Data] | None = None
 
+		self.size: int = 0
+
 	def __bool__(self) -> bool:
-		return \
-			self.head is not None or \
-			self.tail is not None
+		return self.head is self.tail is None
 
 	def __iter__(self):
 		node = self.head
