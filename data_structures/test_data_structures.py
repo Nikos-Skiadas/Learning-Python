@@ -27,6 +27,8 @@ class TestLinked:
 		for item in reversed(self.items):
 			assert item == stack.pop()
 
+		assert not list(stack)
+
 	def test_queue(self):
 		queue = sequential.Queue()
 
@@ -37,6 +39,8 @@ class TestLinked:
 
 		for item in self.items:
 			assert item == queue.dequeue()
+
+		assert not list(queue)
 
 	def test_deque(self):
 		deque = sequential.Deque()
@@ -50,6 +54,8 @@ class TestLinked:
 		for item in reversed(self.items):
 			assert item == deque.pull()
 			assert item == deque.pop()
+
+		assert not list(deque)
 
 
 class TestGraph:
