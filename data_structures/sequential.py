@@ -7,19 +7,9 @@ class Node[Data]:
 		next: Node[Data] | None = None,
 		prev: Node[Data] | None = None,
 	):
-		"""We would like a node to hold an index in case it belongs to a list.
-
-		How is `self.index` related to the `self.prev.index` and its `self.next.index`?
-		How is `self.index` updated when either `self.prev` or `self.next` is set?
-		How is `self.prev.index` or `self.next.index` affected when `self.prev` or `self.next` is set?
-		Which methods of `Node` require updating the `index`?
-		Note that all methods mutate the node so possibly all of them need to affect some index.
-		"""
 		self.data = data
 		self.next = next
 		self.prev = prev
-
-	#	self.index: int
 
 
 	@property
@@ -84,24 +74,19 @@ class Node[Data]:
 		return data
 
 
+	@property
+	def index(self):
+		...
+
+
 class List[Data]:
 
 	def __init__(self):
 		del self.head
 		del self.tail
 
-	@property
-	def size(self) -> int:
-		"""Is there a way to count how many elements the list has?
-
-		First find a wat to do this by simply iterating all elements in the list:
-		This can be done either with a while loop,
-		or using the `Iterable` nature of `List` implemented in `List.__iter__`.
-
-		Next see if you can provide a faster way, utilizing the `index` attribute of nodes.
-		"""
+	def __len__(self) -> int:
 		...
-
 
 	def __bool__(self) -> bool:
 		return self.head is not self.tail is not None
@@ -158,13 +143,11 @@ class List[Data]:
 class Deque[Data](List[Data]):
 
 	def append(self, data: Data):
-		"""Add data to the end of the deque."""
 		self.tail = Node(data,
 			prev = self.tail
 		)
 
 	def pop(self) -> Data:
-		"""Pop data from the end of the deque."""
 		if self.tail is None:
 			raise IndexError(f"Pop from empty {self.__class__.__name__.lower()}")
 
@@ -181,11 +164,9 @@ class Deque[Data](List[Data]):
 
 
 	def prepend(self, data: Data):
-		"""Add data to the beginning of the deque."""
 		...
 
 	def pull(self) -> Data:
-		"""Pop data from the beginning of the deque."""
 		...
 
 
