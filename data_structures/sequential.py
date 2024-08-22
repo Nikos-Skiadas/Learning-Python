@@ -7,12 +7,22 @@ class Node[Data]:
 		next: Node[Data] | None = None,
 		prev: Node[Data] | None = None,
 	):
+		"""We would like a node to hold an index in case it belongs to a list.
+
+		How is `self.index` related to the `self.prev.index` and its `self.next.index`?
+		How is `self.index` updated when either `self.prev` or `self.next` is set?
+		How is `self.prev.index` or `self.next.index` affected when `self.prev` or `self.next` is set?
+		Which methods of `Node` require updating the `index`?
+		Note that all methods mutate the node so possibly all of them need to affect some index.
+		"""
 		self.data = data
 		self.next = next
 		self.prev = prev
 
-	@property
+	#	self.index: int
 
+
+	@property
 	def next(self) -> Node[Data] | None:
 		return self._next
 
@@ -26,6 +36,21 @@ class Node[Data]:
 	@next.deleter
 	def next(self):
 		self.next = None
+
+	def insert_next(self, data: Data):
+		self.next = Node(data,
+			next = self.next,
+			prev = self
+		)
+
+	def remove_next(self) -> Data:
+		if self.next is None:
+			raise IndexError("Remove from orhpan node")
+
+		data      = self.next.data
+		self.next = self.next.next
+
+		return data
 
 
 	@property
@@ -43,25 +68,43 @@ class Node[Data]:
 	def prev(self):
 		self.prev = None
 
+	def insert_prev(self, data: Data):
+		self.prev = Node(data,
+			next = self,
+			prev = self.prev,
+		)
 
-	@property
-	def index(self) -> int:
-		return \
-			self.prev.index + 1 if self.prev is not None else \
-			self.next.index - 1 if self.next is not None else \
-			0
+	def remove_prev(self) -> Data:
+		if self.prev is None:
+			raise IndexError("Remove from orhpan node")
+
+		data      = self.prev.data
+		self.prev = self.prev.prev
+
+		return data
 
 
 class List[Data]:
 
 	def __init__(self):
-		self.head: Node[Data] | None = None
-		self.tail: Node[Data] | None = None
+		del self.head
+		del self.tail
 
-		self.size: int = 0
+	@property
+	def size(self) -> int:
+		"""Is there a way to count how many elements the list has?
+
+		First find a wat to do this by simply iterating all elements in the list:
+		This can be done either with a while loop,
+		or using the `Iterable` nature of `List` implemented in `List.__iter__`.
+
+		Next see if you can provide a faster way, utilizing the `index` attribute of nodes.
+		"""
+		...
+
 
 	def __bool__(self) -> bool:
-		return self.head is self.tail is None
+		return self.head is not self.tail is not None
 
 	def __iter__(self):
 		node = self.head
@@ -78,41 +121,72 @@ class List[Data]:
 			node = node.prev
 
 
+	@property
+	def head(self) -> Node[Data] | None:
+		return self._head
+
+	@head.setter
+	def head(self, node: Node[Data] | None):
+		self._head = node
+
+		if self._tail is None:
+			self._tail = self._head
+
+	@head.deleter
+	def head(self):
+		self._head = None
+		self._tail = None
+
+
+	@property
+	def tail(self) -> Node[Data] | None:
+		return self._tail
+
+	@tail.setter
+	def tail(self, node: Node[Data] | None):
+		self._tail = node
+
+		if self._head is None:
+			self._head = self._tail
+
+	@tail.deleter
+	def tail(self):
+		self._tail = None
+		self._head = None
+
+
 class Deque[Data](List[Data]):
 
-	def prepend(self, data: Data):
-		self.head = Node(data,
-			next = self.head,
-		)
-
-		if self.tail is None:
-			self.tail = self.head
-
 	def append(self, data: Data):
+		"""Add data to the end of the deque."""
 		self.tail = Node(data,
-			prev = self.tail,
+			prev = self.tail
 		)
-
-		if self.head is None:
-			self.head = self.tail
-
-	def pull(self) -> Data:
-		if self.head is None:
-			raise IndexError(f"`{self.pull.__name__}` from an empty `{self.__class__.__name__}`")
-
-		data      = self.head.data
-		self.head = self.head.next
-
-		return data
 
 	def pop(self) -> Data:
+		"""Pop data from the end of the deque."""
 		if self.tail is None:
-			raise IndexError(f"`{self.pop.__name__}` from an empty `{self.__class__.__name__}`")
+			raise IndexError(f"Pop from empty {self.__class__.__name__.lower()}")
 
 		data      = self.tail.data
 		self.tail = self.tail.prev
 
+		if self.tail is None:
+			del self.tail
+
+		else:
+			del self.tail.next
+
 		return data
+
+
+	def prepend(self, data: Data):
+		"""Add data to the beginning of the deque."""
+		...
+
+	def pull(self) -> Data:
+		"""Pop data from the beginning of the deque."""
+		...
 
 
 class Stack[Data](Deque[Data]):
