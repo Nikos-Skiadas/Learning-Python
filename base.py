@@ -23,12 +23,26 @@ class queue[ItemType](deque[ItemType]):
 		return super().popleft()
 
 
-class heap[ItemType](list[ItemType]):
+class priority_queue[ItemType](list[ItemType]):
 
 	def __init__(self, *args, **kwargs) -> None:
 		super().__init__(*args, **kwargs)
 
 		heapify(self)
+
+	def __radd__(self, other: priority_queue[ItemType]) -> priority_queue[ItemType]:
+		return priority_queue[ItemType](merge(self, other)) if other else self
+
+	def __add__(self, other: priority_queue[ItemType]) -> priority_queue[ItemType]:
+		return other + self
+
+	def __iadd__(self, other: priority_queue[ItemType]) -> priority_queue[ItemType]:
+		self.extend(other)
+
+		heapify(self)
+
+		return self
+
 
 	def insert(self, item: ItemType) -> None:
 		heappush(self, item)
@@ -38,18 +52,3 @@ class heap[ItemType](list[ItemType]):
 
 	def replace(self, item: ItemType) -> ItemType:
 		return heappushpop(self, item)
-
-	def merge(self, other: heap[ItemType]) -> None:
-		for item in other:
-			self.insert(item)
-
-	def __radd__(self, other: heap[ItemType]) -> heap[ItemType]:
-		return heap[ItemType](merge(self, other)) if other else self
-
-	def __add__(self, other: heap[ItemType]) -> heap[ItemType]:
-		return other + self
-
-	def __iadd__(self, other: heap[ItemType]) -> heap[ItemType]:
-		self.merge(other)
-
-		return self
