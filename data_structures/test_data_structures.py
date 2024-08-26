@@ -17,7 +17,7 @@ class TestLinked:
 	]
 
 	def test_stack(self):
-		stack = sequential.Stack()
+		stack = sequential.stack()
 
 		for item in self.items:
 			stack.push(item)
@@ -30,7 +30,7 @@ class TestLinked:
 		assert not list(stack)
 
 	def test_queue(self):
-		queue = sequential.Queue()
+		queue = sequential.queue()
 
 		for item in self.items:
 			queue.enqueue(item)
@@ -43,16 +43,16 @@ class TestLinked:
 		assert not list(queue)
 
 	def test_deque(self):
-		deque = sequential.Deque()
+		deque = sequential.deque()
 
 		for item in self.items:
-			deque.prepend(item)
+			deque.appendleft(item)
 			deque.append(item)
 
 		assert list(reversed(self.items)) + self.items == list(deque)
 
 		for item in reversed(self.items):
-			assert item == deque.pull()
+			assert item == deque.popleft()
 			assert item == deque.pop()
 
 		assert not list(deque)
