@@ -6,7 +6,8 @@ class Node[Data]:
 	def __init__(self, data: Data,
 		next: Node[Data] | None = None,
 		prev: Node[Data] | None = None,
-	):
+		index: int = 0): # Added index parameter with default value and later i have to add the attribute
+
 		"""We would like a node to hold an index in case it belongs to a list.
 
 		How is `self.index` related to the `self.prev.index` and its `self.next.index`?
@@ -18,8 +19,9 @@ class Node[Data]:
 		self.data = data
 		self.next = next
 		self.prev = prev
+        self.index = index  # Added index attribute
 
-	#	self.index: int
+
 
 
 	@property
@@ -32,6 +34,7 @@ class Node[Data]:
 
 		if node is not None:
 			node._prev = self
+			node.index = self.index + 1 # Updated index
 
 	@next.deleter
 	def next(self):
@@ -41,6 +44,7 @@ class Node[Data]:
 		self.next = Node(data,
 			next = self.next,
 			prev = self
+			index = self.index + 1 # Updated index
 		)
 
 	def remove_next(self) -> Data:
@@ -49,6 +53,12 @@ class Node[Data]:
 
 		data      = self.next.data
 		self.next = self.next.next
+
+		if self.next:
+					current = self.next
+					while current:
+						current.index = current.prev.index + 1  # Recalculate subsequent indexes
+						current = current.next
 
 		return data
 
@@ -72,6 +82,7 @@ class Node[Data]:
 		self.prev = Node(data,
 			next = self,
 			prev = self.prev,
+			index=self.index - 1
 		)
 
 	def remove_prev(self) -> Data:
@@ -182,11 +193,21 @@ class Deque[Data](List[Data]):
 
 	def prepend(self, data: Data):
 		"""Add data to the beginning of the deque."""
-		...
+		self.head = Node(data,
+        	next=self.head)
+		
+
+        if self.head.next:  !!!!!!!
+            self.head.index = 0
+            current = self.head.next
+            while current:
+                current.index = current.prev.index + 1
+                current = current.next
 
 	def pull(self) -> Data:
 		"""Pop data from the beginning of the deque."""
-		...
+		 if self.head is None:
+            raise IndexError("...")
 
 
 class Stack[Data](Deque[Data]):
