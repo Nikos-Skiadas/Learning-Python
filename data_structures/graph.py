@@ -1,3 +1,8 @@
+#	1) import collections: This imports the collections module, which contains specialized data structures like deque, Counter, OrderedDict, etc.
+#	2) import json: This imports Python’s json module, which provides methods for parsing JSON strings and serializing Python objects to JSON.
+#	3) import typing: This imports the typing module, which provides tools for type hints in Python, allowing for better type-checking and clarity in function signatures, class methods, etc.
+
+
 from __future__ import annotations
 
 import collections
@@ -5,20 +10,21 @@ import json
 import typing
 
 
-class NeighborhoodBase(typing.Collection):
+class NeighborhoodBase(typing.Collection): # It is a class that inherits from "typing.Collection"
 
+	# The method returns a JSON-like string representation of the object.
 	def __repr__(self):
 		return json.dumps(self,
 			indent = 4,
 			default = self.serialize,
 		).replace('"', '')
 
-
+	# This method calculates the degree of the neighborhood, in other words it shows how many nodes are adjacent to a particular node in a graph.
 	@property
 	def degree(self) -> int:
 		return len(self)
 
-
+	# This serialize method defines a contract for child classes like UnweightedNeighborhood to implement a way to convert their instances into a serializable format.
 	@classmethod
 	def serialize(cls, neighborhood: typing.Self):
 		raise NotImplementedError
@@ -33,13 +39,14 @@ class UnweightedNeighborhood[
 	NeighborhoodBase,
 ):
 
+	# This method implements the serialize method from the parent class and converts the neighborhood into a list.
 	@classmethod
 	def serialize(cls, neighborhood: typing.Self) -> list[
 		VertexType,
 	]:
 		return list(neighborhood)
 
-
+	# This checks whether the specified key (a vertex) is present in the set (self) and ti returns True if the key exists, otherwise False
 	def __getitem__(self, key: VertexType) -> bool:
 		return key in self
 
@@ -55,6 +62,8 @@ class Neighborhood[
 	NeighborhoodBase,
 ):
 
+	# This method converts the Neighborhood object into a serializable format (from a), which in this case is simply the dictionary itself.
+
 	@classmethod
 	def serialize(cls, neighborhood: typing.Self) -> dict[
 		VertexType,
@@ -62,6 +71,9 @@ class Neighborhood[
 	]:
 		return neighborhood
 
+# 1) The graph's vertices are stored as keys in the dictionary.
+# 2) Each vertex maps to a neighborhood, which could either be weighted (Neighborhood) or unweighted (UnweightedNeighborhood).
+# collections.defaultdict is used to simplify graph creation, ensuring that when a vertex is referenced that doesn't yet have a neighborhood, a new neighborhood is automatically created.
 
 class GraphBase[
 	VertexType: typing.Hashable,
@@ -72,7 +84,7 @@ class GraphBase[
 		NeighborhoodType
 	],
 ):
-
+	
 	@classmethod
 	def serialize(cls, neighborhood: NeighborhoodType):
 		return neighborhood.serialize(neighborhood)
@@ -133,7 +145,7 @@ class GraphBase[
 	) -> bool:
 		return head in self[tail]
 
-
+d
 	def add(self, *args):
 		raise NotImplementedError
 
