@@ -84,7 +84,7 @@ class GraphBase[
 		NeighborhoodType
 	],
 ):
-	
+
 	@classmethod
 	def serialize(cls, neighborhood: NeighborhoodType):
 		return neighborhood.serialize(neighborhood)
