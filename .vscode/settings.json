@@ -9,7 +9,7 @@
 	"[python]": {
 	//	"editor.tabSize": 4, // optional
 		"editor.insertSpaces": false, // use tabs
-		"editor.detectIndentation": false, // persistently
+		"editor.detectIndentation": true, // persistently
 		"editor.formatOnType": true, // apply tabs intuitively
 	},
 

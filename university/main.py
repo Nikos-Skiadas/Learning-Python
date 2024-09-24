@@ -1,33 +1,61 @@
+class Name:
+
+    def __init__(self, first: str, last: str):
+        self.first = first
+        self.last = last
+
+    def __repr__(self) -> str:
+        return f"{self.first} {self.last}"
+
+
+class Email:
+
+    def __init__(self, user: str, host: str):
+        self.user = user
+        self.host = host
+
+    def __repr__(self) -> str:
+        return f"{self.user}@{self.host}.com"
 
 
 class Person:
 
-    count = 0	# Variable to track the number of Person objects created
+    count = 0	# variable to track the number of Person objects created
 
-    def __init__(self, name, age, reg_number):
-        self._name = name
-        self._age = age
+
+    def __init__(self, name: str, reg_number: str, email: str):
+        self._name: Name = Name(*name.split())
         self._reg_number = reg_number
-        Person.count += 1  # Increment the counter when a new object is created
+        self._email: Email = Email(*email.strip(".com").split("@"))
+
+        Person.count += 1  # increment the counter when a new object is created
 
     def __del__(self):
-        Person.count -= 1  # Decrement the counter when an object is deleted
-        print(f"Person object with registration number {self.__reg_number} has been deleted.")
+        Person.count -= 1  # decrement the counter when an object is deleted
 
-    def get_name(self):
-        return self.__name
 
-    def set_name(self, name):
-        self.__name = name
+    @property
+    def name(self) -> Name:
+        return self._name
 
-    def get_age(self):
-        return self.__age
+    @property
+    def reg_number(self) -> str:
+        return self._reg_number
 
-    def set_age(self, age):
-        self.__age = age
+    @reg_number.setter
+    def reg_number(self, reg_number: str):
+        self._reg_number = reg_number
 
-    def get_reg_number(self):
-        return self.__reg_number
+    @property
+    def email(self) -> Email:
+        return self._email
 
-    def set_reg_number(self, reg_number):
-        self.__reg_number = reg_number
+
+if __name__ == "__main__":
+    x = Person(
+        "Nikos Skiadas",
+        "AM10203401",
+        "nikos.skiadas@uoa.com",
+    )
+    x.name.first = "Stratos"
+    x.name.last = "Papadoudis"
