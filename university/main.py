@@ -1,3 +1,18 @@
+"""Exercises:
+
+Add a `department` attribute to `Person`, that is a string with the department name.
+Maybe each department is formatte as 'Department of <name>'.
+
+Update the `Person` constructor to use the department as well, to generate a full email adress.
+This means that the user depends on the person name, and the host depends on the department.
+
+Bonus: Start working on a `Department` class.
+If this class is made, what should happen to the string `department` attribute of person?
+Should it now be a `Department` object?
+If yes, what changes to the email creation for a person?
+"""
+
+
 from __future__ import annotations
 
 
@@ -49,10 +64,6 @@ class Person:
     @property
     def reg_number(self) -> str:
         return self._reg_number
-
-    @reg_number.setter
-    def reg_number(self, reg_number: str):
-        self._reg_number = reg_number
 
     @property
     def email(self) -> Email:
