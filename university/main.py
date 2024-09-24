@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Name:
 
     def __init__(self, first: str, last: str):
@@ -9,6 +12,11 @@ class Name:
 
 
 class Email:
+
+    @classmethod
+    def from_name(cls, name: Name, host: str) -> Email:
+        return Email(f"{name.first}.{name.last}", host)
+
 
     def __init__(self, user: str, host: str):
         self.user = user
@@ -23,10 +31,10 @@ class Person:
     count = 0	# variable to track the number of Person objects created
 
 
-    def __init__(self, name: str, reg_number: str, email: str):
-        self._name: Name = Name(*name.split())
+    def __init__(self, name: str, reg_number: str, host: str):
+        self._name = Name(*name.split())
         self._reg_number = reg_number
-        self._email: Email = Email(*email.strip(".com").split("@"))
+        self._email = Email.from_name(self._name, host)
 
         Person.count += 1  # increment the counter when a new object is created
 
@@ -55,7 +63,7 @@ if __name__ == "__main__":
     x = Person(
         "Nikos Skiadas",
         "AM10203401",
-        "nikos.skiadas@uoa.com",
+        "physics.uoa",
     )
     x.name.first = "Stratos"
     x.name.last = "Papadoudis"
