@@ -46,10 +46,14 @@ class Person:
     count = 0	# variable to track the number of Person objects created
 
 
-    def __init__(self, name: str, reg_number: str, host: str):
+    def __init__(self, name: str, reg_number: str, host: str, department: str):
         self._name = Name(*name.split())
         self._reg_number = reg_number
         self._email = Email.from_name(self._name, host)
+        self._department = f"Department of {department}"
+        
+        email_host = department.lower()
+        self._email = Email.from_name(self._name, email_host)
 
         Person.count += 1  # increment the counter when a new object is created
 
@@ -68,6 +72,10 @@ class Person:
     @property
     def email(self) -> Email:
         return self._email
+    
+    @property
+    def department(self) -> str:
+        return self._department
 
 
 if __name__ == "__main__":
@@ -75,6 +83,7 @@ if __name__ == "__main__":
         "Nikos Skiadas",
         "AM10203401",
         "physics.uoa",
+        "NTUA"
     )
     x.name.first = "Stratos"
     x.name.last = "Papadoudis"
