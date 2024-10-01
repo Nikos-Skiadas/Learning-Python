@@ -1,3 +1,29 @@
+"""Exercise:
+
+Must:
+-   Improve interface messages. For example if bad strategy, list the good ones.
+-   Also, should we have a default strategy? If yes, which? How to handle this?
+-   Implement other strategies and properly list them:
+    -   tit_for_tat
+    -   win-stay-lose-switch
+    -   always-cooperate
+    -   always-defect
+    -   ...
+
+Bonus:
+-   Support fuzzy strategies (with probabilities). Should probabilities complement each other?? Which is so?? If NOT, why??
+-   Start working on an object oriented implementation, that may include (up to you) the following entities:
+    -   `Strategy` (do we really need this or is `Player` enough?)
+    -   `Player` (perhaps track their score and select a strategy?)
+    -   `Game` (perhaps track the turns and run the game loop?)
+    -   ...
+    Think how those entities interact with one another. For example:
+    -   a `Player` must have a `Strategy`
+    -   a `Game` must have two `Players`
+    -   ...
+"""
+
+
 import sys
 
 
