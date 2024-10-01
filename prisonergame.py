@@ -12,31 +12,35 @@ def prison_dilemma():
     while True:
         print(algorithm_move)
 
-        player_move = input().upper() # input to take player move and upper to capitalize
+        # Input to take player move and upper to capitalize:
+        player_move = input().upper()
 
+        # Endgame:
         if not player_move:
             break
 
         if player_move not in ['C', 'D']:
-
             print("Invalid input. Please type 'C' or 'D'.")
             continue
 
-		# Maximum profit
-        if player_move == 'C':
-            maximum_profit += 5
-        else:
-            maximum_profit += 1
+        # Game specification:
+        profits: dict[str, dict[str, int]] = {
+            'C': {
+                'C': 3,
+                'D': 0,
+            },
+            'D': {
+                'C': 5,
+                'D': 1,
+            },
+        }
+        maximum_profits = profits['D']
 
-        if algorithm_move == 'C' and player_move == 'C':
-            actual_profit += 3
-        elif algorithm_move == 'C' and player_move == 'D':
-            actual_profit += 0
-        elif algorithm_move == 'D' and player_move == 'C':
-            actual_profit += 5
-        elif algorithm_move == 'D' and player_move == 'D':
-            actual_profit += 1
+        # Score algorithm:
+        maximum_profit += maximum_profits[player_move]
+        actual_profit += profits[algorithm_move][player_move]
 
+        # Next turn:
         algorithm_move = player_move
 
     print("\nGame over.")
