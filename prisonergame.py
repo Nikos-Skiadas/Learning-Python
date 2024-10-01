@@ -2,6 +2,19 @@
 
 # Prison Dilemma with tit for tat method
 def prison_dilemma():
+    # Game specification:
+    profits: dict[str, dict[str, int]] = {
+        'C': {
+            'C': 3,
+            'D': 0,
+        },
+        'D': {
+            'C': 5,
+            'D': 1,
+        },
+    }
+    maximum_profits = profits['D']
+
     algorithm_move = 'C'
 
     actual_profit = 0
@@ -10,38 +23,26 @@ def prison_dilemma():
     print("Type 'C' for Cooperate or 'D' for Defect. Leave input empty to stop playing.")
 
     while True:
-        print(algorithm_move)
 
         # Input to take player move and upper to capitalize:
-        player_move = input().upper()
+        try:
+            print(f"player 1: {algorithm_move}")
 
-        # Endgame:
-        if not player_move:
-            break
+            player_move = input("player 2: \033[K")
 
-        if player_move not in ['C', 'D']:
-            print("Invalid input. Please type 'C' or 'D'.")
+            # Score algorithm:
+            maximum_profit += maximum_profits[player_move]
+            actual_profit += profits[algorithm_move][player_move]
+
+            # Next turn:
+            algorithm_move = player_move
+
+        except KeyError:
+            print("\033[3A")
             continue
 
-        # Game specification:
-        profits: dict[str, dict[str, int]] = {
-            'C': {
-                'C': 3,
-                'D': 0,
-            },
-            'D': {
-                'C': 5,
-                'D': 1,
-            },
-        }
-        maximum_profits = profits['D']
-
-        # Score algorithm:
-        maximum_profit += maximum_profits[player_move]
-        actual_profit += profits[algorithm_move][player_move]
-
-        # Next turn:
-        algorithm_move = player_move
+        except EOFError:
+            break
 
     print("\nGame over.")
     print(f"Maximum possible profit: {maximum_profit}")
