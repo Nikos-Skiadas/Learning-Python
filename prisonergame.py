@@ -1,8 +1,25 @@
-# import sys
+import sys
+
+
+# Whether algorithm will cooperate:
+# Collection of standard strategies:
+strategies = {
+    "tit_for_tat": {
+        'C': {
+            'C': True,
+            'D': False,
+        },
+        'D': {
+            'C': False,
+            'D': True,
+        },
+    },
+}
+
 
 # Prison Dilemma with tit for tat method
-def prison_dilemma():
-    profits: dict[str, dict[str, int]] = {
+def prison_dilemma(strategy: dict[str, dict[str, bool]]):
+    profits = {
         'C': {
             'C': 3,
             'D': 0,
@@ -36,7 +53,7 @@ def prison_dilemma():
             actual_profit += profits[algorithm_move][player_move]
 
             # Next turn:
-            algorithm_move = player_move
+            algorithm_move = 'C' if strategy[algorithm_move][player_move] else 'D'
             turn += 1
 
         except KeyError:
@@ -53,4 +70,8 @@ def prison_dilemma():
 
 
 if __name__ == "__main__":
-	prison_dilemma()
+    try:
+        prison_dilemma(strategies[sys.argv[1]])
+
+    except KeyError:
+        print("non-existent strategy")
