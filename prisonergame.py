@@ -2,7 +2,6 @@
 
 # Prison Dilemma with tit for tat method
 def prison_dilemma():
-    # Game specification:
     profits: dict[str, dict[str, int]] = {
         'C': {
             'C': 3,
@@ -17,12 +16,14 @@ def prison_dilemma():
 
     algorithm_move = 'C'
 
+    turn = 1
     actual_profit = 0
     maximum_profit = 0
 
-    print("Type 'C' for Cooperate or 'D' for Defect. Leave input empty to stop playing.")
+    print("Type 'C' for Cooperate or 'D' for Defect. EOF for endgame.\n")
 
     while True:
+        print(f"Round {turn}:")
 
         # Input to take player move and upper to capitalize:
         try:
@@ -36,15 +37,17 @@ def prison_dilemma():
 
             # Next turn:
             algorithm_move = player_move
+            turn += 1
 
         except KeyError:
-            print("\033[3A")
+            print("\033[4A")
             continue
 
         except EOFError:
             break
 
     print("\nGame over.")
+    print(f"Rounds: {turn - 1}")
     print(f"Maximum possible profit: {maximum_profit}")
     print(f"Actual profit: {actual_profit}")
 
