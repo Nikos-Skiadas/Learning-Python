@@ -26,6 +26,7 @@ Bonus:
 
 import sys
 
+default_strategy = "tit_for_tat"
 
 # Whether algorithm will cooperate:
 # Collection of standard strategies:
@@ -40,23 +41,56 @@ strategies = {
             'D': True,
         },
     },
+    "win_stay_lose_switch": {
+        'C': {
+            'C': True,
+            'D': False,
+        },
+        'D': {
+            'C': True,
+            'D': False,
+        },
+    },
+    "always_cooperate": {
+        'C': {
+            'C': True,
+            'D': True,
+        },
+        'D': {
+            'C': True,
+            'D': True,
+        },
+    },
+    "always_defect": {
+        'C': {
+            'C': False,
+            'D': False,
+        },
+        'D': {
+            'C': False,
+            'D': False,
+        },
+    },
 }
 
 
 # Prison Dilemma with tit for tat method
-def prison_dilemma(strategy: dict[str, dict[str, bool]]):
+def prison_dilemma(strategy_name: str):
     profits = {
         'C': {
             'C': 3,
             'D': 0,
         },
         'D': {
-            'C': 5,
+            'C': 5,"tit_for_tat"
+
             'D': 1,
         },
     }
     maximum_profits = profits['D']
 
+    strategy = strategies[strategy_name]
+    maximum_profits = profits['D']
     algorithm_move = 'C'
 
     turn = 1
@@ -73,6 +107,11 @@ def prison_dilemma(strategy: dict[str, dict[str, bool]]):
             print(f"player 1: {algorithm_move}")
 
             player_move = input("player 2: \033[K")
+
+
+            if player_move not in ['C', 'D']:
+                print("Invalid input. Please type 'C' for Cooperate or 'D' for Defect.\n")
+                continue
 
             # Score algorithm:
             maximum_profit += maximum_profits[player_move]
@@ -97,7 +136,7 @@ def prison_dilemma(strategy: dict[str, dict[str, bool]]):
 
 if __name__ == "__main__":
     try:
-        prison_dilemma(strategies[sys.argv[1]])
+        prison_dilemma(sys.argv[1] if len(sys.argv) > 1 else default_strategy)
 
     except KeyError:
         print("non-existent strategy")
