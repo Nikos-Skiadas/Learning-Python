@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -17,17 +17,17 @@ Run python autograder.py
 """
 
 
-def add(a: float, b: float) -> float:
-    """
-    Calculate the sum of two numbers.
+from __future__ import annotations
 
-    Parameters:
-    a (float): The first number to add.
-    b (float): The second number to add.
+import typing
 
-    Returns:
-    int or float: The sum of a and b.
-    """
-        
+
+class SupportsAdd(typing.Protocol):
+
+    def __add__(self, other: typing.Self, /) -> typing.Self:
+        ...
+
+
+def add(a: SupportsAdd, b: SupportsAdd) -> SupportsAdd:
     "Return the sum of a and b"
     return a + b

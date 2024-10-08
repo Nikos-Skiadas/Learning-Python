@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -22,25 +22,25 @@ the script should produce the output:
 
 Cost of [('apples', 2.0), ('pears', 3.0), ('limes', 4.0)] is 12.25
 """
-from shop import FruitShop
+
+
 from __future__ import print_function
 
-fruitPrices = {'apples': 2.00, 'oranges': 1.50, 'pears': 1.75,
-               'limes': 0.75, 'strawberries': 1.00}
+from shop import FruitShop
+
+
+fruitPrices = {
+    'apples': 2.00,
+    'oranges': 1.50,
+    'pears': 1.75,
+    'limes': 0.75,
+    'strawberries': 1.00,
+}
 
 
 def buyLotsOfFruit(orderList)-> float:
     """
-    Calculate the total cost of a fruit order.
-
-    This function takes a list of fruit and their corresponding weights,
-    calculates the total cost based on the prices set in the FruitShop.
-
-    Parameters:
-    orderList:          A list where each tuple contains a 
-                        fruit name (str) and the number of 
-                        pounds (float) to buy, e.g. 
-                        [('apples', 2.0), ('pears', 3.0)].
+        orderList: List of (fruit, numPounds) tuples
 
     Returns the total cost of the order
     """
@@ -54,5 +54,9 @@ def buyLotsOfFruit(orderList)-> float:
 # Main Method
 if __name__ == '__main__':
     "This code runs when you invoke the script from the command line"
-    orderList = [('apples', 2.0), ('pears', 3.0), ('limes', 4.0)]
+    orderList = [
+        ('apples', 2.0),
+        ('pears', 3.0),
+        ('limes', 4.0),
+    ]
     print('Cost of', orderList, 'is', buyLotsOfFruit(orderList))
