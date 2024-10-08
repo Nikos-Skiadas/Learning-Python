@@ -13,9 +13,8 @@ def complete_parentheses(expression: list[str]) -> list[str]:
 		if token == ")":
 			return complete_parentheses(expression[:index])
 
-		balanced.append(token)
-
-	balanced.append("(")
+		else:
+			balanced.append(token)
 
 	return balanced[::-1]
 
