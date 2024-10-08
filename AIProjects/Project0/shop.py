@@ -14,7 +14,7 @@
 
 class FruitShop:
 
-    def __init__(self, name, fruitPrices):
+    def __init__(self, name: str, fruitPrices: dict[str, float]):
         """
             name: Name of the fruit shop
 
@@ -24,7 +24,14 @@ class FruitShop:
         """
         self.fruitPrices = fruitPrices
         self.name = name
-        print('Welcome to %s fruit shop' % (name))
+        print(f'Welcome to {name} fruit shop')
+
+    def __str__(self) -> str:
+        return repr(self)
+
+    def __repr__(self) -> str:
+        return f"<FruitShop: {self.getName()}>"
+
 
     def getCostPerPound(self, fruit):
         """
@@ -32,9 +39,7 @@ class FruitShop:
         Returns cost of 'fruit', assuming 'fruit'
         is in our inventory or None otherwise
         """
-        if fruit not in self.fruitPrices:
-            return None
-        return self.fruitPrices[fruit]
+        return self.fruitPrices.get(fruit)
 
     def getPriceOfOrder(self, orderList):
         """
@@ -52,9 +57,3 @@ class FruitShop:
 
     def getName(self):
         return self.name
-
-    def __str__(self):
-        return "<FruitShop: %s>" % self.getName()
-
-    def __repr__(self):
-        return str(self)

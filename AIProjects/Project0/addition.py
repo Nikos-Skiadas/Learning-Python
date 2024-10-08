@@ -28,6 +28,14 @@ class SupportsAdd(typing.Protocol):
         ...
 
 
-def add(a: SupportsAdd, b: SupportsAdd) -> SupportsAdd:
-    "Return the sum of a and b"
+def add(a: float, b: float) -> float:
+    """Add two real numbers.
+
+    Args:
+        a: Lefthand operand.
+        b: Righthand operand.
+
+    Returns:
+        a + b
+    """
     return a + b
