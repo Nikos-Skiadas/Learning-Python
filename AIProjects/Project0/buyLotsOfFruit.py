@@ -24,8 +24,6 @@ Once you have correctly implemented the buyLotsOfFruit function, the script shou
 
 from __future__ import print_function
 
-from shop import FruitShop
-
 
 fruitPrices = {
     'apples': 2.00,
