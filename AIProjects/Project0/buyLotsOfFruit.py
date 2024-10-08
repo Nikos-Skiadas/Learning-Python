@@ -22,20 +22,32 @@ the script should produce the output:
 
 Cost of [('apples', 2.0), ('pears', 3.0), ('limes', 4.0)] is 12.25
 """
+from shop import FruitShop
 from __future__ import print_function
 
 fruitPrices = {'apples': 2.00, 'oranges': 1.50, 'pears': 1.75,
                'limes': 0.75, 'strawberries': 1.00}
 
 
-def buyLotsOfFruit(orderList):
+def buyLotsOfFruit(orderList)-> float:
     """
-        orderList: List of (fruit, numPounds) tuples
+    Calculate the total cost of a fruit order.
 
-    Returns cost of order
+    This function takes a list of fruit and their corresponding weights,
+    calculates the total cost based on the prices set in the FruitShop.
+
+    Parameters:
+    orderList:          A list where each tuple contains a 
+                        fruit name (str) and the number of 
+                        pounds (float) to buy, e.g. 
+                        [('apples', 2.0), ('pears', 3.0)].
+
+    Returns the total cost of the order
     """
     totalCost = 0.0
-    "*** YOUR CODE HERE ***"
+    shop = FruitShop("Berkeley Fruit Shop", fruitPrices)  # Create a FruitShop
+
+    totalCost = shop.getPriceOfOrder(orderList)  # Use getPriceOfOrder to calculate total cost
     return totalCost
 
 

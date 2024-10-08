@@ -1,5 +1,5 @@
-# addition.py
-# -----------
+# projectParams.py
+# ----------------
 # Licensing Information:  You are free to use or extend these projects for
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
@@ -12,22 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
-"""
-Run python autograder.py
-"""
-
-
-def add(a: float, b: float) -> float:
-    """
-    Calculate the sum of two numbers.
-
-    Parameters:
-    a (float): The first number to add.
-    b (float): The second number to add.
-
-    Returns:
-    int or float: The sum of a and b.
-    """
-        
-    "Return the sum of a and b"
-    return a + b
+STUDENT_CODE_DEFAULT = 'addition.py,buyLotsOfFruit.py,shopSmart.py,shopAroundTown.py'
+PROJECT_TEST_CLASSES = 'tutorialTestClasses.py'
+PROJECT_NAME = 'Project 0: Tutorial'
+BONUS_PIC = False
