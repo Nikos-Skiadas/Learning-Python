@@ -1,26 +1,39 @@
-def complete_parentheses(expression: list[str]) -> list[str]:
-	operators = {
-		"+",
-		"-",
-		"*",
-		"/",
-		"%",
-	}
+def complete_parentheses(expression):
+    
+    """
+    This function takes a list representing a numerical expression without left parentheses
+    and returns the expression with the correct left parentheses inserted.
+    """
+    stack = []
+    
+    for token in expression:
+        if token == ')':
+            operand2 = stack.pop()
+            operator = stack.pop()
+            operand1 = stack.pop()
+            stack.append(['(', operand1, operator, operand2, ')'])
+        else:
+            stack.append(token)
+    
+    return stack[0]
 
-	balanced = []
+def flatten_expression(expr):
 
-	for index, token in enumerate(expression[::-1]):
-		if token == ")":
-			return complete_parentheses(expression[:index])
-
-		else:
-			balanced.append(token)
-
-	return balanced[::-1]
-
+    flat = []
+    for item in expr:
+        if isinstance(item, list):
+            flat.extend(flatten_expression(item))  # Recursively flatten nested lists
+        else:
+            flat.append(item)
+            
+    return flat
 
 if __name__ == "__main__":
-	bad_expression = ['1', '+', '2', ')', '*', '3', '-', '4', ')', '*', '5', '-', '6', ')', ')', ')']
+    
+    expression = [1, '-', 2, ')', '*', 3, '-', 4, ')', '*', 5, '-', 6, ')', ')', ')']
+    result = complete_parentheses(expression)
+    
+    flattened_result = flatten_expression(result)
+    
+    print(*flattened_result)
 
-	print(*bad_expression)
-	print(*complete_parentheses(bad_expression))
