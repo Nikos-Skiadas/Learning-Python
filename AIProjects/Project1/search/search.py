@@ -88,42 +88,7 @@ def depthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
     print("Is the start a goal?", problem.isGoalState(problem.getStartState()))
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
-    node = problem.getStartState()
-
     frontier = util.Stack()
-    frontier.push(node)
-
-    path = []
-    path.append(node)
-
-    expanded = set()
-
-    while not frontier.isEmpty():
-        node = frontier.pop()
-        path.append(node)
-
-        if problem.isGoalState(node):
-            break
-
-        if node not in expanded:
-            expanded.add(node)
-
-            for next_square in problem.getSuccessors(node):
-                frontier.push(next_square)
-
-    return [game.Actions.vectorToDirection((node[0] - prev[0], node[1] - prev[1])) for prev, node in zip(path[:-1], path[1:])]
-
-"""
-def depthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
-    """
-    Search the deepest nodes in the search tree first using DFS.
-
-    Returns a list of actions that reaches the goal.
-    """
-    from util import Stack
-
-    # Initialize the stack (frontier) and start state
-    frontier = Stack()
     start_state = problem.getStartState()
     frontier.push((start_state, [], []))  # (current state, path to state, visited states)
 
@@ -149,8 +114,6 @@ def depthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
                     frontier.push((successor, new_actions, visited + [current_state]))
 
     return []  # If no solution found
-
-"""
 
 def breadthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
     """Search the shallowest nodes in the search tree first."""

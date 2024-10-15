@@ -20,7 +20,6 @@
 # John DeNero (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
-import enum
 from util import *
 import time, os
 import traceback
@@ -47,30 +46,26 @@ class Agent:
         """
         raiseNotDefined()
 
-class Directions(str, enum.Enum):
+class Directions:
     NORTH = 'North'
     SOUTH = 'South'
     EAST = 'East'
     WEST = 'West'
     STOP = 'Stop'
 
-    LEFT = {
-        NORTH: WEST,
-        SOUTH: EAST,
-        EAST: NORTH,
-        WEST: SOUTH,
-        STOP: STOP,
-    }
+    LEFT =       {NORTH: WEST,
+                   SOUTH: EAST,
+                   EAST:  NORTH,
+                   WEST:  SOUTH,
+                   STOP:  STOP}
 
-    RIGHT = {y: x for x, y in LEFT.items()}
+    RIGHT =      dict([(y,x) for x, y in LEFT.items()])
 
-    REVERSE = {
-        NORTH: SOUTH,
-        SOUTH: NORTH,
-        EAST: WEST,
-        WEST: EAST,
-        STOP: STOP,
-    }
+    REVERSE = {NORTH: SOUTH,
+               SOUTH: NORTH,
+               EAST: WEST,
+               WEST: EAST,
+               STOP: STOP}
 
 class Configuration:
     """
@@ -304,8 +299,7 @@ class Actions:
 
     TOLERANCE = .001
 
-    @staticmethod
-    def reverseDirection(action: Directions):
+    def reverseDirection(action):
         if action == Directions.NORTH:
             return Directions.SOUTH
         if action == Directions.SOUTH:
@@ -315,9 +309,9 @@ class Actions:
         if action == Directions.WEST:
             return Directions.EAST
         return action
+    reverseDirection = staticmethod(reverseDirection)
 
-    @staticmethod
-    def vectorToDirection(vector: tuple[int, int]):
+    def vectorToDirection(vector):
         dx, dy = vector
         if dy > 0:
             return Directions.NORTH
@@ -328,13 +322,13 @@ class Actions:
         if dx > 0:
             return Directions.EAST
         return Directions.STOP
+    vectorToDirection = staticmethod(vectorToDirection)
 
-    @staticmethod
-    def directionToVector(direction: Directions, speed = 1.0):
+    def directionToVector(direction, speed = 1.0):
         dx, dy =  Actions._directions[direction]
         return (dx * speed, dy * speed)
+    directionToVector = staticmethod(directionToVector)
 
-    @staticmethod
     def getPossibleActions(config, walls):
         possible = []
         x, y = config.pos
@@ -352,7 +346,8 @@ class Actions:
 
         return possible
 
-    @staticmethod
+    getPossibleActions = staticmethod(getPossibleActions)
+
     def getLegalNeighbors(position, walls):
         x,y = position
         x_int, y_int = int(x + 0.5), int(y + 0.5)
@@ -365,12 +360,13 @@ class Actions:
             if next_y < 0 or next_y == walls.height: continue
             if not walls[next_x][next_y]: neighbors.append((next_x, next_y))
         return neighbors
+    getLegalNeighbors = staticmethod(getLegalNeighbors)
 
-    @staticmethod
     def getSuccessor(position, action):
         dx, dy = Actions.directionToVector(action)
         x, y = position
         return (x + dx, y + dy)
+    getSuccessor = staticmethod(getSuccessor)
 
 class GameStateData:
     """
