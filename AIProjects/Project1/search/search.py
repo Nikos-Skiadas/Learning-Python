@@ -91,21 +91,23 @@ def depthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
     frontier = util.Stack()
     start_state = problem.getStartState()
 
-    frontier.push((start_state, [], []))  # (current state, path to state, visited states)
+    frontier.push((start_state, []))  # (current state, path to state)
+    visited = []
 
     while not frontier.isEmpty():
         # Pop the state from the frontier
-        current_state, actions, visited = frontier.pop()
+        current_state, actions = frontier.pop()
 
         # Check if current state is the goal state
         if problem.isGoalState(current_state):
             return actions
 
         # Avoid revisiting already explored nodes
-        for successor, action, _ in problem.getSuccessors(current_state):
-            if successor not in visited:
-                new_actions = actions + [action]
-                frontier.push((successor, new_actions, visited + [current_state]))
+        if current_state not in visited:
+            visited.append(current_state)
+
+            for next_state, action, _ in problem.getSuccessors(current_state):
+                frontier.push((next_state, actions + [action]))
 
     return []  # If no solution found
 
@@ -115,21 +117,22 @@ def breadthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
     frontier = util.Queue()
     start_state = problem.getStartState()
 
-    frontier.push((start_state, [], [start_state]))  # (current state, path to state, visited states)
+    frontier.push((start_state, []))  # (current state, path to state)
+    visited = [start_state]
 
     while not frontier.isEmpty():
         # Pop the state from the frontier
-        current_state, actions, visited = frontier.pop()
+        current_state, actions = frontier.pop()
 
         # Check if current state is the goal state
         if problem.isGoalState(current_state):
             return actions
 
         # Avoid revisiting already explored nodes
-        for successor, action, _ in problem.getSuccessors(current_state):
-            if successor not in visited:
-                new_actions = actions + [action]
-                frontier.push((successor, new_actions, visited + [current_state]))
+        for next_state, action, _ in problem.getSuccessors(current_state):
+            if next_state not in visited:
+                visited.append(next_state)
+                frontier.push((next_state, actions + [action]))
 
     return []  # If no solution found
 
