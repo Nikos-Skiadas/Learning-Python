@@ -22,7 +22,7 @@ import game
 import typing
 
 
-class SearchProblem[State: tuple[int, int]]:
+class SearchProblem[State]:
     """
     This class outlines the structure of a search problem, but doesn't implement
     any of the methods (in object-oriented terminology: an abstract class).
@@ -90,10 +90,8 @@ def depthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
     """
     frontier = util.Stack()
     start_state = problem.getStartState()
-    frontier.push((start_state, [], []))  # (current state, path to state, visited states)
 
-    # A set to track explored nodes (visited)
-    explored = set()
+    frontier.push((start_state, [], []))  # (current state, path to state, visited states)
 
     while not frontier.isEmpty():
         # Pop the state from the frontier
@@ -104,21 +102,37 @@ def depthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
             return actions
 
         # Avoid revisiting already explored nodes
-        if current_state not in explored:
-            explored.add(current_state)
-
-            # Explore each successor (state, action, cost)
-            for successor, action, _ in problem.getSuccessors(current_state):
-                if successor not in explored and successor not in visited:
-                    new_actions = actions + [action]
-                    frontier.push((successor, new_actions, visited + [current_state]))
+        for successor, action, _ in problem.getSuccessors(current_state):
+            if successor not in visited:
+                new_actions = actions + [action]
+                frontier.push((successor, new_actions, visited + [current_state]))
 
     return []  # If no solution found
 
 def breadthFirstSearch(problem: SearchProblem) -> list[game.Directions]:
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier = util.Queue()
+    start_state = problem.getStartState()
+
+    frontier.push((start_state, [], [start_state]))  # (current state, path to state, visited states)
+
+    while not frontier.isEmpty():
+        # Pop the state from the frontier
+        current_state, actions, visited = frontier.pop()
+
+        # Check if current state is the goal state
+        if problem.isGoalState(current_state):
+            return actions
+
+        # Avoid revisiting already explored nodes
+        for successor, action, _ in problem.getSuccessors(current_state):
+            if successor not in visited:
+                new_actions = actions + [action]
+                frontier.push((successor, new_actions, visited + [current_state]))
+
+    return []  # If no solution found
+
 
 def uniformCostSearch(problem: SearchProblem) -> list[game.Directions]:
     """Search the node of least total cost first."""

@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -42,6 +42,10 @@ import util
 import time
 import search
 import pacman
+
+
+Position = tuple[int, int]
+
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -277,12 +281,15 @@ class CornersProblem(search.SearchProblem):
     You must select a suitable state space and successor function
     """
 
+    State = tuple[Position, dict[Position, bool]]
+
+
     def __init__(self, startingGameState: pacman.GameState):
         """
         Stores the walls, pacman's starting position and corners.
         """
         self.walls = startingGameState.getWalls()
-        self.startingPosition = startingGameState.getPacmanPosition()
+        self.startingPosition: Position = startingGameState.getPacmanPosition()
         top, right = self.walls.height-2, self.walls.width-2
         self.corners = ((1,1), (1,top), (right, 1), (right, top))
         for corner in self.corners:
@@ -290,22 +297,22 @@ class CornersProblem(search.SearchProblem):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
 
-    def getStartState(self):
+    def getStartState(self) -> State:
         """
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.startingPosition, dict.fromkeys(self.corners, False)
 
-    def isGoalState(self, state: Any):
+    def isGoalState(self, state: State):
         """
         Returns whether this search state is a goal state of the problem.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        _, corners_state = state
 
-    def getSuccessors(self, state: Any):
+        return all(corners_state.values())
+
+    def getSuccessors(self, state: State) -> list[State]:
         """
         Returns successor states, the actions they require, and a cost of 1.
 
@@ -315,19 +322,33 @@ class CornersProblem(search.SearchProblem):
             state, 'action' is the action required to get there, and 'stepCost'
             is the incremental cost of expanding to that successor
         """
-
         successors = []
-        for action in [Directions.NORTH, Directions.SOUTH, Directions.EAST, Directions.WEST]:
+
+        for action in [
+            Directions.NORTH,
+            Directions.SOUTH,
+            Directions.EAST,
+            Directions.WEST,
+        ]:
             # Add a successor state to the successor list if the action is legal
             # Here's a code snippet for figuring out whether a new position hits a wall:
             #   x,y = currentPosition
             #   dx, dy = Actions.directionToVector(action)
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
+            (x, y), corners = state
+            dx, dy = Actions.directionToVector(action)
+            nextx, nexty = int(x + dx), int(y + dy)
+            if not self.walls[nextx][nexty]:
+                if (nextx, nexty) in self.corners:
+                    corners[nextx, nexty] = True
 
-            "*** YOUR CODE HERE ***"
+                nextState = (nextx, nexty), corners
+                # cost = self.costFn(nextState)
+                successors.append((nextState, action, 1))
 
         self._expanded += 1 # DO NOT CHANGE
+
         return successors
 
     def getCostOfActions(self, actions):
