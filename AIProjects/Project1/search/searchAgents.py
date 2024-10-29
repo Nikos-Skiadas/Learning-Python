@@ -38,6 +38,7 @@ from typing import List, Tuple, Any
 from game import Directions
 from game import Agent
 from game import Actions
+from game import Grid
 import util
 import time
 import search
@@ -478,7 +479,7 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
 
-def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
+def foodHeuristic(state: Tuple[Tuple, Grid], problem: FoodSearchProblem):
     """
     Your heuristic for the FoodSearchProblem goes here.
 
@@ -501,9 +502,26 @@ def foodHeuristic(state: Tuple[Tuple, List[List]], problem: FoodSearchProblem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
+    if problem.isGoalState(state):
+        return 0
+
     position, foodGrid = state
-    "*** YOUR CODE HERE ***"
-    return 0
+    game_start = problem.startingGameState
+    problem.heuristicInfo['wallCount'] = problem.walls.count()
+    foods = foodGrid.asList()
+
+    # Get the closest food position so that we start from there.
+    # Calculate a simple Manhattan distance for each food point, for faster evaluation.
+    # I could use `mazeDistance` here, but it ran too slow and did not score high enough.
+    food_distances = {food: util.manhattanDistance(position, food)  for food in foods}
+    closest_food = min(food_distances, key = food_distances.get)  # type: ignore
+
+    # Assume that all remaining food is connected and serial, to make sure heuristic is admisssible.
+    # Normally I can use the `food_distances[closest_food]`, but `mazeDistance` for one point is not expensive.
+    # So, what I'm doing here is find the closest food ignoring walls, but then estimate my first step accounting for walls too!
+    # I subtract one step as adding the distance is already a single step.
+    # If this is not done, the heuristic is not admissible!
+    return mazeDistance(position, closest_food, game_start) + foodGrid.count() - 1
 
 
 class ClosestDotSearchAgent(SearchAgent):
