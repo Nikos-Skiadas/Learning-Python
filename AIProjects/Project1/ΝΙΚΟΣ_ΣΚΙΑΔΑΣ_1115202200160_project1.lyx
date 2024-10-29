@@ -53,6 +53,8 @@ theorems-bytype
 \output_sync 0
 \bibtex_command biber
 \index_command default
+\float_placement class
+\float_alignment class
 \paperfontsize default
 \spacing single
 \use_hyperref true
@@ -105,8 +107,8 @@ theorems-bytype
 \footskip 0.5in
 \secnumdepth 3
 \tocdepth 3
-\paragraph_separation indent
-\paragraph_indentation default
+\paragraph_separation skip
+\defskip halfline
 \is_math_indent 0
 \math_numbering_side default
 \quotes_style english
@@ -207,31 +209,30 @@ theorems-bytype
 \end_layout
 
 \begin_layout Solution
-Ο χώρος καταστάσεων αναπαρίσταται ως δένδρο και είναι γνωστό οτι ο παράγοντας διακλάδωσεης,
- έστω b,
- ισούται με 3 δηλαδή,
- 
+Ο χώρος καταστάσεων αναπαρίσταται ως δένδρο και είναι γνωστό οτι ο παράγοντας διακλάδωσης είναι 
 \begin_inset Formula $b=3$
 \end_inset
 
 .
- Επίσης,
- το βάθος του δέντρου,
- έστω d,
- ισούται με 4,
- δηλαδή,
- 
+ Επίσης έστω το βάθος του δέντρου 
 \begin_inset Formula $d=4$
 \end_inset
 
 .
+ Το επιπεδο 
+\begin_inset Formula $n\leq d$
+\end_inset
+
+ έχει 
+\begin_inset Formula $b^{n}$
+\end_inset
+
+ κόμβους:
+ 
 \end_layout
 
 \begin_layout Itemize
-Επίπεδο 
-\begin_inset Formula $0(d=0):$
-\end_inset
-
+Επίπεδο 0:
  
 \begin_inset Formula $3^{0}=1$
 \end_inset
@@ -240,10 +241,7 @@ theorems-bytype
 \end_layout
 
 \begin_layout Itemize
-Επίπεδο 
-\begin_inset Formula $1(d=1):$
-\end_inset
-
+Επίπεδο 1:
  
 \begin_inset Formula $3^{1}=3$
 \end_inset
@@ -252,10 +250,7 @@ theorems-bytype
 \end_layout
 
 \begin_layout Itemize
-Επίπεδο 
-\begin_inset Formula $2(d=2):$
-\end_inset
-
+Επίπεδο 2:
  
 \begin_inset Formula $3^{2}=9$
 \end_inset
@@ -264,10 +259,7 @@ theorems-bytype
 \end_layout
 
 \begin_layout Itemize
-Επίπεδο 
-\begin_inset Formula $3(d=3):$
-\end_inset
-
+Επίπεδο 3:
  
 \begin_inset Formula $3^{3}=27$
 \end_inset
@@ -276,10 +268,7 @@ theorems-bytype
 \end_layout
 
 \begin_layout Itemize
-Επίπεδο 
-\begin_inset Formula $4(d=4):$
-\end_inset
-
+Επίπεδο 4:
  
 \begin_inset Formula $3^{4}=81$
 \end_inset
@@ -288,30 +277,41 @@ theorems-bytype
 \end_layout
 
 \begin_layout Standard
-Αρα ο συνολικός αριθμός κόμβων του δέντρου με βάθος 4 είναι:
+Αρα ο συνολικός αριθμός κόμβων του δέντρου με βάθος 
+\begin_inset Formula $d$
+\end_inset
+
+ είναι:
 \begin_inset Formula 
 \[
-1+3+9+27+81=121
+\sum_{n=0}^{d}b^{n}
 \]
 
+\end_inset
+
+Για 
+\begin_inset Formula $b=3$
+\end_inset
+
+ and 
+\begin_inset Formula $d=4$
+\end_inset
+
+:
+ 
+\begin_inset Formula $1+3+9+27+81=121$
 \end_inset
 
 
 \end_layout
 
-\begin_layout Paragraph*
-1) ΑΝΑΖΗΤΗΣΗ ΠΡΩΤΑ ΚΑΤΑ ΠΛΑΤΟΣ (BFS):
+\begin_layout Minisec
+Αναζήτηση πρώτα κάτα πλάτος (BFS):
 \end_layout
 
 \begin_layout Standard
 Η αναζήτηση BFS εξετάζει τους κόμβους επίπεδο προς επίπεδο,
  από το μικρότερο στο μεγαλύτερο βάθος.
-\end_layout
-
-\begin_layout Standard
-
-\emph on
-ΜΕΓΙΣΤΟΣ ΑΡΙΘΜΟΣ ΚΟΜΒΩΝ;
 \end_layout
 
 \begin_layout Standard
@@ -327,12 +327,6 @@ theorems-bytype
 \end_layout
 
 \begin_layout Standard
-
-\emph on
-ΕΛΑΧΙΣΤΟΣ ΑΡΙΘΜΟΣ ΚΟΜΒΩΝ;
-\end_layout
-
-\begin_layout Standard
 Στην καλύτερη περίπτωση,
  ο στόχος είναι ο πρώτος κόμβος στο βάθος 
 \begin_inset Formula $4$
@@ -345,7 +339,7 @@ theorems-bytype
  δηλαδή:
 \begin_inset Formula 
 \[
-1+3+9+27+1=41
+3+9+27+1=41
 \]
 
 \end_inset
@@ -361,20 +355,14 @@ theorems-bytype
  κομβους για να βρει τον στόχο.
 \end_layout
 
-\begin_layout Paragraph
-2) ΑΝΑΖΗΤΗΣΗ ΠΡΩΤΑ ΚΑΤΑ ΒΑΘΟΣ (DFS):
+\begin_layout Minisec
+Αναζήτηση πρώτα κάτα βάθος (DFS):
 \end_layout
 
 \begin_layout Standard
 Η DFS προχωρά σε βάθος,
  εξετάζοντας τον πρώτο απόγονο κάθε κόμβου (το αριστερότερο παιδί),
  μέχρι να βρει τον στόχο ή να εξαντλήσει ένα μονοπάτι και να επιστρέψει πίσω για να εξετάσει τους επόμενους απογόνους.
-\end_layout
-
-\begin_layout Standard
-
-\emph on
-ΜΕΓΙΣΤΟΣ ΑΡΙΘΜΟΣ ΚΟΜΒΩΝ;
 \end_layout
 
 \begin_layout Standard
@@ -387,12 +375,6 @@ theorems-bytype
  Σε αυτή την περίπτωση,
  ο DFS θα εξετάσει όλους τους κόμβους του δέντρου,
  διασχίζοντας και τους 121 κόμβους.
-\end_layout
-
-\begin_layout Standard
-
-\emph on
-ΕΛΑΧΙΣΤΟΣ ΑΡΙΘΜΟΣ ΚΟΜΒΩΝ;
 \end_layout
 
 \begin_layout Standard
@@ -413,27 +395,21 @@ theorems-bytype
 \end_layout
 
 \begin_layout Standard
-Αρα ο DFS θα διασχίσει 
+Αρα ο DFS θα επεκτείνει 
 \begin_inset Formula $5$
 \end_inset
 
  κομβους για να βρει τον στόχο.
 \end_layout
 
-\begin_layout Paragraph
-2) ΑΝΑΖΗΤΗΣΗ ΜΕ ΕΠΑΝΑΛΗΠΤΙΚΗ ΕΚΒΑΘΥΝΣΗ (IDS)
+\begin_layout Minisec
+Αναζήτηση με επαναληπτική εκβάθυνση (IDS)
 \end_layout
 
 \begin_layout Standard
 Η IDS είναι ένας συνδυασμός DFS και BFS,
  όπου εκτελεί διαδοχικές αναζητήσεις DFS,
  αυξάνοντας το μέγιστο επιτρεπόμενο βάθος κατά 1 σε κάθε επανάληψη.
-\end_layout
-
-\begin_layout Standard
-
-\emph on
-ΜΕΓΙΣΤΟΣ ΑΡΙΘΜΟΣ ΚΟΜΒΩΝ;
 \end_layout
 
 \begin_layout Standard
@@ -482,12 +458,6 @@ theorems-bytype
 \end_layout
 
 \begin_layout Standard
-
-\emph on
-ΕΛΑΧΙΣΤΟΣ ΑΡΙΘΜΟΣ ΚΟΜΒΩΝ;
-\end_layout
-
-\begin_layout Standard
 Στην καλύτερη περίπτωση,
  ο στόχος είναι ο πρώτος κόμβος σε βάθος 
 \begin_inset Formula $4$
@@ -513,6 +483,95 @@ theorems-bytype
 \end_inset
 
  κομβους για να βρει τον στόχο.
+\end_layout
+
+\begin_layout Problem
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Problem
+\begin_inset listings
+lstparams "basicstyle={\ttfamily}"
+inline false
+status open
+
+\begin_layout Plain Layout
+
+S R R R B W R H H H
+\end_layout
+
+\begin_layout Plain Layout
+
+R B B R H H R R B H
+\end_layout
+
+\begin_layout Plain Layout
+
+R P P R B R R R B R
+\end_layout
+
+\begin_layout Plain Layout
+
+R R R R W R P P R R
+\end_layout
+
+\begin_layout Plain Layout
+
+R R B R R R H H R B
+\end_layout
+
+\begin_layout Plain Layout
+
+B W R P P R B R R R
+\end_layout
+
+\begin_layout Plain Layout
+
+P P R R R R R R B B
+\end_layout
+
+\begin_layout Plain Layout
+
+R B R R R W H H R R
+\end_layout
+
+\begin_layout Plain Layout
+
+R R R R B R R R B R
+\end_layout
+
+\begin_layout Plain Layout
+
+H H H B B R R G R R
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Problem
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
 \end_layout
 
 \end_body
