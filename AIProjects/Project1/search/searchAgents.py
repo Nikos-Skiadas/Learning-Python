@@ -337,8 +337,10 @@ class CornersProblem(search.SearchProblem):
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
             (x, y), corners = state
+            corners = corners.copy()  # `dict`s are passed by refeference so make a copy to avoid editing the other `dict`.
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
+
             if not self.walls[nextx][nexty]:
                 if (nextx, nexty) in self.corners:
                     corners[nextx, nexty] = True
