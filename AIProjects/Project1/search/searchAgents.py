@@ -142,6 +142,7 @@ class SearchAgent(Agent):
         else:
             return Directions.STOP
 
+
 class PositionSearchProblem(search.SearchProblem):
     """
     A search problem defines the state space, start state, goal test, successor
@@ -235,6 +236,7 @@ class PositionSearchProblem(search.SearchProblem):
             cost += self.costFn((x,y))
         return cost
 
+
 class StayEastSearchAgent(SearchAgent):
     """
     An agent for position search with a cost function that penalizes being in
@@ -270,6 +272,7 @@ def euclideanHeuristic(position, problem, info={}):
     xy1 = position
     xy2 = problem.goal
     return ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
+
 
 #####################################################
 # This portion is incomplete.  Time to write code!  #
@@ -374,7 +377,6 @@ class CornersProblem(search.SearchProblem):
         return len(actions)
 
 
-
 def cornersHeuristic(state: Any, problem: CornersProblem):
     """
     A heuristic for the CornersProblem that you defined.
@@ -422,6 +424,7 @@ class AStarCornersAgent(SearchAgent):
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, cornersHeuristic)
         self.searchType = CornersProblem
+
 
 class FoodSearchProblem:
     """
@@ -473,11 +476,13 @@ class FoodSearchProblem:
             cost += 1
         return cost
 
+
 class AStarFoodSearchAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
     def __init__(self):
         self.searchFunction = lambda prob: search.aStarSearch(prob, foodHeuristic)
         self.searchType = FoodSearchProblem
+
 
 def foodHeuristic(state: Tuple[Tuple, Grid], problem: FoodSearchProblem):
     """
@@ -554,6 +559,7 @@ class ClosestDotSearchAgent(SearchAgent):
 
         # Just use my favourite search algorightm on the problem.
         return search.uniformCostSearch(problem)
+
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
