@@ -281,7 +281,7 @@ class CornersProblem(search.SearchProblem):
     You must select a suitable state space and successor function
     """
 
-    State = tuple[Position, dict[Position, bool]]
+    State = tuple[Position, tuple[bool, bool, bool, bool]]
 
 
     def __init__(self, startingGameState: pacman.GameState):
@@ -302,7 +302,13 @@ class CornersProblem(search.SearchProblem):
         Returns the start state (in your state space, not the full Pacman state
         space)
         """
-        return self.startingPosition, dict.fromkeys(self.corners, False)
+        # I could return a dictionary with the corners as keys but I prefer a hashable state jsut in case.
+        return self.startingPosition, (
+            False,
+            False,
+            False,
+            False,
+        )
 
     def isGoalState(self, state: State):
         """
@@ -310,7 +316,7 @@ class CornersProblem(search.SearchProblem):
         """
         _, corners_state = state
 
-        return all(corners_state.values())
+        return all(corners_state)
 
     def getSuccessors(self, state: State) -> list[State]:
         """
@@ -337,15 +343,15 @@ class CornersProblem(search.SearchProblem):
             #   nextx, nexty = int(x + dx), int(y + dy)
             #   hitsWall = self.walls[nextx][nexty]
             (x, y), corners = state
-            corners = corners.copy()  # `dict`s are passed by refeference so make a copy to avoid editing the other `dict`.
+            corners = dict(zip(self.corners, corners))  # Match corner states with the corners to properly update them.
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
 
             if not self.walls[nextx][nexty]:
                 if (nextx, nexty) in self.corners:
-                    corners[nextx, nexty] = True
+                    corners[nextx, nexty] = True  # Update the proer corner as visited.
 
-                nextState = (nextx, nexty), corners
+                nextState = (nextx, nexty), tuple(corners.values())
                 # cost = self.costFn(nextState)
                 successors.append((nextState, action, 1))
 
@@ -381,12 +387,33 @@ def cornersHeuristic(state: Any, problem: CornersProblem):
     shortest path from the state to a goal of the problem; i.e.  it should be
     admissible.
     """
-    corners = problem.corners # These are the corner coordinates
-    walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
+    corners = problem.corners  # These are the corner coordinates
+    walls = problem.walls  # These are the walls of the maze, as a Grid (game.py)
 
-    "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    # If goal is reached, return.
+    if problem.isGoalState(state):
+        return 0
 
+    # Explode current state in a position and a state of corners (visited or not).
+    xy, visited_corners = state
+    visited_corners = dict(zip(corners, visited_corners)) # Match corner states with the corners in the problem.
+
+    # Track all straight Manhattan distances to all unvisited corners
+    distances = {corner: util.manhattanDistance(xy, corner) for corner, visited in visited_corners.items() if not visited}
+    distance = 0
+
+    # Lets find the path that straightly connects all remaining corners.
+    # Repeat until distance dict is exhausted.
+    while distances:
+        # Lets get the nearest unvisited corner first.
+        next_corner = min(distances, key=distances.get)  # type: ignore
+        # Update this tesselated distance with the next piece.
+        distance += distances[next_corner]
+        # Pop the next corner to see the distance from it to the remaining corners:
+        distances.pop(next_corner)
+        distances = {corner: util.manhattanDistance(next_corner, corner) for corner in distances}
+
+    return distance
 
 
 class AStarCornersAgent(SearchAgent):
