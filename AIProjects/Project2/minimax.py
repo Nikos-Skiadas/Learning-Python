@@ -1,119 +1,11 @@
 from __future__ import annotations
 
 
+import collections
 import enum
+import json
+import math
 import typing
-
-
-
-
-
-class MinimaxGame:
-    def __init__(self, terminal_states: dict):
-        """
-        Initialize the game with given terminal states.
-
-        Args:
-            terminal_states (dict): A dictionary where keys are terminal state names and
-                                    values are the utility scores for Player 1 (maximizing player).
-        """
-        self.terminal_states = terminal_states
-        self.moves = {}  # Dictionary to store possible moves for each state
-
-    def add_moves(self, state, next_states):
-        """
-        Define possible moves for a given state.
-
-        Args:
-            state (str): The current state.
-            next_states (list): List of possible next states from the current state.
-        """
-        self.moves[state] = next_states
-
-    def minimax(self, state, maximizing_player=True):
-        """
-        Minimax algorithm to evaluate the utility of a state.
-
-        Args:
-            state (str): The current state.
-            maximizing_player (bool): True if maximizing, False if minimizing.
-
-        Returns:
-            int: The utility score of the best move from the given state.
-        """
-        if state in self.terminal_states:  # Check if it's a terminal state
-            return self.terminal_states[state]
-
-        if maximizing_player:
-            max_eval = float('-inf')
-            for next_state in self.moves[state]:
-                eval = self.minimax(next_state, maximizing_player=False)
-                max_eval = max(max_eval, eval)
-            return max_eval
-        else:
-            min_eval = float('inf')
-            for next_state in self.moves[state]:
-                eval = self.minimax(next_state, maximizing_player=True)
-                min_eval = min(min_eval, eval)
-            return min_eval
-
-    def best_move(self, initial_state):
-        """
-        Determine the best move for the maximizing player from the initial state.
-
-        Args:
-            initial_state (str): The starting state of the game.
-
-        Returns:
-            str: The best next state for the maximizing player.
-        """
-        best_value = float('-inf')
-        best_state = None
-        for next_state in self.moves[initial_state]:
-            move_value = self.minimax(next_state, maximizing_player=False)
-            if move_value > best_value:
-                best_value = move_value
-                best_state = next_state
-        return best_state
-
-# Example Usage:
-# Define terminal states and their utility scores
-terminal_states = {
-    "Win": 1,
-    "Loss": -1,
-    "Draw": 0
-}
-
-
-if __name__ == "__main__":
-	# Initialize game with terminal state utilities
-	game = MinimaxGame(terminal_states)
-
-	# Define the game's move structure
-	game.add_moves("Start", ["Move1", "Move2"])
-	game.add_moves("Move1", ["Win", "Draw"])
-	game.add_moves("Move2", ["Loss", "Draw"])
-
-	# Determine the best move for Player 1 from the initial state
-	initial_state = "Start"
-	best_next_state = game.best_move(initial_state)
-	print(f"The best move for Player 1 from '{initial_state}' is '{best_next_state}'.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -124,40 +16,102 @@ class Action:
 
 class State:
 
-	def __init__(self):
-		self.player = True
-        self.actions
+	def __init__(self, node: str, *children: State,
+		terminal_utility: float = 0,
+	):
+		self.name = node
+		self.children = list(children)
+		self.terminal_utility = terminal_utility
+
+	@classmethod
+	def max(cls, state: State) -> float:
+		if state.terminal:
+			return state.utility
+
+		return max(cls.min(child) for child in state.children)
+
+
+	@classmethod
+	def min(cls, state: State) -> float:
+		if state.terminal:
+			return state.utility
+
+		return min(cls.max(child) for child in state.children)
 
 
 	@property
-	def actions(self) -> typing.Iterable[Action]:
-		...
+	def minmax(self) -> State | None:
+		if self.terminal:
+			return None
 
-
-
-class Game:
-
-	def __init__(self, initial: State):
-		self._initial = initial
-		self._max = True
-
+		return max(self.children,
+			key = State.min,
+		)
 
 	@property
-	def is_max(self) -> bool:
-		return self._max
+	def terminal(self) -> bool:
+		return not self.children
+
+	@property
+	def utility(self) -> float:
+		return self.terminal_utility if self.terminal else State.max(self)
+
+	@property
+	def json(self) -> dict:
+		dict = {}
+
+		if self.terminal:
+			dict[self.name] = self.utility
+
+		else:
+			for state in self.children:
+				dict[state.name] = state.json
+
+		return dict
 
 
-	def result(self, state: State, action: Action) -> State:
-		...
 
-	def actions(self, state: State) -> typing.Iterable[Action]:
-		...
+if __name__ == "__main__":
+	game = State("a",
+		State("aa",
+			State("aaa",
+				State("aaaa", terminal_utility = +4),
+				State("aaab", terminal_utility = +8),
+			),
+			State("aab",
+				State("aaba", terminal_utility = +9),
+				State("aabb", terminal_utility = +3),
+			),
+		),
+		State("ab",
+			State("aba",
+				State("abaa", terminal_utility = +2),
+				State("abab", terminal_utility = -2),
+			),
+			State("abb",
+				State("abba", terminal_utility = +9),
+				State("abbb", terminal_utility = -1),
+			),
+			State("abc",
+				State("abca", terminal_utility = +8),
+				State("abcb", terminal_utility = +4),
+			),
+		),
+		State("ac",
+			State("aca",
+				State("acaa", terminal_utility = +3),
+				State("acab", terminal_utility = +6),
+				State("acac", terminal_utility = +5),
+			),
+			State("acb",
+				State("acba", terminal_utility = +7),
+				State("acbb", terminal_utility = +1),
+			),
+		),
+	)
 
-	def is_terminal(self, state: State) -> bool:
-		...
-
-	def utility(self, state: State, player: Player) -> float:
-		...
-
-
-
+	print(
+		json.dumps(game.json,
+			indent = 4,
+		)
+	)
