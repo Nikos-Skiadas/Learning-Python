@@ -8,7 +8,7 @@ import math
 import typing
 
 
-class Game[State]:
+class Game[State: typing.Hashable]:
 
 	def __init__(self, state: State, *children: Game,
 		terminal_utility: float = 0,
