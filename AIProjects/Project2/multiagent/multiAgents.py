@@ -4,7 +4,7 @@
 # educational purposes provided that (1) you do not distribute or publish
 # solutions, (2) you retain this notice, and (3) you provide clear
 # attribution to UC Berkeley, including a link to http://ai.berkeley.edu.
-# 
+#
 # Attribution Information: The Pacman AI projects were developed at UC Berkeley.
 # The core projects and autograders were primarily created by John DeNero
 # (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
@@ -14,7 +14,7 @@
 
 from util import manhattanDistance
 from game import Directions
-import random, util
+import random, util, math
 
 from game import Agent
 from pacman import GameState
@@ -45,7 +45,8 @@ class ReflexAgent(Agent):
         # Choose one of the best actions
         scores = [self.evaluationFunction(gameState, action) for action in legalMoves]
         bestScore = max(scores)
-        bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
+        bestIndices = [index for index, score in enumerate(scores) if score == bestScore]
+        # bestIndices = [index for index in range(len(scores)) if scores[index] == bestScore]
         chosenIndex = random.choice(bestIndices) # Pick randomly among the best
 
         "Add more of your code here if you want to"
@@ -67,15 +68,49 @@ class ReflexAgent(Agent):
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
+
+        def foorRatio(currentPos, newPos, foodLoc):
+            return manhattanDistance(currentPos, foodLoc) / manhattanDistance(newPos, foodLoc)
+
         # Useful information you can extract from a GameState (pacman.py)
+        #currentPos = currentGameState.getPacmanPosition()
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
+        #newFoodLocs = newFood.asList()  # type: ignore
+        #foodFactor = min(foorRatio(currentPos, newPos, foodLoc) for foodLoc in newFoodLocs)
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        # newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
-        "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        # return successorGameState.getScore() / foodFactor
+
+        score = float(0)
+        currentFood = currentGameState.getFood().asList()  # type: ignore
+
+        for newGhostState in newGhostStates:
+            newGhostPos = newGhostState.getPosition()
+            movesAway = manhattanDistance(newPos, newGhostPos)
+
+            # Food is good:
+            if newPos in currentFood:
+                score += 1
+
+            # Walls should always be avoided:
+            if currentGameState.hasWall(*newPos):
+                score -= math.inf
+
+            # Eat ghost:
+            if movesAway <= newGhostState.scaredTimer:
+             score += movesAway
+
+            # Run away from ghost but compete with eating ghost above:
+            if movesAway < 2:
+                score -= 2
+
+            # Add 1/minimum distance to nearest food:
+            score -= .1 * min(manhattanDistance(newPos, foodPos) for foodPos in currentFood)
+
+        return score
 
 def scoreEvaluationFunction(currentGameState: GameState):
     """
