@@ -14,7 +14,7 @@
 
 from util import manhattanDistance
 from game import Directions
-import random, util, math
+import random, util, math, typing
 
 from game import Agent
 from pacman import GameState
@@ -68,21 +68,9 @@ class ReflexAgent(Agent):
         Print out these variables to see what you're getting, then combine them
         to create a masterful evaluation function.
         """
-
-        def foorRatio(currentPos, newPos, foodLoc):
-            return manhattanDistance(currentPos, foodLoc) / manhattanDistance(newPos, foodLoc)
-
-        # Useful information you can extract from a GameState (pacman.py)
-        #currentPos = currentGameState.getPacmanPosition()
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos = successorGameState.getPacmanPosition()
-        newFood = successorGameState.getFood()
-        #newFoodLocs = newFood.asList()  # type: ignore
-        #foodFactor = min(foorRatio(currentPos, newPos, foodLoc) for foodLoc in newFoodLocs)
         newGhostStates = successorGameState.getGhostStates()
-        # newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
-
-        # return successorGameState.getScore() / foodFactor
 
         score = float(0)
         currentFood = currentGameState.getFood().asList()  # type: ignore
@@ -139,7 +127,7 @@ class MultiAgentSearchAgent(Agent):
 
     def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
         self.index = 0 # Pacman is always agent index 0
-        self.evaluationFunction = util.lookup(evalFn, globals())
+        self.evaluationFunction: typing.Callable[[GameState], float] = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
 class MinimaxAgent(MultiAgentSearchAgent):
@@ -170,8 +158,42 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def opt(gameState: GameState, agentIndex: int = self.index, depth: int = self.depth):
+            """Helper function replacing min and max helper functions usually found in minimax algorithms.
+
+            I believe it is simpler to check `agentIndex` and act accordingly instead of creating two functions.
+            Here we do not have a one-to-one game, we have one-to-many, so we get a max-min-min-...-max-min-min-...-gameover.
+
+            This is made to expand the game tree at fixed depth, given as an attribute in the class.
+
+            Finally, this is made a local function for better recursion.
+            That way I can use argument default values as syntactic sugar.
+            """
+            if not depth or gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState), None
+
+            # Cycle to the next agent first:
+            agentIndexNext = agentIndex + 1
+
+            # Reset agent index on full cycle:
+            if agentIndexNext == gameState.getNumAgents():
+                agentIndexNext = self.index
+                depth -= 1
+
+            # Get actions and results for the enxt agent (presumably a ghost):
+            actions = gameState.getLegalActions(agentIndex)
+            states = [gameState.generateSuccessor(agentIndex, action) for action in actions]
+            results = [opt(state, agentIndexNext, depth)[0] for state in states]
+
+            # get corresponding max or min depending on whose turn it is:
+            # Get max for pacman, min for everyone (ghosts) else:
+            opt_result = max(results) if agentIndex == self.index else min(results)
+
+            # Return both optimum plus the action it corresponds to:
+            return opt_result, actions[results.index(opt_result)]
+
+        return opt(gameState)[1]
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
