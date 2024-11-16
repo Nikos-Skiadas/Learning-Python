@@ -216,6 +216,14 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
+        def better(
+            x: float,
+            y: float,
+            z: float, agentIndex: int = self.index
+        ) -> bool:
+            return x < z and agentIndex == self.index \
+                or y > z and agentIndex != self.index
+
         def opt(gameState: GameState, agentIndex: int = self.index, depth: int = self.depth,
             a: float = -math.inf,
             b: float = +math.inf,
@@ -256,15 +264,21 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                 )  # evaluate successor and get the value of it
 
                 # Track the best value together with the action it corresponds to:
-                if (best_value < value and agentIndex == self.index) \
-                or (best_value > value and agentIndex != self.index):
+                if better(
+                    best_value,
+                    best_value, value, agentIndex
+                ):
                     best_value = value  # keep track of the optimum value depending on who plays
                     best_action = action  # keep track of the corresponding action depending on who plays
 
-                if (b < best_value and agentIndex == self.index) \
-                or (a > best_value and agentIndex != self.index):
+                # If pruning is necessary cut the loop here:
+                if better(
+                    b,
+                    a, value, agentIndex
+                ):
                     break
 
+                # Update pruning bounds otherwise:
                 a = max(a, best_value) if agentIndex == self.index else a
                 b = min(b, best_value) if agentIndex != self.index else b
 
