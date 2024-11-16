@@ -263,13 +263,10 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
 
                 if (b < best_value and agentIndex == self.index) \
                 or (a > best_value and agentIndex != self.index):
-                    return best_value, best_action
+                    break
 
-                if agentIndex == self.index:
-                    a = max(a, best_value)
-
-                else:
-                    b = min(b, best_value)
+                a = max(a, best_value) if agentIndex == self.index else a
+                b = min(b, best_value) if agentIndex != self.index else b
 
             # Return both optimum plus the action it corresponds to:
             return best_value, best_action
