@@ -13,7 +13,7 @@
 
 
 from util import manhattanDistance
-from game import Directions
+from game import Directions, Actions
 import random, util, math, typing
 
 from game import Agent
@@ -53,7 +53,7 @@ class ReflexAgent(Agent):
 
         return legalMoves[chosenIndex]
 
-    def evaluationFunction(self, currentGameState: GameState, action):
+    def evaluationFunction(self, currentGameState: GameState, action: Actions):
         """
         Design a better evaluation function here.
 
@@ -125,6 +125,68 @@ class MultiAgentSearchAgent(Agent):
     is another abstract class.
     """
 
+    @classmethod
+    def max(cls, results: typing.Iterable[float]) -> float:
+        value = -math.inf
+
+        for result in results:
+            if value < result:
+                value = result
+
+        return value
+
+    @classmethod
+    def min(cls, results: typing.Iterable[float]) -> float:
+        value = +math.inf
+
+        for result in results:
+            if value > result:
+                value = result
+
+        return value
+
+    def opt(self, gameState: GameState,
+        agentIndex: int | None = None,
+        depth: int | None = None,
+    ) -> tuple[float, Actions | None]:
+        """Helper function replacing min and max helper functions usually found in minimax algorithms.
+
+        I believe it is simpler to check `agentIndex` and act accordingly instead of creating two functions.
+        Here we do not have a one-to-one game, we have one-to-many, so we get a max-min-min-...-max-min-min-...-gameover.
+
+        This is made to expand the game tree at fixed depth, given as an attribute in the class.
+
+        Finally, this is made a local function for better recursion.
+        That way I can use argument default values as syntactic sugar.
+        """
+        # Set default values for optional parameters:
+        agentIndex = agentIndex if agentIndex is not None else self.index
+        depth = depth if depth is not None else self.depth
+
+        # Terminate on leaf nodes:
+        if not depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState), None
+
+        # Cycle to the next agent first:
+        agentIndexNext = agentIndex + 1
+
+        # Reset agent index on full cycle:
+        if agentIndexNext == gameState.getNumAgents():
+            agentIndexNext = self.index
+            depth -= 1
+
+        # Get actions and results for the enxt agent (presumably a ghost):
+        actions = gameState.getLegalActions(agentIndex)
+        states = [gameState.generateSuccessor(agentIndex, action) for action in actions]
+        results = [self.opt(state, agentIndexNext, depth)[0] for state in states]
+
+        # get corresponding max or min depending on whose turn it is:
+        # Get max for pacman, min for everyone (ghosts) else:
+        opt_result = self.max(results) if agentIndex == self.index else self.min(results)
+
+        # Return both optimum plus the action it corresponds to:
+        return opt_result, actions[results.index(opt_result)]
+
     def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
         self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction: typing.Callable[[GameState], float] = util.lookup(evalFn, globals())
@@ -158,7 +220,22 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-        def opt(gameState: GameState, agentIndex: int = self.index, depth: int = self.depth):
+        return self.opt(gameState)[1]
+
+
+class AlphaBetaAgent(MultiAgentSearchAgent):
+    """
+    Your minimax agent with alpha-beta pruning (question 3)
+    """
+
+    def getAction(self, gameState: GameState):
+        """
+        Returns the minimax action using self.depth and self.evaluationFunction
+        """
+        def opt(gameState: GameState, alpha: float = -math.inf, beta: float = math.inf,
+            agentIndex: int = self.index,
+            depth: int = self.depth,
+        ) -> tuple[float, Actions | None]:
             """Helper function replacing min and max helper functions usually found in minimax algorithms.
 
             I believe it is simpler to check `agentIndex` and act accordingly instead of creating two functions.
@@ -168,6 +245,8 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
             Finally, this is made a local function for better recursion.
             That way I can use argument default values as syntactic sugar.
+
+            This implementation additionaly has an `alpha` and `beta` parameter to perform alpha-beta-pruning.
             """
             if not depth or gameState.isWin() or gameState.isLose():
                 return self.evaluationFunction(gameState), None
@@ -194,18 +273,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
 
         return opt(gameState)[1]
 
-
-class AlphaBetaAgent(MultiAgentSearchAgent):
-    """
-    Your minimax agent with alpha-beta pruning (question 3)
-    """
-
-    def getAction(self, gameState: GameState):
-        """
-        Returns the minimax action using self.depth and self.evaluationFunction
-        """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
