@@ -16,8 +16,14 @@ from util import manhattanDistance
 from game import Directions, Actions
 import random, util, math, typing
 
-from game import Agent
+from game import Agent, AgentState
 from pacman import GameState
+
+
+def mean(numbers: typing.Collection[float]) -> float:
+    """Helper function to calculate the mean of a collection of numbers."""
+    return sum(numbers) / len(numbers)
+
 
 class ReflexAgent(Agent):
     """
@@ -72,7 +78,7 @@ class ReflexAgent(Agent):
         newPos = successorGameState.getPacmanPosition()
         newGhostStates = successorGameState.getGhostStates()
 
-        score = float(0)
+        score = 0
         currentFood = currentGameState.getFood().asList()  # type: ignore
 
         for newGhostState in newGhostStates:
@@ -89,13 +95,13 @@ class ReflexAgent(Agent):
 
             # Eat ghost:
             if movesAway <= newGhostState.scaredTimer:
-             score += movesAway
+                score += movesAway
 
             # Run away from ghost but compete with eating ghost above:
             if movesAway < 2:
                 score -= 2
 
-            # Add 1/minimum distance to nearest food:
+            # Add 1 / minimum distance to nearest food:
             score -= .1 * min(manhattanDistance(newPos, foodPos) for foodPos in currentFood)
 
         return score
@@ -268,16 +274,9 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       Your expectimax agent (question 4)
     """
 
-    @staticmethod
-    def mean(numbers: typing.Collection[float]) -> float:
-        return sum(numbers) / len(numbers)
-
     def opt(self, gameState: GameState,
         agentIndex: int | None = None,
         depth: int | None = None,
-        # prune: bool = False,
-        # a: float = -math.inf,
-        # b: float = +math.inf,
     ) -> tuple[float, Actions | None]:
         """Helper function replacing min and max helper functions usually found in minimax algorithms.
 
@@ -289,8 +288,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         Finally, this is made a local function for better recursion.
         That way I can use argument default values as syntactic sugar.
 
-        The method optionally supports alpha-beta pruning with set pruning bounds.
-        If `prune` is false, `a` and `b` will be ignored.
+        This variant of the method calculates expectation values instead of min values for all non-pacman agents.
         """
         if agentIndex is None: agentIndex = self.index
         if depth is None: depth = self.depth
@@ -331,7 +329,7 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
 
         # If a ghost, the best value is the expectation of all values and the best action is a random one:
         if agentIndex != self.index:
-            best_value = self.mean(all_values)
+            best_value = mean(all_values)
             best_action = random.choice(all_actions)
 
         # Return both optimum plus the action it corresponds to:
@@ -354,10 +352,44 @@ def betterEvaluationFunction(currentGameState: GameState):
     Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
     evaluation function (question 5).
 
-    DESCRIPTION: <write something here so we know what you did>
+    DESCRIPTION:
+
+    We start with a score of 0, but that does not mean it cannot be negative.
+
+    If a wall is hit for a move, we drop the score all the way, walls should always be avoided.
+
+    For every ghost out there, we see how far it is and if it is scared.
+    -   If it is scared, we should approach it.
+    -   Otherwise move away from the nearest one.
+
+    Finally be attracted by the nearest food
     """
-    "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    position = currentGameState.getPacmanPosition()
+    ghostStates: list[AgentState] = currentGameState.getGhostStates()
+
+    # Initial value:
+    score = 0
+
+    # Walls should always be avoided:
+    if currentGameState.hasWall(*position):
+        score -= math.inf
+
+    # For each ghost:
+    for ghostState in ghostStates:
+        ghostPosition = ghostState.getPosition()
+        movesAway = manhattanDistance(position, ghostPosition)
+
+        # Eat ghost:
+        if movesAway <= ghostState.scaredTimer:
+            score += movesAway
+
+        else:
+            score -= movesAway
+
+    score -= currentGameState.getNumFood()
+
+    return score
+
 
 # Abbreviation
 better = betterEvaluationFunction
