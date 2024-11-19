@@ -125,13 +125,96 @@ class MultiAgentSearchAgent(Agent):
     is another abstract class.
     """
 
+    # NOTE: pacman index has been moved to a class variable as is the same across all pacmans
+    index = 0 # Pacman is always agent index 0
+
+
     def __init__(self, evalFn = 'scoreEvaluationFunction', depth = '2'):
-        self.index = 0 # Pacman is always agent index 0
         self.evaluationFunction: typing.Callable[[GameState], float] = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
 
+    def better(self,
+        min: float,
+        max: float,
+        new: float, agentIndex: int | None = None
+    ) -> bool:
+        """
+        """
+        if agentIndex is None: agentIndex = self.index
+
+        return max < new and agentIndex == self.index \
+            or min > new and agentIndex != self.index
+
+    def opt(self, gameState: GameState,
+        agentIndex: int | None = None,
+        depth: int | None = None,
+        prune: bool = False,
+        a: float = -math.inf,
+        b: float = +math.inf,
+    ) -> tuple[float, Actions | None]:
+        """Helper function replacing min and max helper functions usually found in minimax algorithms.
+
+        I believe it is simpler to check `agentIndex` and act accordingly instead of creating two functions.
+        Here we do not have a one-to-one game, we have one-to-many, so we get a max-min-min-...-max-min-min-...-gameover.
+
+        This is made to expand the game tree at fixed depth, given as an attribute in the class.
+
+        Finally, this is made a local function for better recursion.
+        That way I can use argument default values as syntactic sugar.
+
+        The method optionally supports alpha-beta pruning with set pruning bounds.
+        If `prune` is false, `a` and `b` will be ignored.
+        """
+        if agentIndex is None: agentIndex = self.index
+        if depth is None: depth = self.depth
+
+        if not depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState), None
+
+        # Cycle to the next agent first:
+        agentIndexNext = agentIndex + 1
+
+        # Reset agent index on full cycle:
+        if agentIndexNext == gameState.getNumAgents():
+            agentIndexNext = self.index  # cycle back to pacman
+            depth -= 1  # and write out one depth level
+
+        # Initialize the best action to None:
+        best_value = -math.inf if agentIndex == self.index else +math.inf  # either max or min logic depending on who plays
+        best_action = None
+
+        # Get actions and results for the enxt agent (presumably a ghost):
+        for action in gameState.getLegalActions(agentIndex):
+            state = gameState.generateSuccessor(agentIndex, action)  # query succerssors one by one
+            value, _ = self.opt(state, agentIndexNext, depth, prune, a,  b)  # evaluate successor and get the value of it
+
+            # Track the best value together with the action it corresponds to:
+            if self.better(
+                best_value,
+                best_value, value, agentIndex
+            ):
+                best_value = value  # keep track of the optimum value depending on who plays
+                best_action = action  # keep track of the corresponding action depending on who plays
+
+            # If pruning is necessary cut the loop here:
+            if prune:
+                if self.better(
+                    a,
+                    b, value, agentIndex
+                ):
+                    break
+
+                # Update pruning bounds otherwise:
+                a = max(a, best_value) if agentIndex == self.index else a
+                b = min(b, best_value) if agentIndex != self.index else b
+
+        # Return both optimum plus the action it corresponds to:
+        return best_value, best_action
+
+
 class MinimaxAgent(MultiAgentSearchAgent):
+
     """
     Your minimax agent (question 2)
     """
@@ -159,50 +242,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
         gameState.isLose():
         Returns whether or not the game state is a losing state
         """
-        def opt(gameState: GameState,
-            agentIndex: int = self.index,
-            depth: int = self.depth,
-        ) -> tuple[float, Actions | None]:
-            """Helper function replacing min and max helper functions usually found in minimax algorithms.
-
-            I believe it is simpler to check `agentIndex` and act accordingly instead of creating two functions.
-            Here we do not have a one-to-one game, we have one-to-many, so we get a max-min-min-...-max-min-min-...-gameover.
-
-            This is made to expand the game tree at fixed depth, given as an attribute in the class.
-
-            Finally, this is made a local function for better recursion.
-            That way I can use argument default values as syntactic sugar.
-            """
-            if not depth or gameState.isWin() or gameState.isLose():
-                return self.evaluationFunction(gameState), None
-
-            # Cycle to the next agent first:
-            agentIndexNext = agentIndex + 1
-
-            # Reset agent index on full cycle:
-            if agentIndexNext == gameState.getNumAgents():
-                agentIndexNext = self.index  # cycle back to pacman
-                depth -= 1  # and write out one depth level
-
-            # Initialize the best action to None:
-            best_value = -math.inf if agentIndex == self.index else +math.inf  # either max or min logic depending on who plays
-            best_action = None
-
-            # Get actions and results for the enxt agent (presumably a ghost):
-            for action in gameState.getLegalActions(agentIndex):
-                state = gameState.generateSuccessor(agentIndex, action)  # query succerssors one by one
-                value, _ = opt(state, agentIndexNext, depth)  # evaluate successor and get the value of it
-
-                # Track the best value together with the action it corresponds to:
-                if (best_value < value and agentIndex == self.index) \
-                or (best_value > value and agentIndex != self.index):
-                    best_value = value  # keep track of the optimum value depending on who plays
-                    best_action = action  # keep track of the corresponding action depending on who plays
-
-            # Return both optimum plus the action it corresponds to:
-            return best_value, best_action
-
-        _, action = opt(gameState)
+        _, action = self.opt(gameState)
 
         return action
 
@@ -216,76 +256,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         """
         Returns the minimax action using self.depth and self.evaluationFunction
         """
-        def better(
-            x: float,
-            y: float,
-            z: float, agentIndex: int = self.index
-        ) -> bool:
-            return x < z and agentIndex == self.index \
-                or y > z and agentIndex != self.index
-
-        def opt(gameState: GameState, agentIndex: int = self.index, depth: int = self.depth,
-            a: float = -math.inf,
-            b: float = +math.inf,
-        ) -> tuple[float, Actions | None]:
-            """Helper function replacing min and max helper functions usually found in minimax algorithms.
-
-            I believe it is simpler to check `agentIndex` and act accordingly instead of creating two functions.
-            Here we do not have a one-to-one game, we have one-to-many, so we get a max-min-min-...-max-min-min-...-gameover.
-
-            This is made to expand the game tree at fixed depth, given as an attribute in the class.
-
-            Finally, this is made a local function for better recursion.
-            That way I can use argument default values as syntactic sugar.
-
-            This implementation has extra alpha and beta parameters for pruning.
-            """
-            if not depth or gameState.isWin() or gameState.isLose():
-                return self.evaluationFunction(gameState), None
-
-            # Cycle to the next agent first:
-            agentIndexNext = agentIndex + 1
-
-            # Reset agent index on full cycle:
-            if agentIndexNext == gameState.getNumAgents():
-                agentIndexNext = self.index  # cycle back to pacman
-                depth -= 1  # and write out one depth level
-
-            # Initialize the best action to None:
-            best_value = -math.inf if agentIndex == self.index else +math.inf  # either max or min logic depending on who plays
-            best_action = None
-
-            # Get actions and results for the enxt agent (presumably a ghost):
-            for action in gameState.getLegalActions(agentIndex):
-                state = gameState.generateSuccessor(agentIndex, action)  # query succerssors one by one
-                value, _ = opt(state, agentIndexNext, depth,
-                    a,
-                    b,
-                )  # evaluate successor and get the value of it
-
-                # Track the best value together with the action it corresponds to:
-                if better(
-                    best_value,
-                    best_value, value, agentIndex
-                ):
-                    best_value = value  # keep track of the optimum value depending on who plays
-                    best_action = action  # keep track of the corresponding action depending on who plays
-
-                # If pruning is necessary cut the loop here:
-                if better(
-                    b,
-                    a, value, agentIndex
-                ):
-                    break
-
-                # Update pruning bounds otherwise:
-                a = max(a, best_value) if agentIndex == self.index else a
-                b = min(b, best_value) if agentIndex != self.index else b
-
-            # Return both optimum plus the action it corresponds to:
-            return best_value, best_action
-
-        _, action = opt(gameState)
+        _, action = self.opt(gameState,
+            prune = True,
+        )
 
         return action
 
@@ -295,6 +268,75 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       Your expectimax agent (question 4)
     """
 
+    @staticmethod
+    def mean(numbers: typing.Collection[float]) -> float:
+        return sum(numbers) / len(numbers)
+
+    def opt(self, gameState: GameState,
+        agentIndex: int | None = None,
+        depth: int | None = None,
+        # prune: bool = False,
+        # a: float = -math.inf,
+        # b: float = +math.inf,
+    ) -> tuple[float, Actions | None]:
+        """Helper function replacing min and max helper functions usually found in minimax algorithms.
+
+        I believe it is simpler to check `agentIndex` and act accordingly instead of creating two functions.
+        Here we do not have a one-to-one game, we have one-to-many, so we get a max-min-min-...-max-min-min-...-gameover.
+
+        This is made to expand the game tree at fixed depth, given as an attribute in the class.
+
+        Finally, this is made a local function for better recursion.
+        That way I can use argument default values as syntactic sugar.
+
+        The method optionally supports alpha-beta pruning with set pruning bounds.
+        If `prune` is false, `a` and `b` will be ignored.
+        """
+        if agentIndex is None: agentIndex = self.index
+        if depth is None: depth = self.depth
+
+        if not depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState), None
+
+        # Cycle to the next agent first:
+        agentIndexNext = agentIndex + 1
+
+        # Reset agent index on full cycle:
+        if agentIndexNext == gameState.getNumAgents():
+            agentIndexNext = self.index  # cycle back to pacman
+            depth -= 1  # and write out one depth level
+
+        # Initialize the best action to None:
+        best_value = -math.inf if agentIndex == self.index else +math.inf  # either max or min logic depending on who plays
+        best_action = None
+
+        # Collect all values and actions if a ghost:
+        all_values = []
+        all_actions = []
+
+        # Get actions and results for the enxt agent (presumably a ghost):
+        for action in gameState.getLegalActions(agentIndex):
+            state = gameState.generateSuccessor(agentIndex, action)  # query succerssors one by one
+            value, _ = self.opt(state, agentIndexNext, depth)  # evaluate successor and get the value of it
+
+            # Track the best value together with the action it corresponds to:
+            if agentIndex == self.index:
+                if best_value < value:
+                    best_value = value  # keep track of the optimum value depending on who plays
+                    best_action = action  # keep track of the corresponding action depending on who plays
+
+            else:
+                all_values.append(value)
+                all_actions.append(action)
+
+        # If a ghost, the best value is the expectation of all values and the best action is a random one:
+        if agentIndex != self.index:
+            best_value = self.mean(all_values)
+            best_action = random.choice(all_actions)
+
+        # Return both optimum plus the action it corresponds to:
+        return best_value, best_action
+
     def getAction(self, gameState: GameState):
         """
         Returns the expectimax action using self.depth and self.evaluationFunction
@@ -302,8 +344,9 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         All ghosts should be modeled as choosing uniformly at random from their
         legal moves.
         """
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        _, action = self.opt(gameState)
+
+        return action
 
 
 def betterEvaluationFunction(currentGameState: GameState):
