@@ -358,14 +358,12 @@ def betterEvaluationFunction(currentGameState: GameState):
 
     If a wall is hit for a move, we drop the score all the way, walls should always be avoided.
 
-    For every ghost out there, we see how far it is and if it is scared.
-    -   If it is scared, we should approach it.
-    -   Otherwise move away from the nearest one.
-
-    Finally be attracted by the nearest food
+    For every ghost out there, we see how far it is. The more the better.
+    See how much food is left. The more we have eaten the better.
     """
     position = currentGameState.getPacmanPosition()
     ghostStates: list[AgentState] = currentGameState.getGhostStates()
+    # currentFood = currentGameState.getFood().asList()  # type: ignore
 
     # Initial value:
     score = 0
@@ -377,15 +375,11 @@ def betterEvaluationFunction(currentGameState: GameState):
     # For each ghost:
     for ghostState in ghostStates:
         ghostPosition = ghostState.getPosition()
-        movesAway = manhattanDistance(position, ghostPosition)
 
-        # Eat ghost:
-        if movesAway <= ghostState.scaredTimer:
-            score += movesAway
+        # The further away the ghos is the better for us!
+        score += manhattanDistance(position, ghostPosition)
 
-        else:
-            score -= movesAway
-
+    # The more food we have eaten the better!
     score -= currentGameState.getNumFood()
 
     return score
