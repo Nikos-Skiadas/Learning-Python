@@ -421,7 +421,7 @@ def astar_search(problem, h=None, display=False):
 
 
 # ______________________________________________________________________________
-# A* heuristics 
+# A* heuristics
 
 class EightPuzzle(Problem):
     """ The problem of sliding tiles numbered from 1 to 8 on a 3x3 board, where one of the
@@ -487,7 +487,7 @@ class EightPuzzle(Problem):
         return inversion % 2 == 0
 
     def h(self, node):
-        """ Return the heuristic value for a given state. Default heuristic function used is 
+        """ Return the heuristic value for a given state. Default heuristic function used is
         h(n) = number of misplaced tiles """
 
         return sum(s != g for (s, g) in zip(node.state, self.goal))
@@ -673,7 +673,7 @@ def simulated_annealing(problem, schedule=exp_schedule()):
 
 
 def simulated_annealing_full(problem, schedule=exp_schedule()):
-    """ This version returns all the states encountered in reaching 
+    """ This version returns all the states encountered in reaching
     the goal state."""
     states = []
     current = Node(problem.initial)
