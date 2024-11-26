@@ -18,7 +18,7 @@ class Problem:
     __init__, goal_test, and path_cost. Then you will create instances
     of your subclass and solve them with the various search functions."""
 
-    def __init__(self, initial, goal=None):
+    def __init__(self, initial: dict, goal: dict | None =None):
         """The constructor specifies the initial state, and possibly a goal
         state, if there is a unique goal. Your subclass's constructor can add
         other arguments."""
