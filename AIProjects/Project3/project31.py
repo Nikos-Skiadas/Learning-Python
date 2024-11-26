@@ -39,77 +39,97 @@ class UniformDict(collections.defaultdict):
 		super().__init__(lambda: value)
 
 
-class CSP(csp.CSP):
-
-	"""Proxy class for type-hinting parameters required to define a CSP.
-
-	Lock parameters to keyword-only, for a more readable code.
-	"""
-
-	def __init__(self, *,
-		variables: Names | None = None,
-		domains: Domains,
-		neighbors: Domains,
-		constraints: Constraint,
-	):
-		super().__init__(
-			variables,
-			domains,
-			neighbors,
-			constraints,
-		)
-
-
-def collect(*constraints: Constraint) -> Constraint:
-
+def collective(*constraints: Constraint) -> Constraint:
 	"""Collect all constraints into one constraint.
 
 	Return a collective constraint.
 	"""
-	def collective(*args) -> bool:
+	def collective_constraint(*args) -> bool:
 		return all(constraint(*args) for constraint in constraints)
 
-	return collective
+	return collective_constraint
 
 
-class ExamTimetabling(CSP):
+def binary(constraint: Constraint) -> Constraint:
+	"""Provide the base for binary constraints.
 
-	exams = pandas.read_csv("h3-data.csv").rename(
-		columns = {
-			"Εξάμηνο": "semester",
-			"Μάθημα": "course",
-			"Καθηγητής": "teacher",
-			"Δύσκολο (TRUE/FALSE)": "is_hard",
-			"Εργαστήριο (TRUE/FALSE)": "has_lab",
-		}
-	).set_index("semester")
+	Binary constraints should only focus on non trivial constraints.
+	This decorator takes care of the trivial condition A == B.
+	"""
+	def binary_constraint(
+		A,
+		a,
+		B,
+		b,
+	) -> bool:
+		return A == B or constraint(
+			A,
+			a,
+			B,
+			b,
+		)
+
+	return binary_constraint
 
 
-	@staticmethod
-	def semester_constraint(
+class ExamTimetabling(csp.CSP):
+
+
+	@binary
+	def course_constraint(self,
 		A: str,
 		a: int,
 		B: str,
 		b: int,
 	) -> bool:
-		return A == B or day(a) != day(b) or ExamTimetabling.exams[A].semester != ExamTimetabling.exams[B].semester
+		"""No exams may overlap.
 
-	@staticmethod
-	def has_lab_constraint(
-		A: str,
-		a: int,
-	) -> bool:
-		return not ExamTimetabling.exams[A].has_lab or slot(a) < 2
+		Each exams shall ahve its own hour.
+		"""
+		return a != b
 
-	@staticmethod
-	def is_hard_constraint(
+	@binary
+	def semester_constraint(self,
 		A: str,
 		a: int,
 		B: str,
 		b: int,
 	) -> bool:
-		return A == B or not ExamTimetabling.exams[A].is_hard or not ExamTimetabling.exams[B].is_hard or abs(day(a) - day(b)) >= 2
+		"""No same semester exams in one day.
 
+		Either the days are different, or
+		the exam semesters are different.
+		"""
+		return day(a) != day(b) or self.exams[A].semester != self.exams[B].semester
+
+	@binary
+	def has_lab_constraint(self,
+		A: str,
+		a: int,
+		B: str,
+		b: int,
+	) -> bool:
+		"""Courses with labs are all examined in one day with 2 slots..
+
+		Either one of the exams has a lab and an approriate slot
+		"""
+		return (not self.exams[A].has_lab or (slot(a) != 2 and (day(a) != day(b) or slot(b) == (slot(a) + 2) % 3))) \
+			or (not self.exams[B].has_lab or (slot(b) != 2 and (day(b) != day(a) or slot(a) == (slot(b) + 2) % 3)))
+
+	@binary
+	def is_hard_constraint(self,
+		A: str,
+		a: int,
+		B: str,
+		b: int,
+	) -> bool:
+		"""No hard exams closer than 2 days.
+
+		Either at least one of the exams is easy, or
+		the exams are at least 2 days apart.
+		"""
+		return not self.exams[A].is_hard \
+			or not self.exams[B].is_hard or abs(day(a) - day(b)) >= 2
 
 
 	def __init__(self, *,
@@ -117,15 +137,25 @@ class ExamTimetabling(CSP):
 		num_days: int = 0,
 		num_slots: int = 0,
 	):
-		slots = list(range(num_days * num_slots))
+		self.exams = pandas.read_csv(exams_file).rename(
+			columns = {
+				"Εξάμηνο": "semester",
+				"Μάθημα": "course",
+				"Καθηγητής": "teacher",
+				"Δύσκολο (TRUE/FALSE)": "is_hard",
+				"Εργαστήριο (TRUE/FALSE)": "has_lab",
+			}  # rename silly greek keys (columns) to ASCII ones
+		).set_index("course")  # index exam table by course name
+
+		hours = list(range(num_days * num_slots))
 
 		super().__init__(
 			variables = self.exams.course.to_list(),
-			domains = UniformDict(slots),
-			neighbors = UniformDict(slots),
-			constraints = collect(
-				ExamTimetabling.semester_constraint,
-				ExamTimetabling.has_lab_constraint,
-				ExamTimetabling.is_hard_constraint,
+			domains = UniformDict(hours),
+			neighbors = UniformDict(hours),
+			constraints = collective(
+				self.semester_constraint,
+				self.has_lab_constraint,
+				self.is_hard_constraint,
 			),
 		)
