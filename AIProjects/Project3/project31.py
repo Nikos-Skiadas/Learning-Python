@@ -9,9 +9,7 @@ import pandas
 import csp
 
 
-type Names = list[typing.Hashable]
-type Domains = dict[typing.Hashable, list]
-type Constraint = typing.Callable
+type Constraint = typing.Callable[..., bool]
 
 
 def day(numerator: int,
@@ -138,7 +136,7 @@ class ExamTimetabling(csp.CSP):
 		super().__init__(
 			variables = self.exams.course.to_list(),
 			domains = UniformDict(hours),
-			neighbors = {},
+			neighbors = UniformDict(self.exams.course.to_list()),
 			constraints = collective(
 				ExamTimetabling.day_attribute("semester"),
 				ExamTimetabling.day_attribute("teacher"),
