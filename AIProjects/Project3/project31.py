@@ -50,73 +50,59 @@ def collective(*constraints: Constraint) -> Constraint:
 	return collective_constraint
 
 
-def binary(constraint: Constraint) -> Constraint:
+def conflict(constraint: Constraint) -> Constraint:
 	"""Provide the base for binary constraints.
 
 	Binary constraints should only focus on non trivial constraints.
 	This decorator takes care of the trivial condition A == B.
 	"""
-	def binary_constraint(
+	def conflict_constraint(
 		A,
 		a,
 		B,
 		b,
 	) -> bool:
-		return A == B or constraint(
-			A,
-			a,
-			B,
-			b,
+		return A == B or (
+			a != b and constraint(
+				A,
+				a,
+				B,
+				b,
+			)
 		)
 
-	return binary_constraint
+	return conflict_constraint
 
 
 class ExamTimetabling(csp.CSP):
 
-
-	@binary
-	def course_constraint(self,
-		A: str,
-		a: int,
-		B: str,
-		b: int,
-	) -> bool:
-		"""No exams may overlap.
-
-		Each exams shall ahve its own hour.
-		"""
-		return a != b
-
-	@binary
-	def semester_constraint(self,
-		A: str,
-		a: int,
-		B: str,
-		b: int,
-	) -> bool:
-		"""No same semester exams in one day.
-
-		Either the days are different, or
-		the exam semesters are different.
-		"""
-		return day(a) != day(b) or self.exams[A].semester != self.exams[B].semester
-
-	@binary
+	@conflict
 	def has_lab_constraint(self,
 		A: str,
 		a: int,
 		B: str,
 		b: int,
 	) -> bool:
-		"""Courses with labs are all examined in one day with 2 slots..
-
-		Either one of the exams has a lab and an approriate slot
+		"""Courses with labs are all examined in one day with 2 slots
 		"""
-		return (not self.exams[A].has_lab or (slot(a) != 2 and (day(a) != day(b) or slot(b) == (slot(a) + 2) % 3))) \
-			or (not self.exams[B].has_lab or (slot(b) != 2 and (day(b) != day(a) or slot(a) == (slot(b) + 2) % 3)))
+		return (not self.exams.has_lab[A] or (slot(a) != 2 and (day(a) != day(b) or slot(b) == (slot(a) + 2) % 3))) \
+			or (not self.exams.has_lab[B] or (slot(b) != 2 and (day(b) != day(a) or slot(a) == (slot(b) + 2) % 3)))
 
-	@binary
+	@staticmethod
+	def day_attribute(attribute: str) -> Constraint:
+		@conflict
+		def day_attribute_constraint(self,
+			A,
+			a,
+			B,
+			b,
+		) -> bool:
+			return day(a) != day(b) or self.exams[attribute][A] != self.exams[attribute][B]
+
+		return day_attribute_constraint
+
+
+	@conflict
 	def is_hard_constraint(self,
 		A: str,
 		a: int,
@@ -128,8 +114,8 @@ class ExamTimetabling(csp.CSP):
 		Either at least one of the exams is easy, or
 		the exams are at least 2 days apart.
 		"""
-		return not self.exams[A].is_hard \
-			or not self.exams[B].is_hard or abs(day(a) - day(b)) >= 2
+		return not self.exams.is_hard[A] \
+			or not self.exams.is_hard[B] or abs(day(a) - day(b)) >= 2
 
 
 	def __init__(self, *,
@@ -152,9 +138,10 @@ class ExamTimetabling(csp.CSP):
 		super().__init__(
 			variables = self.exams.course.to_list(),
 			domains = UniformDict(hours),
-			neighbors = UniformDict(hours),
+			neighbors = {},
 			constraints = collective(
-				self.semester_constraint,
+				ExamTimetabling.day_attribute("semester"),
+				ExamTimetabling.day_attribute("teacher"),
 				self.has_lab_constraint,
 				self.is_hard_constraint,
 			),
