@@ -2,6 +2,7 @@ from __future__ import annotations
 
 
 import collections
+import os
 import typing
 
 import pandas
@@ -74,8 +75,12 @@ def conflict(constraint: Constraint) -> Constraint:
 
 class ExamTimetabling(csp.CSP):
 
+	exams: pandas.DataFrame
+
+
+	@staticmethod
 	@conflict
-	def has_lab_constraint(self,
+	def has_lab_constraint(
 		A: str,
 		a: int,
 		B: str,
@@ -83,25 +88,26 @@ class ExamTimetabling(csp.CSP):
 	) -> bool:
 		"""Courses with labs are all examined in one day with 2 slots
 		"""
-		return (not self.exams.has_lab[A] or (slot(a) != 2 and (day(a) != day(b) or slot(b) == (slot(a) + 2) % 3))) \
-			or (not self.exams.has_lab[B] or (slot(b) != 2 and (day(b) != day(a) or slot(a) == (slot(b) + 2) % 3)))
+		return (not ExamTimetabling.exams.has_lab[A] or (slot(a) != 2 and (day(a) != day(b) or slot(b) == (slot(a) + 2) % 3))) \
+			or (not ExamTimetabling.exams.has_lab[B] or (slot(b) != 2 and (day(b) != day(a) or slot(a) == (slot(b) + 2) % 3)))
 
 	@staticmethod
-	def day_attribute(attribute: str) -> Constraint:
+	def different_day(attribute: str) -> Constraint:
 		@conflict
-		def day_attribute_constraint(self,
+		def day_attribute_constraint(
 			A,
 			a,
 			B,
 			b,
 		) -> bool:
-			return day(a) != day(b) or self.exams[attribute][A] != self.exams[attribute][B]
+			return day(a) != day(b) or ExamTimetabling.exams[attribute][A] != ExamTimetabling.exams[attribute][B]  # type: ignore
 
 		return day_attribute_constraint
 
 
+	@staticmethod
 	@conflict
-	def is_hard_constraint(self,
+	def is_hard_constraint(
 		A: str,
 		a: int,
 		B: str,
@@ -112,8 +118,8 @@ class ExamTimetabling(csp.CSP):
 		Either at least one of the exams is easy, or
 		the exams are at least 2 days apart.
 		"""
-		return not self.exams.is_hard[A] \
-			or not self.exams.is_hard[B] or abs(day(a) - day(b)) >= 2
+		return not ExamTimetabling.exams.is_hard[A] \
+			or not ExamTimetabling.exams.is_hard[B] or abs(day(a) - day(b)) >= 2
 
 
 	def __init__(self, *,
@@ -121,7 +127,7 @@ class ExamTimetabling(csp.CSP):
 		num_days: int = 0,
 		num_slots: int = 0,
 	):
-		self.exams = pandas.read_csv(exams_file).rename(
+		ExamTimetabling.exams = pandas.read_csv(exams_file).rename(
 			columns = {
 				"Εξάμηνο": "semester",
 				"Μάθημα": "course",
@@ -132,15 +138,55 @@ class ExamTimetabling(csp.CSP):
 		).set_index("course")  # index exam table by course name
 
 		hours = list(range(num_days * num_slots))
+		courses = self.exams.index.to_list()
 
 		super().__init__(
-			variables = self.exams.course.to_list(),
+			variables = courses,
 			domains = UniformDict(hours),
-			neighbors = UniformDict(self.exams.course.to_list()),
+			neighbors = UniformDict(courses),
 			constraints = collective(
-				ExamTimetabling.day_attribute("semester"),
-				ExamTimetabling.day_attribute("teacher"),
-				self.has_lab_constraint,
-				self.is_hard_constraint,
+				ExamTimetabling.different_day("semester"),
+				ExamTimetabling.different_day("teacher"),
+				ExamTimetabling.has_lab_constraint,
+				ExamTimetabling.is_hard_constraint,
 			),
 		)
+
+
+	def to_pandas(self, assignment) -> pandas.DataFrame:
+		return ExamTimetabling.exams.assign(
+			day_and_slot = assignment,
+		).sort_values("day_and_slot")
+
+
+	def display(self, assignment):
+		print(self.to_pandas(assignment))
+
+
+if __name__ == "__main__":
+	filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)), "h3-data.csv")
+
+	problem = ExamTimetabling(
+		exams_file = filepath,
+		num_days = 21,
+		num_slots = 3,
+	)
+
+	for backtracking_method in [
+		csp.forward_checking,
+		csp.mac,
+	]:
+		problem.to_pandas(
+			csp.backtracking_search(
+				csp = problem,
+				select_unassigned_variable = csp.mrv,
+				order_domain_values = csp.lcv,
+				inference = backtracking_method,
+			)
+		).to_csv(filepath.replace(".csv", f".{backtracking_method.__name__}.csv"))
+
+	problem.to_pandas(
+		csp.min_conflicts(
+			csp = problem,
+		)
+	).to_csv(filepath.replace(".csv", f".{csp.min_conflicts.__name__}.csv"))
