@@ -13,6 +13,18 @@ import csp
 type Constraint = typing.Callable[..., bool]
 
 
+def read(exams_file: str) -> pandas.DataFrame:
+	return pandas.read_csv(exams_file).rename(
+			columns = {
+				"Εξάμηνο": "semester",
+				"Μάθημα": "course",
+				"Καθηγητής": "teacher",
+				"Δύσκολο (TRUE/FALSE)": "is_hard",
+				"Εργαστήριο (TRUE/FALSE)": "has_lab",
+			}  # rename silly greek keys (columns) to ASCII ones
+		).set_index("course")  # index exam table by course name
+
+
 def day(numerator: int,
 	denominator: int = 3,
 ) -> int:
@@ -89,7 +101,7 @@ class ExamTimetabling(csp.CSP):
 		"""Courses with labs are all examined in one day with 2 slots
 		"""
 		return (not ExamTimetabling.exams.has_lab[A] or (slot(a) != 2 and (day(a) != day(b) or slot(b) == (slot(a) + 2) % 3))) \
-			or (not ExamTimetabling.exams.has_lab[B] or (slot(b) != 2 and (day(b) != day(a) or slot(a) == (slot(b) + 2) % 3)))
+		   and (not ExamTimetabling.exams.has_lab[B] or (slot(b) != 2 and (day(b) != day(a) or slot(a) == (slot(b) + 2) % 3)))
 
 	@staticmethod
 	def different_day(attribute: str) -> Constraint:
@@ -127,15 +139,7 @@ class ExamTimetabling(csp.CSP):
 		num_days: int = 0,
 		num_slots: int = 0,
 	):
-		ExamTimetabling.exams = pandas.read_csv(exams_file).rename(
-			columns = {
-				"Εξάμηνο": "semester",
-				"Μάθημα": "course",
-				"Καθηγητής": "teacher",
-				"Δύσκολο (TRUE/FALSE)": "is_hard",
-				"Εργαστήριο (TRUE/FALSE)": "has_lab",
-			}  # rename silly greek keys (columns) to ASCII ones
-		).set_index("course")  # index exam table by course name
+		ExamTimetabling.exams = read(exams_file)
 
 		hours = list(range(num_days * num_slots))
 		courses = self.exams.index.to_list()
