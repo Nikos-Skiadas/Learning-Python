@@ -28,6 +28,7 @@
 \binoppenalty=10000
 \setlength{\columnsep}{0in} % Space between columns
 %\setlength{\columnseprule}{0.5pt} % Width of the vertical line (separator)
+\renewcommand{\labelenumi}{(\alph{enumi})}
 \end_preamble
 \use_default_options true
 \begin_modules
@@ -42,8 +43,8 @@ tabs-within-sections
 \end_modules
 \maintain_unincluded_children no
 \language english
-\language_package default
-\inputencoding auto-legacy
+\language_package auto
+\inputencoding auto-legacy-plain
 \fontencoding auto
 \font_roman "default" "default"
 \font_sans "default" "default"
@@ -61,7 +62,7 @@ tabs-within-sections
 \use_dash_ligatures true
 \graphics default
 \default_output_format default
-\output_sync 0
+\output_sync 1
 \bibtex_command biber
 \index_command default
 \float_placement H
@@ -144,6 +145,29 @@ tabs-within-sections
 \end_header
 
 \begin_body
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+setcounter{section}{4}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
 
 \begin_layout Solution
 \begin_inset space ~
@@ -1950,6 +1974,117 @@ False
 </row>
 </lyxtabular>
 
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $(\forall x)(\text{Student(}x)\wedge\text{Knows}(x,\text{python})\Rightarrow\text{Passes}(x,\text{artificial\_intelligence}))$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\text{Student}(x)\wedge(\forall y)(\text{Project}(y)\wedge\text{Course}(z)\wedge\text{IsProjectOf}(y,z)\wedge\text{HasDone}(x,y))\Rightarrow\text{Passes}(x,z))$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\neg$
+\end_inset
+
+Κουμπαράκης
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula 
+\begin{multline*}
+\forall x(\text{Student}(x)\wedge\\
+(\exists y)(\text{Student}(y)\wedge\text{IsFriendOf}(x,y)\wedge(\forall z)(\text{Project}(z)\wedge\text{IsProjectOf}(z,\text{artificial\_intelligence})\wedge\text{HasDone}(y,z)))\Rightarrow\\
+(\exists y)(\text{Student}(y)\wedge\text{IsFriendOf}(x,y)\wedge(\forall z)(\text{Project}(z)\wedge\text{IsProjectOf}(z,\text{artificial\_intelligence})\wedge\neg\text{HasDone}(y,z))))
+\end{multline*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
 \end_inset
 
 
