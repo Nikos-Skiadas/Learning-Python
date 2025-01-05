@@ -44,7 +44,7 @@ tabs-within-sections
 \maintain_unincluded_children no
 \language english
 \language_package auto
-\inputencoding auto-legacy-plain
+\inputencoding auto-legacy
 \fontencoding auto
 \font_roman "default" "default"
 \font_sans "default" "default"
@@ -1986,6 +1986,14 @@ False
 
 \end_layout
 
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
 \begin_layout Enumerate
 \begin_inset Formula $(\forall x)(\text{Student(}x)\wedge\text{Knows}(x,\text{python})\Rightarrow\text{Passes}(x,\text{artificial\_intelligence}))$
 \end_inset
@@ -2085,6 +2093,359 @@ False
 
 \begin_layout Enumerate
 \begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+\begin_inset CommandInset label
+LatexCommand label
+name "exer:5"
+
+\end_inset
+
+
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+Η έγκυρη πρόταση της άσκησης 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "exer:5"
+plural "false"
+caps "false"
+noprefix "false"
+nolink "false"
+
+\end_inset
+
+ είναι η
+\begin_inset Formula 
+\[
+(\forall x)P(x)\vee(\forall x)Q(x)\Rightarrow(\forall x)(P(x)\vee Q(x))
+\]
+
+\end_inset
+
+οπότε (θεώρημα)
+\begin_inset Formula 
+\[
+(\forall x)P(x)\vee(\forall x)Q(x)\models(\forall x)(P(x)\vee Q(x))
+\]
+
+\end_inset
+
+και θα χρησιμουποιήσουμε κανόνες συμπερασμού για να καταλήξουμε από το αριστερό μέλος στο δεξί.
+ Θα ξεκινήσουμε υποθέτωντας ότι 
+\begin_inset Formula $(\forall x)P(x)$
+\end_inset
+
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Για κάθε βασικό όρο 
+\begin_inset Formula $t$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+\dfrac{(\forall x)P(x)}{\text{substitute}(\{x/t\},P(x))}
+\]
+
+\end_inset
+
+δηλαδή,
+ για κάθε βασικό όρο 
+\begin_inset Formula $t$
+\end_inset
+
+,
+ 
+\begin_inset Formula $P(t)$
+\end_inset
+
+ είναι έγκυρη.
+\end_layout
+
+\begin_layout Enumerate
+Με εισαγωγή διάζευξης (και πάντα για κάθε βασικό τύπο 
+\begin_inset Formula $t$
+\end_inset
+
+),
+\begin_inset Formula 
+\[
+\dfrac{P(t)}{P(t)\vee Q(t)}
+\]
+
+\end_inset
+
+και άρα για κάθε αντικατάσταση,
+ 
+\begin_inset Formula $\text{substitute}(\{x/t\},P(t)\vee Q(t))$
+\end_inset
+
+ είναι έγκυρη.
+ Με τον κανόνα καθολικής γενίκευσης:
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Λείπει από τις διαφάνειες για κάποιο λόγο.
+ Μου το ανέφερε το 
+\family typewriter
+gpt-4o
+\family default
+ και το έψαξα εδώ:
+ 
+\family typewriter
+
+\begin_inset CommandInset href
+LatexCommand href
+target "https://en.wikipedia.org/wiki/Universal_generalization"
+literal "false"
+
+\end_inset
+
+
+\family default
+)
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+(\forall x)P(x)\vee Q(x)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+Σε κάθε περίπτωση θα χτίζουμε σταδιακά τον γενικό ενοποιητή,
+ ξεκινόντας πρώτα από τις σταθερές,
+ και έπειτα τις μεταβλητές,
+ ελπίζοντας ότι αυτό που μένει θα είναι ξεκάθαρο για το αν αποτελεί MGU.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $\{\}$
+\end_inset
+
+:
+ 
+\begin_inset Formula $P(x,F(y),A,w)$
+\end_inset
+
+ και 
+\begin_inset Formula $P(G(u),v,u,x)$
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $\{u/A\}$
+\end_inset
+
+:
+ 
+\begin_inset Formula $P(x,F(y),A,w)$
+\end_inset
+
+ και 
+\begin_inset Formula $P(G(A),v,A,x)$
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $\{u/A,w/x\}$
+\end_inset
+
+:
+ 
+\begin_inset Formula $P(x,F(y),A,x)$
+\end_inset
+
+ και 
+\begin_inset Formula $P(G(A),v,A,x)$
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+
+\begin_inset Formula $\{u/A,w/x,x/G(A),v/F(y)\}$
+\end_inset
+
+:
+ 
+\begin_inset Formula $P(G(A),F(y),A,G(A))$
+\end_inset
+
+ και 
+\begin_inset Formula $P(G(A),F(y),A,G(A))$
+\end_inset
+
+
+\begin_inset Newline newline
+\end_inset
+
+Όμως η
+\begin_inset Formula 
+\[
+\{u/A,w/x,x/G(A),v/F(y)\}
+\]
+
+\end_inset
+
+δεν είναι αντικατάσταση διότι η δεσμευμένη μεταβλητή 
+\begin_inset Formula $x$
+\end_inset
+
+ εμφανίζεται στην αντικατάσταση 
+\begin_inset Formula $\{w/x\}$
+\end_inset
+
+,
+ άρα δεν υπάρχει MGU.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+Θυμίζουμε ότι για ένα σύνολο 
+\begin_inset Formula $p_{1},\ldots,p_{n},q$
+\end_inset
+
+ ατομικών τύπων,
+ οι φράσεις Horn είναι της μορφής
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+Υπενθυμίζουμε πως
+\begin_inset Formula 
+\[
+\neg\bigwedge\nolimits_{i=1}^{n}p_{i}\vee q\equiv\bigwedge\nolimits_{i=1}^{n}p_{i}\Rightarrow q
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+q,\neg\bigwedge\nolimits_{i=1}^{n}p_{i}\vee q,\neg\bigwedge\nolimits_{i=1}^{n}p_{i}
+\]
+
 \end_inset
 
 
