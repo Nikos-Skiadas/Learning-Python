@@ -2451,5 +2451,254 @@ q,\neg\bigwedge\nolimits_{i=1}^{n}p_{i}\vee q,\neg\bigwedge\nolimits_{i=1}^{n}p_
 
 \end_layout
 
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\text{Beautiful}(\text{Helen})$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\text{Beautiful}(\text{John})$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\text{Rich}(\text{John})$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\text{Man}(x)\wedge\text{Woman}(y)\wedge\text{Beautiful}(y)\Rightarrow\text{Likes}(x,y)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\text{Rich}(x)\Rightarrow\text{Happy}(x)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset Formula 
+\[
+(\forall x)((\exists y)(P(x,y)\Rightarrow(\exists z)(Q(x,z)\Rightarrow(\exists w)R(x,w))))
+\]
+
+\end_inset
+
+Απαλοιφή συνεπαγωγών:
+\begin_inset Formula 
+\[
+(\forall x)((\exists y)(\neg P(x,y)\vee(\exists z)(\neg Q(x,z)\vee(\exists w)R(x,w))))
+\]
+
+\end_inset
+
+Οι αρνήσεις είναι ήδη μέσα.
+ Οι μεταβλητές των ποσοδεικτών είναι ήδη προτυποποιημένες (διαφορετικές για κάθε ποσοδείκτη) Απαλοιφή υπαρξιακών ποσοδεικτών με συναρτήσεις Skolem,
+ διότι όλοι είναι στην εμβέλεια του καθολικού ποσοδείκτη της 
+\begin_inset Formula $x$
+\end_inset
+
+ μεταβλητής:
+\begin_inset Formula 
+\[
+(\forall x)(\neg P(x,Y(x))\vee\neg Q(x,Z(x))\vee R(x,W(x)))
+\]
+
+\end_inset
+
+Απαλοιφή καθολικού ποσοδείκτη:
+\begin_inset Formula 
+\[
+\neg P(x,Y(x))\vee\neg Q(x,Z(x))\vee R(x,W(x))
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Παρατηρούμε ότι η παραπάνω πρόταση είναι ισοδύναμη με την
+\begin_inset Formula 
+\[
+P(x,Y(x))\Rightarrow(Q(x,Z(x))\Rightarrow R(x,W(x)))
+\]
+
+\end_inset
+
+Επαναεισάγοντας τον καθολικό ποσοδείκτη και αντικαθιστώντας τα σύμβολα Skolem με τον αντίστοιχο υπαρξιακό ποσοδείκτη στην εμβέλεια παντα του καθολικού που υπονοούν τα εν λόγω σύμβολα,
+ καταλήγουμε στην
+\begin_inset Formula 
+\[
+(\forall x)(\exists y)(\exists z)(\exists w)(P(x,y)\Rightarrow(Q(x,z)\Rightarrow R(x,w)))
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+Γεγονότα (σχέσεις):
+\begin_inset Formula 
+\begin{gather*}
+\text{TeachesCourse}(\text{Manolis},\text{AI})\\
+\text{TeachesCourse}(\text{DataStructures},\text{AI})\\
+\text{TeachesCourse}(\text{Yiannis},\text{AI})\\
+\text{TeachesCourse}(\text{Mema},\text{AI})\\
+\text{CourseSemester}(\text{DataStructures},1)\\
+\text{CourseSemester}(\text{AI},3)\\
+\text{CourseSemester}(\text{DB},4)\\
+\text{CourseSemester}(\text{SystemProgramming},6)
+\end{gather*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+Κανόνες:
+\begin_inset Formula 
+\[
+\text{TeachesCourse}(x,y)\wedge\text{\text{CourseSemester}}(y,z)=\text{TeachesSemester}(x,z)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Solution
+Ερώτημα:
+\begin_inset Formula 
+\[
+\text{TeachesSemester}(\text{Manolis},z)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+H forward chaning μέθοδος μπορεί να δώσει μία απάντηση στο ερώτημα.
+\end_layout
+
 \end_body
 \end_document
