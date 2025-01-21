@@ -4,7 +4,7 @@ from copy import copy
 from math import sqrt
 
 class complex:
-	def _init_(self,
+	def __init__(self,
 		real: float = 0
 		imag: float = 0
 	):
