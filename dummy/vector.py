@@ -2,45 +2,40 @@ from __future__ import annotations
 
 
 import math
+import typing
 
 
-class Vector:
-
-    # MAGIC METHODS
-
-    def __init__(self, components: list[float]):
-        for x in components:
-            if not isinstance(x, float):
-                raise TypeError("Not all given components are floats")
-
-        self.components = components
-
-    def __repr__(self) -> str:
-        return str(self.components)
-
-    def __len__(self) -> int:
-        return len(self.components)
+class Vector(tuple[float, ...]):
 
     def __add__(self, other: Vector) -> Vector:
-        return Vector([x + y for x, y in zip(self.components, other.components)])
+        return Vector([x + y for x, y in zip(self, other)])
 
     def __sub__(self, other: Vector) -> Vector:
-        return Vector([x - y for x, y in zip(self.components, other.components)])
+        return Vector([x - y for x, y in zip(self, other)])
 
     def __mul__(self, times: float) -> Vector:
-        return Vector([x * times for x in self.components])
+        return Vector([x * times for x in self])
 
     def __rmul__(self, times: float) -> Vector:
         return self * times
 
     def __truediv__(self, times: float) -> Vector:
-        return Vector([x / times for x in self.components])
+        return Vector([x / times for x in self])
 
     def __matmul__(self, other: Vector) -> float:  # corresponds to "@"
-        return sum(x * y for x, y in zip(self.components, other.components))
+        return sum(x * y for x, y in zip(self, other))
 
     def __abs__(self) -> float:
         return math.sqrt(self @ self)
+
+
+    @property
+    def dim(self) -> int:
+        return len(self)
+
+    @property
+    def norm(self) -> float:
+        return abs(self)
 
 
 if __name__ == "__main__":
@@ -70,8 +65,8 @@ if __name__ == "__main__":
     print(f"a * y: {a * y}")
     print(f"x * a: {x * a}")
     print()
-    print(f"||x||: {abs(x)}")
-    print(f"||y||: {abs(y)}")
+    print(f"||x||: {abs(x)} == {x.norm}")
+    print(f"||y||: {abs(y)} == {y.norm}")
     print()
-    print(f"dim x: {len(x)}")
-    print(f"dim y: {len(y)}")
+    print(f"dim x: {len(x)} == {x.dim}")
+    print(f"dim y: {len(y)} == {y.dim}")
