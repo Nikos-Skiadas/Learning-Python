@@ -45,40 +45,34 @@ class Complex:
         )
 
     def __truediv__(self, other: Complex) -> Complex:
-        # Correct formula for complex division
-        # https://courses.lumenlearning.com/waymakercollegealgebra/chapter/divide-complex-numbers/
-        denom = other.real ** 2 + other.imag ** 2
-        if denom == 0:
-            raise ZeroDivisionError("Cannot divide by zero in complex division.")
+        numer = other @ self
+        denom = self.norm
+
         return Complex(
-            (self.real * other.real + self.imag * other.imag) / denom,
-            (self.imag * other.real - self.real * other.imag) / denom,
+            numer.real / denom,
+            numer.imag / denom,
         )
 
-    def __invert__(self) -> Complex:
+    def __matmul__(self, other: Complex) -> Complex:
+        return self.conjugate() * other
+
+    def __abs__(self) -> float:
+        return sqrt(self.norm)
+
+
+    def conjugate(self) -> Complex:
         # Fix for the conjugate method
         return Complex(
             +self.real,
             -self.imag,
         )
-
-    def __matmul__(self, other: Complex) -> float:
-        return((~self) * other).real
-        return sqrt(
-            self.real * other.real +
-            self.imag * other.imag
-        )
-
-    def abs(self) -> float:
-        return self @ self
-        return sqrt(
-            self.real ** 2 +
-            self.imag ** 2
-        )
+    @property
+    def norm(self) -> float:
+        return (self @ self).real  # self.real ** 2 + self.imag ** 2
 
 
 Complex.zero = Complex()
 
 
-να φτιαξω μια αντικειμενο που να ειναι vector απο n πραγματικουσ αριθμους, προσθεση απο vectors, αφαιρεση προσημο, εσωτερικο γινομενο, 
-και μια δευτερη κλαση που λεγεται matrix που να δεχεται πραξεις για πινακες, προσθεση, trace, πολλαπλασιαμο κτλ
+# να φτιαξω μια αντικειμενο που να ειναι vector απο n πραγματικουσ αριθμους, προσθεση απο vectors, αφαιρεση προσημο, εσωτερικο γινομενο,
+# και μια δευτερη κλαση που λεγεται matrix που να δεχεται πραξεις για πινακες, προσθεση, trace, πολλαπλασιαμο κτλ
