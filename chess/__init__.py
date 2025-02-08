@@ -11,8 +11,17 @@ class Game:
 
 class Square(tuple[int, int]):
 
+	@classmethod
+	def from_notation(cls, notation: str) -> Square:
+		file, rank = notation
+
+		#TODO: Limit squares that can be made.
+
+		return Square([int(rank) - 1, ord(file) - ord("a")])
+
+
 	def __repr__(self) -> str:
-		...
+		return self.file + str(self.rank)
 
 
 	@property
