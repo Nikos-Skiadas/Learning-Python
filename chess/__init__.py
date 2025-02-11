@@ -41,7 +41,7 @@ class Square(tuple[int, int]):
 		return chr(self[1] + ord("a"))
 
 	@property
-	def black(self) -> bool:
+	def is_black(self) -> bool:
 		return (self[0] + self[1]) % 2 == 0
 
 
@@ -97,6 +97,26 @@ class Piece:
 				continue
 
 		return positions
+
+
+"""HOMEWORK FOR NEXT WEEK:
+
+EASY:
+-	Fill values for all other piece classes apart from `King`.
+-	Fill in the `legal_moves` of `King`.
+
+HARD:
+-	How do you handle the value of `King`? Mathematically speaking, the king's value is infinite.
+-	What is the major difference between `{Bishop, Rook, Queen}` and `{Knight, King}` in how they move?
+	NOTE: `Ranged` vs `Melee` pieces
+-	What could be the `legal_moves` of other pieces?
+-	What could be the `legal_positions` of other pieces? The `Ranged` ones in particular?
+
+HINTS:
+-	Use inheritance to its fullest!
+-	Feel free to redisgin the classes, and possibly add new ones!
+"""
+
 
 
 class Pawn(Piece):
