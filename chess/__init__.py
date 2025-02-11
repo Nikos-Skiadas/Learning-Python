@@ -80,7 +80,13 @@ class Vector(tuple[int, int]):
 
 class Piece:
 
-	...
+	def __init__(self, color: str, position: str):
+		if color not in {"white", "black"}:
+			raise ValueError("Piece must be either white or black")
+		
+		self.color = color
+		self.position = Square.fromnotation(position)
+
 
 
 
