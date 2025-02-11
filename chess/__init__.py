@@ -7,18 +7,16 @@ import typing
 class Square(tuple[int, int]):
 
 	def __new__(cls,
-		file: int,
 		rank: int,
+		file: int,
 	) -> Square:
-		square = super().__new__(cls, (file, rank))
+		square = super().__new__(cls, (rank, file))
 
 		# Check if tuple of integers is within chess bounds:
 		if not "a" <= square.file <= "h" or not "1" <= square.rank <= "8":
-			raise IndexError(f"Invalid square {square}")
+			raise IndexError(f"invalid square {square}")
 
 		return square
-
-
 
 	def __repr__(self) -> str:
 		return self.file + str(self.rank)
@@ -28,10 +26,10 @@ class Square(tuple[int, int]):
 	def fromnotation(cls, notation: str) -> Square:
 		file, rank = notation
 
-		if not "a" <= file <= "h" or not "1" <= rank <= "8":
-			raise IndexError(f"Invalid square notation: {notation}")
-
-		return super().__new__(cls, (int(rank) - 1, ord(file) - ord("a")))
+		return cls(
+			int(rank) - 1,
+			ord(file) - ord("a"),
+		)
 
 
 	@property
