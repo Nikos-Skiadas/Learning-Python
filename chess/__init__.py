@@ -67,28 +67,79 @@ class Vector(tuple[int, int]):
 		return super().__new__(cls, (file_diff, rank_diff))
 
 
-
-
-
-
-
-
-
-
-
-
-
 class Piece:
 
+	value: int
+	legal_moves: set[Vector]
+
+
 	def __init__(self, color: str, position: str):
-		if color not in {"white", "black"}:
+		color = color.lower()
+
+		if color not in {
+			"white",
+			"black",
+		}:
 			raise ValueError("Piece must be either white or black")
-		
-		self.color = color
+
+		self.is_black = color == "black"
 		self.position = Square.fromnotation(position)
 
 
+	def legal_positions(self) -> set[Square]:
+		positions = set()
 
+		for legal_move in self.legal_moves:
+			try:
+				positions.add(self.position + legal_move)
+
+			except IndexError:
+				continue
+
+		return positions
+
+
+class Pawn(Piece):
+
+	...
+
+
+class Rook(Piece):
+
+	...
+
+
+class Bishop(Piece):
+
+	...
+
+
+class Knight(Piece):
+
+	value = 3
+	legal_moves = {
+		Vector(+1, +2),
+		Vector(+2, +1),
+		Vector(+2, -1),
+		Vector(+1, -2),
+		Vector(-1, -2),
+		Vector(-2, -1),
+		Vector(-2, +1),
+		Vector(-1, +2),
+	}
+
+
+class Queen(Piece):
+
+	...
+
+
+class King(Piece):
+
+
+#	TODO: What shall we use for value of king?
+
+	...
 
 
 
