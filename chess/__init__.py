@@ -78,6 +78,20 @@ class Vector(tuple[int, int]):
 
 
 
+class Piece:
+
+	...
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -137,11 +151,6 @@ class Board(list[Square]):
 
 
 class Player:
-
-	...
-
-
-class Piece:
 
 	...
 
