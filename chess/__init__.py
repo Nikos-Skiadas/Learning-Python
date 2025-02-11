@@ -15,7 +15,8 @@ class Square(tuple[int, int]):
 	def from_notation(cls, notation: str) -> Square:
 		file, rank = notation
 
-		#TODO: Limit squares that can be made.
+		if file < 'a' or file > 'h' or rank < '1' or rank > '8':
+			raise ValueError(f"Invalid square notation: {notation}")
 
 		return Square([int(rank) - 1, ord(file) - ord("a")])
 
