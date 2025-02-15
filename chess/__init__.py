@@ -212,12 +212,7 @@ class Queen(Piece):
 
 	value = 9
 
-	legal_moves = {
-		*{Vectors.N * step for step in range(1, 8)}, *{Vectors.NE * step for step in range(1, 8)},
-		*{Vectors.S * step for step in range(1, 8)}, *{Vectors.SE * step for step in range(1, 8)},
-		*{Vectors.E * step for step in range(1, 8)}, *{Vectors.SW * step for step in range(1, 8)},
-		*{Vectors.W * step for step in range(1, 8)}, *{Vectors.NW * step for step in range(1, 8)},
-	}
+	legal_moves = Rook.legal_moves | Bishop.legal_moves
 
 
 class King(Piece):
