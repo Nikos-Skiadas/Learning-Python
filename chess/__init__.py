@@ -121,18 +121,27 @@ HINTS:
 
 class Pawn(Piece):
 
-	...
-
+    value = 1
+    legal_moves = {
+        Vector(+1, 0), Vector(+1, +1), Vector(+1, -1),
+        Vector(-1, 0), Vector(-1, +1), Vector(-1, -1),
+    }
 
 class Rook(Piece):
 
-	...
-
+    value = 5
+    legal_moves = {
+        {Vector(r, 0) for r in range(-7, 8) if r != 0},
+        {Vector(0, f) for f in range(-7, 8) if f != 0},
+    }
 
 class Bishop(Piece):
 
-	...
-
+    value = 3
+    legal_moves = {
+        {Vector(d, d) for d in range(-7, 7) if d != 0},
+        {Vector(d, -d) for d in range(-7, 7) if d != 0},
+    }
 
 class Knight(Piece):
 
@@ -151,17 +160,24 @@ class Knight(Piece):
 
 class Queen(Piece):
 
-	...
+	value = 9
+
+    legal_moves = {
+        {Vector(r, 0) for r in range(-7, 7) if r != 0},
+        {Vector(0, f) for f in range(-7, 7) if f != 0},
+        {Vector(d, d) for d in range(-7, 7) if d != 0},
+        {Vector(d, -d) for d in range(-7, 7) if d != 0},
+    }
 
 
 class King(Piece):
 
+    legal_moves = {
+        Vector(+1, 0), Vector(-1, 0), Vector(0, +1), Vector(0, -1),
+        Vector(+1, +1), Vector(+1, -1), Vector(-1, +1), Vector(-1, -1),
+    }
 
-#	TODO: What shall we use for value of king?
-
-	...
-
-
+# Python allows infinity like that: value=float("inf") or value as 0
 
 
 
