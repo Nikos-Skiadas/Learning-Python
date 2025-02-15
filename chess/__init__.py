@@ -198,7 +198,7 @@ class Bishop(Ranged):
 
 class Knight(Melee):
 
-	value = 3
+	value = Bishop.value
 
 	legal_steps = {
 		straight + diagonal for straight, diagonal in itertools.product(
@@ -221,7 +221,7 @@ class Knight(Melee):
 
 class Queen(Ranged):
 
-	value = 9
+	value = Rook.value + Bishop.value + Pawn.value
 
 	legal_steps = Rook.legal_steps | Bishop.legal_steps
 
