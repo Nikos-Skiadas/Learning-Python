@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 
+import itertools
 import enum
+import re
 
 
 class Square(tuple[int, int]):
@@ -109,10 +111,27 @@ class Vectors(enum.Enum, Vector):
 	N2W = N + NW  # knight
 
 
+	def __repr__(self) -> str:
+		symbols = {
+			self.N.name: "▲",  # king queen rook pawn(white)
+			self.E.name: "▶",  # king queen rook
+			self.S.name: "▼",  # king queen rook pawn(black)
+			self.W.name: "◀",  # king queen rook
+		}
+
+		parts = re.compile(r"([NSWE])(\d*)").findall(self.name)  # Extract movement letters and optional numbers
+		representation = ""
+
+		for direction, count in parts:
+			representation += symbols[direction] * (int(count) if count else 1)
+
+		return representation
+
+
 class Piece:
 
 	value: int
-	legal_moves: set[Vector]
+	legal_steps: set[Vector]
 
 
 	def __init__(self, color: str, position: str):
@@ -131,9 +150,9 @@ class Piece:
 	def legal_positions(self) -> set[Square]:
 		positions = set()
 
-		for legal_move in self.legal_moves:
+		for legal_step in self.legal_steps:
 			try:
-				positions.add(self.position + legal_move)
+				positions.add(self.position + legal_step)
 
 			except IndexError:
 				continue
@@ -141,94 +160,116 @@ class Piece:
 		return positions
 
 
-"""HOMEWORK FOR NEXT WEEK:
+class Melee(Piece):
 
-EASY:
--	Fill values for all other piece classes apart from `King`.
--	Fill in the `legal_moves` of `King`.
+	def legal_positions(self) -> set[Square]:
+		positions = set()
 
-HARD:
--	How do you handle the value of `King`? Mathematically speaking, the king's value is infinite.
--	What is the major difference between `{Bishop, Rook, Queen}` and `{Knight, King}` in how they move?
-	NOTE: `Ranged` vs `Melee` pieces
--	What could be the `legal_moves` of other pieces?
--	What could be the `legal_positions` of other pieces? The `Ranged` ones in particular?
+		for legal_step in self.legal_steps:
+			try:
+				positions.add(self.position + legal_step)
 
-HINTS:
--	Use inheritance to its fullest!
--	Feel free to redisgin the classes, and possibly add new ones!
-"""
+			except IndexError:
+				continue
 
+		return positions
+
+
+class Ranged(Piece):
+
+	def legal_positions(self) -> set[Square]:
+		positions = set()
+
+		for legal_step in self.legal_steps:
+			for leap in range(1, 8):
+				try:
+					positions.add(self.position + legal_step * leap)
+
+				except IndexError:
+					break
+
+		return positions
 
 
 class Pawn(Piece):
 
 	value = 1
 
-	legal_moves = {
+	legal_steps = {
 		Vectors.N, Vectors.NE, Vectors.NW, Vectors.N2,
 		Vectors.S, Vectors.SE, Vectors.SW, Vectors.S2,
 	}
 
-class Rook(Piece):
+
+class Rook(Ranged):
 
 	value = 5
 
-	legal_moves = {
-		*{Vectors.N * step for step in range(1, 8)},
-		*{Vectors.S * step for step in range(1, 8)},
-		*{Vectors.E * step for step in range(1, 8)},
-		*{Vectors.W * step for step in range(1, 8)},
+	legal_steps = {
+		Vectors.N,
+		Vectors.S,
+		Vectors.E,
+		Vectors.W,
 	}
 
-class Bishop(Piece):
+
+class Bishop(Ranged):
 
 	value = 3
 
-	legal_moves = {
-		*{Vectors.NE * step for step in range(1, 8)},
-		*{Vectors.SE * step for step in range(1, 8)},
-		*{Vectors.SW * step for step in range(1, 8)},
-		*{Vectors.NW * step for step in range(1, 8)},
+	legal_steps = {
+		one + two for one, two in itertools.product(
+			Rook.legal_steps,
+			Rook.legal_steps,
+		)
 	}
 
-class Knight(Piece):
+#	legal_steps = {
+#		Vectors.NE,
+#		Vectors.SE,
+#		Vectors.SW,
+#		Vectors.NW,
+#	}
+
+
+class Knight(Melee):
 
 	value = 3
 
-	legal_moves = {
-		Vectors.N2E,
-		Vectors.NE2,
-		Vectors.SE2,
-		Vectors.S2E,
-		Vectors.S2W,
-		Vectors.SW2,
-		Vectors.NW2,
-		Vectors.N2W,
+	legal_steps = {
+		straight + diagonal for straight, diagonal in itertools.product(
+			Rook.legal_steps,
+			Bishop.legal_steps,
+		)
 	}
 
+#	legal_steps = {
+#		Vectors.N2E,
+#		Vectors.NE2,
+#		Vectors.SE2,
+#		Vectors.S2E,
+#		Vectors.S2W,
+#		Vectors.SW2,
+#		Vectors.NW2,
+#		Vectors.N2W,
+#	}
 
-class Queen(Piece):
+
+class Queen(Ranged):
 
 	value = 9
 
-	legal_moves = Rook.legal_moves | Bishop.legal_moves
+	legal_steps = Rook.legal_steps | Bishop.legal_steps
 
 
-class King(Piece):
+class King(Melee):
 
 	value = 0  # TODO: figure out what to do with this value
 
-	legal_moves = {
-		Vectors.N, Vectors.NE,
-		Vectors.S, Vectors.SE,
-		Vectors.E, Vectors.SW,
-		Vectors.W, Vectors.NW,
-
+	legal_steps = Queen.legal_steps | {
 		Vectors.E2,
 		Vectors.W2,
 	}
-
 
 
 
