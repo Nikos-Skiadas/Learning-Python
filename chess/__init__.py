@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-import typing
+import enum
 
 
 class Square(tuple[int, int]):
@@ -67,6 +67,48 @@ class Vector(tuple[int, int]):
 		return super().__new__(cls, (file_diff, rank_diff))
 
 
+	def __add__(self, other: Vector) -> Vector:
+		return Vector(
+			self[0] + other[0],
+			self[1] + other[1],
+		)
+
+	def __mul__(self, other: int) -> Vector:
+		return Vector(
+			self[0] * other,
+			self[1] * other,
+		)
+
+
+class Vectors(enum.Enum, Vector):
+
+	N = Vector(+1,  0)  # king queen rook pawn(white)
+	E = Vector(-1,  0)  # king queen rook
+	S = Vector( 0, +1)  # king queen rook pawn(black)
+	W = Vector( 0, -1)  # king queen rook
+
+	N2 = N * 2  # pawn(white leap)
+	S2 = S * 2  # pawn(black leap)
+	E2 = E * 2  # king(castle)
+	W2 = W * 2  # king(castle)
+	E4 = E * 4  # rook(castle)
+	W3 = W * 3  # rook(castle)
+
+	NE = N + E  # queen bishop pawn(white capture)
+	SE = S + E  # queen bishop pawn(black capture)
+	SW = S + W  # queen bishop pawn(black capture)
+	NW = N + W  # queen bishop pawn(white capture)
+
+	N2E = N + NE  # knight
+	NE2 = NE + E  # knight
+	SE2 = SE + E  # knight
+	S2E = S + SE  # knight
+	S2W = S + SW  # knight
+	SW2 = SW + W  # knight
+	NW2 = NW + W  # knight
+	N2W = N + NW  # knight
+
+
 class Piece:
 
 	value: int
@@ -121,40 +163,48 @@ HINTS:
 
 class Pawn(Piece):
 
-    value = 1
-    legal_moves = {
-        Vector(+1, 0), Vector(+1, +1), Vector(+1, -1),
-        Vector(-1, 0), Vector(-1, +1), Vector(-1, -1),
-    }
+	value = 1
+
+	legal_moves = {
+		Vectors.N, Vectors.NE, Vectors.NW, Vectors.N2,
+		Vectors.S, Vectors.SE, Vectors.SW, Vectors.S2,
+	}
 
 class Rook(Piece):
 
-    value = 5
-    legal_moves = {
-        {Vector(r, 0) for r in range(-7, 8) if r != 0},
-        {Vector(0, f) for f in range(-7, 8) if f != 0},
-    }
+	value = 5
+
+	legal_moves = {
+		*{Vectors.N * step for step in range(1, 8)},
+		*{Vectors.S * step for step in range(1, 8)},
+		*{Vectors.E * step for step in range(1, 8)},
+		*{Vectors.W * step for step in range(1, 8)},
+	}
 
 class Bishop(Piece):
 
-    value = 3
-    legal_moves = {
-        {Vector(d, d) for d in range(-7, 7) if d != 0},
-        {Vector(d, -d) for d in range(-7, 7) if d != 0},
-    }
+	value = 3
+
+	legal_moves = {
+		*{Vectors.NE * step for step in range(1, 8)},
+		*{Vectors.SE * step for step in range(1, 8)},
+		*{Vectors.SW * step for step in range(1, 8)},
+		*{Vectors.NW * step for step in range(1, 8)},
+	}
 
 class Knight(Piece):
 
 	value = 3
+
 	legal_moves = {
-		Vector(+1, +2),
-		Vector(+2, +1),
-		Vector(+2, -1),
-		Vector(+1, -2),
-		Vector(-1, -2),
-		Vector(-2, -1),
-		Vector(-2, +1),
-		Vector(-1, +2),
+		Vectors.N2E,
+		Vectors.NE2,
+		Vectors.SE2,
+		Vectors.S2E,
+		Vectors.S2W,
+		Vectors.SW2,
+		Vectors.NW2,
+		Vectors.N2W,
 	}
 
 
@@ -162,22 +212,24 @@ class Queen(Piece):
 
 	value = 9
 
-    legal_moves = {
-        {Vector(r, 0) for r in range(-7, 7) if r != 0},
-        {Vector(0, f) for f in range(-7, 7) if f != 0},
-        {Vector(d, d) for d in range(-7, 7) if d != 0},
-        {Vector(d, -d) for d in range(-7, 7) if d != 0},
-    }
+	legal_moves = {
+		*{Vectors.N * step for step in range(1, 8)}, *{Vectors.NE * step for step in range(1, 8)},
+		*{Vectors.S * step for step in range(1, 8)}, *{Vectors.SE * step for step in range(1, 8)},
+		*{Vectors.E * step for step in range(1, 8)}, *{Vectors.SW * step for step in range(1, 8)},
+		*{Vectors.W * step for step in range(1, 8)}, *{Vectors.NW * step for step in range(1, 8)},
+	}
 
 
 class King(Piece):
 
-    legal_moves = {
-        Vector(+1, 0), Vector(-1, 0), Vector(0, +1), Vector(0, -1),
-        Vector(+1, +1), Vector(+1, -1), Vector(-1, +1), Vector(-1, -1),
-    }
+	value = 1000
 
-# Python allows infinity like that: value=float("inf") or value as 0
+	legal_moves = {
+		Vectors.N, Vectors.NE,
+		Vectors.S, Vectors.SE,
+		Vectors.E, Vectors.SW,
+		Vectors.W, Vectors.NW,
+	}
 
 
 
