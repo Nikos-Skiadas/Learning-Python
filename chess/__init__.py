@@ -82,50 +82,34 @@ class Vector(tuple[int, int]):
 		)
 
 
-class Vectors(enum.Enum, Vector):
+class Vectors(Vector, enum.Enum):
 
-	N = Vector(+1,  0)  # king queen rook pawn(white)
-	E = Vector(-1,  0)  # king queen rook
-	S = Vector( 0, +1)  # king queen rook pawn(black)
-	W = Vector( 0, -1)  # king queen rook
+	O = Vector( 0,  0)  # type: ignore
+	N = Vector(+1,  0)  # type: ignore  # king queen rook pawn(white)
+	S = Vector(-1,  0)  # type: ignore  # king queen rook
+	E = Vector( 0, +1)  # type: ignore  # king queen rook pawn(black)
+	W = Vector( 0, -1)  # type: ignore  # king queen rook
 
-	N2 = N * 2  # pawn(white leap)
-	S2 = S * 2  # pawn(black leap)
-	E2 = E * 2  # king(castle)
-	W2 = W * 2  # king(castle)
-	E4 = E * 4  # rook(castle)
-	W3 = W * 3  # rook(castle)
+	N2 = N * 2  # type: ignore  # pawn(white leap)
+	S2 = S * 2  # type: ignore  # pawn(black leap)
+	E2 = E * 2  # type: ignore  # king(castle)
+	W2 = W * 2  # type: ignore  # king(castle)
+	E4 = E * 4  # type: ignore  # rook(castle)
+	W3 = W * 3  # type: ignore  # rook(castle)
 
-	NE = N + E  # queen bishop pawn(white capture)
-	SE = S + E  # queen bishop pawn(black capture)
-	SW = S + W  # queen bishop pawn(black capture)
-	NW = N + W  # queen bishop pawn(white capture)
+	NE = N + E  # type: ignore  # queen bishop pawn(white capture)
+	SE = S + E  # type: ignore  # queen bishop pawn(black capture)
+	SW = S + W  # type: ignore  # queen bishop pawn(black capture)
+	NW = N + W  # type: ignore  # queen bishop pawn(white capture)
 
-	N2E = N + NE  # knight
-	NE2 = NE + E  # knight
-	SE2 = SE + E  # knight
-	S2E = S + SE  # knight
-	S2W = S + SW  # knight
-	SW2 = SW + W  # knight
-	NW2 = NW + W  # knight
-	N2W = N + NW  # knight
-
-
-	def __repr__(self) -> str:
-		symbols = {
-			self.N.name: "▲",  # king queen rook pawn(white)
-			self.E.name: "▶",  # king queen rook
-			self.S.name: "▼",  # king queen rook pawn(black)
-			self.W.name: "◀",  # king queen rook
-		}
-
-		parts = re.compile(r"([NSWE])(\d*)").findall(self.name)  # Extract movement letters and optional numbers
-		representation = ""
-
-		for direction, count in parts:
-			representation += symbols[direction] * (int(count) if count else 1)
-
-		return representation
+	N2E = N + NE  # type: ignore  # knight
+	NE2 = NE + E  # type: ignore  # knight
+	SE2 = SE + E  # type: ignore  # knight
+	S2E = S + SE  # type: ignore  # knight
+	S2W = S + SW  # type: ignore  # knight
+	SW2 = SW + W  # type: ignore  # knight
+	NW2 = NW + W  # type: ignore  # knight
+	N2W = N + NW  # type: ignore  # knight
 
 
 class Piece:
@@ -145,19 +129,6 @@ class Piece:
 
 		self.is_black = color == "black"
 		self.position = Square.fromnotation(position)
-
-
-	def legal_positions(self) -> set[Square]:
-		positions = set()
-
-		for legal_step in self.legal_steps:
-			try:
-				positions.add(self.position + legal_step)
-
-			except IndexError:
-				continue
-
-		return positions
 
 
 class Melee(Piece):
@@ -196,8 +167,8 @@ class Pawn(Piece):
 	value = 1
 
 	legal_steps = {
-		Vectors.N, Vectors.NE, Vectors.NW, Vectors.N2,
-		Vectors.S, Vectors.SE, Vectors.SW, Vectors.S2,
+		Vectors.N.value, Vectors.NE.value, Vectors.NW.value, Vectors.N2.value,
+		Vectors.S.value, Vectors.SE.value, Vectors.SW.value, Vectors.S2.value,
 	}
 
 
@@ -206,10 +177,10 @@ class Rook(Ranged):
 	value = 5
 
 	legal_steps = {
-		Vectors.N,
-		Vectors.S,
-		Vectors.E,
-		Vectors.W,
+		Vectors.N.value,
+		Vectors.S.value,
+		Vectors.E.value,
+		Vectors.W.value,
 	}
 
 
@@ -218,18 +189,11 @@ class Bishop(Ranged):
 	value = 3
 
 	legal_steps = {
-		one + two for one, two in itertools.product(
-			Rook.legal_steps,
-			Rook.legal_steps,
-		)
+		Vectors.NE.value,
+		Vectors.SE.value,
+		Vectors.SW.value,
+		Vectors.NW.value,
 	}
-
-#	legal_steps = {
-#		Vectors.NE,
-#		Vectors.SE,
-#		Vectors.SW,
-#		Vectors.NW,
-#	}
 
 
 class Knight(Melee):
@@ -241,17 +205,17 @@ class Knight(Melee):
 			Rook.legal_steps,
 			Bishop.legal_steps,
 		)
-	}
+	} - Rook.legal_steps
 
 #	legal_steps = {
-#		Vectors.N2E,
-#		Vectors.NE2,
-#		Vectors.SE2,
-#		Vectors.S2E,
-#		Vectors.S2W,
-#		Vectors.SW2,
-#		Vectors.NW2,
-#		Vectors.N2W,
+#		Vectors.N2E.value,
+#		Vectors.NE2.value,
+#		Vectors.SE2.value,
+#		Vectors.S2E.value,
+#		Vectors.S2W.value,
+#		Vectors.SW2.value,
+#		Vectors.NW2.value,
+#		Vectors.N2W.value,
 #	}
 
 
@@ -267,8 +231,8 @@ class King(Melee):
 	value = 0  # TODO: figure out what to do with this value
 
 	legal_steps = Queen.legal_steps | {
-		Vectors.E2,
-		Vectors.W2,
+		Vectors.E2.value,
+		Vectors.W2.value,
 	}
 
 
