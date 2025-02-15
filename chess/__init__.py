@@ -217,13 +217,16 @@ class Queen(Piece):
 
 class King(Piece):
 
-	value = 1000
+	value = 0  # TODO: figure out what to do with this value
 
 	legal_moves = {
 		Vectors.N, Vectors.NE,
 		Vectors.S, Vectors.SE,
 		Vectors.E, Vectors.SW,
 		Vectors.W, Vectors.NW,
+
+		Vectors.E2,
+		Vectors.W2,
 	}
 
 
