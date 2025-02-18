@@ -112,23 +112,6 @@ class Vectors(Vector, enum.Enum):
 	N2W = N + NW  # type: ignore  # knight
 
 
-"""
-HOMEWORK:
--	Understand new code:
-	-	Have GPT explain various parts you do not fully understand or remember.
-	-	Modify stuff to your own liking.
--	Notice that unlike all other pieces, `Pawn` is neither a `Melee` or a `Ranged`:
-	-	Do you understan why?
-	-	If so, remember that both `Melee` and `Ranged` implement `legal_positions`, thus that `Pawn` also requires such a method.
-	-	The problem is that pawns capture differently to how they move.
-
-NOTE: THis is a big feature for the chess engine. Do not worry if you do not figure out all the bits. You many need to implement other parts of the chess engine here.
-
-BONUS: If that is done, perhaps other pieces can upgrade their `legal_positions` depending on obstacles like other pieces?
-"""
-
-
-
 class Piece:
 
 	value: int
@@ -281,77 +264,21 @@ class King(Melee):
 #	}
 
 
+"""HOMEWORK: CONTEXT
+
+- We need a `Board` to connect all pieces and squares together. How?
+- Perhaps a board is a list of lists of squares?
+- Expand the `__init__` method below to perhaps initialize custom boards as well?
+- Can we modiify the board? What is the easierst way? Lookup magic methods :
+	`__setitem__`,
+	`__getitem__`,
+	`__delitem__`. (optionally)
+- Feel free to implement how these methods work and are called.
+- Lets not forget that we are here to play chess.
+"""
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-class Game:
+class Board:
 
 	def __init__(self):
-		self.board = Board()
-
-		self.history = History()
-
-		self.white = Player()
-		self.black = Player()
-
-
-class Board(list[Square]):
-
-	...
-
-
-class Player:
-
-	...
-
-
-class History:
-
-	...
-
-
-class Move:
-
-	...
+		self.pieces: list[list[Piece | None]]
