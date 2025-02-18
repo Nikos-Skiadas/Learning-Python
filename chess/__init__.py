@@ -144,18 +144,23 @@ class Piece:
 		}:
 			raise ValueError("Piece must be either white or black")
 
-		self.is_black = color == "black"
+		self.color = color
 		self.position = Square.fromnotation(position)
 
 
 class Melee(Piece):
 
-	def legal_positions(self) -> set[Square]:
+	def legal_positions(self, friends: set[Square], foes: set[Square]) -> set[Square]:
 		positions = set()
 
 		for legal_step in self.legal_steps:
 			try:
-				positions.add(self.position + legal_step)
+				next_position = self.position + legal_step
+
+				if next_position in friends:
+					continue
+
+				positions.add(next_position)
 
 			except IndexError:
 				continue
@@ -165,13 +170,21 @@ class Melee(Piece):
 
 class Ranged(Piece):
 
-	def legal_positions(self) -> set[Square]:
+	def legal_positions(self, friends: set[Square], foes: set[Square]) -> set[Square]:
 		positions = set()
 
 		for legal_step in self.legal_steps:
 			for leap in range(1, 8):
 				try:
-					positions.add(self.position + legal_step * leap)
+					next_position = self.position + legal_step * leap
+
+					if next_position in friends:
+						break
+
+					positions.add(next_position)
+
+					if next_position in foes:
+						break
 
 				except IndexError:
 					break
@@ -215,43 +228,57 @@ class Bishop(Ranged):
 
 class Knight(Melee):
 
-	value = Bishop.value
+	value = 3
 
 	legal_steps = {
-		straight + diagonal for straight, diagonal in itertools.product(
-			Rook.legal_steps,
-			Bishop.legal_steps,
-		)
-	} - Rook.legal_steps
-
+		Vectors.N2E.value,
+		Vectors.NE2.value,
+		Vectors.SE2.value,
+		Vectors.S2E.value,
+		Vectors.S2W.value,
+		Vectors.SW2.value,
+		Vectors.NW2.value,
+		Vectors.N2W.value,
+	}
 #	legal_steps = {
-#		Vectors.N2E.value,
-#		Vectors.NE2.value,
-#		Vectors.SE2.value,
-#		Vectors.S2E.value,
-#		Vectors.S2W.value,
-#		Vectors.SW2.value,
-#		Vectors.NW2.value,
-#		Vectors.N2W.value,
-#	}
+#		straight + diagonal for straight, diagonal in itertools.product(
+#			Rook.legal_steps,
+#			Bishop.legal_steps,
+#		)
+#	} - Rook.legal_steps
+
 
 
 class Queen(Ranged):
 
-	value = Rook.value + Bishop.value + Pawn.value
+	value = 9  # Rook.value + Bishop.value + Pawn.value
 
-	legal_steps = Rook.legal_steps | Bishop.legal_steps
+	legal_steps = {
+		Vectors.N.value, Vectors.NE.value,
+		Vectors.S.value, Vectors.SE.value,
+		Vectors.E.value, Vectors.SW.value,
+		Vectors.W.value, Vectors.NW.value,
+	}
+#	legal_steps = Rook.legal_steps | Bishop.legal_steps
 
 
 class King(Melee):
 
 	value = 0  # TODO: figure out what to do with this value
 
-	legal_steps = Queen.legal_steps | {
+	legal_steps = {
+		Vectors.N.value, Vectors.NE.value,
+		Vectors.S.value, Vectors.SE.value,
+		Vectors.E.value, Vectors.SW.value,
+		Vectors.W.value, Vectors.NW.value,
+
 		Vectors.E2.value,
 		Vectors.W2.value,
 	}
-
+#	legal_steps = Queen.legal_steps | {
+#		Vectors.E2.value,
+#		Vectors.W2.value,
+#	}
 
 
 
