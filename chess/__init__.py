@@ -278,7 +278,7 @@ class King(Melee):
 """
 
 
-class Board:
+class Board(list[list[Piece | None]]):
 
 	def __init__(self):
-		self.pieces: list[list[Piece | None]]
+		super().__init__([None] * 8 for _ in range(8))
