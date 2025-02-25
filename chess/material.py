@@ -7,10 +7,10 @@ from chess.algebra import Square, Vectors
 class Piece:
 
 	value: int
-	legal_steps: set[int]
+	steps: set[int]
 
 
-	def __init__(self, color: str, position: str):
+	def __init__(self, color: str, square: str):
 		color = color.lower()
 
 		if color not in {
@@ -20,51 +20,51 @@ class Piece:
 			raise ValueError("Piece must be either white or black")
 
 		self.color = color
-		self.position = Square.fromnotation(position)
+		self.square = Square.fromnotation(square)
 
 
 class Melee(Piece):
 
-	def legal_positions(self, friends: set[Square], foes: set[Square]) -> set[Square]:
-		positions = set()
+	def squares(self, friends: set[Square], foes: set[Square]) -> set[Square]:
+		squares = set()
 
-		for legal_step in self.legal_steps:
+		for legal_step in self.steps:
 			try:
-				next_position = self.position + legal_step
+				next_square = self.square + legal_step
 
-				if next_position in friends:
+				if next_square in friends:
 					continue
 
-				positions.add(next_position)
+				squares.add(next_square)
 
 			except IndexError:
 				continue
 
-		return positions
+		return squares
 
 
 class Ranged(Piece):
 
-	def legal_positions(self, friends: set[Square], foes: set[Square]) -> set[Square]:
-		positions = set()
+	def squares(self, friends: set[Square], foes: set[Square]) -> set[Square]:
+		squares = set()
 
-		for legal_step in self.legal_steps:
+		for legal_step in self.steps:
 			for leap in range(1, 8):
 				try:
-					next_position = self.position + legal_step * leap
+					next_square = self.square + legal_step * leap
 
-					if next_position in friends:
+					if next_square in friends:
 						break
 
-					positions.add(next_position)
+					squares.add(next_square)
 
-					if next_position in foes:
+					if next_square in foes:
 						break
 
 				except IndexError:
 					break
 
-		return positions
+		return squares
 
 
 class Pawn(Piece):
