@@ -35,7 +35,7 @@ class Rank(Index,
 
 
 	@classmethod
-	def fromnotation(cls, rank: str) -> typing.Self:
+	def from_notation(cls, rank: str) -> typing.Self:
 		return cls(8 - int(rank))
 
 
@@ -48,7 +48,7 @@ class File(Index,
 
 
 	@classmethod
-	def fromnotation(cls, file: str) -> typing.Self:
+	def from_notation(cls, file: str) -> typing.Self:
 		return cls(ord(file) - ord("a"))
 
 
@@ -65,12 +65,21 @@ class Square(Index,
 	def __sub__(self, other: Square) -> int:
 		return Square(super().__sub__(other))
 
+	@classmethod
+	def from_rank_and_file(cls,
+		rank: int,
+		file: int,
+	) -> typing.Self:
+		return cls(rank * SIZE + file)
 
 	@classmethod
-	def fromnotation(cls, square: str) -> typing.Self:
+	def from_notation(cls, square: str) -> typing.Self:
 		file, rank = square
 
-		return cls(Rank.fromnotation(rank) * 8 + File.fromnotation(file))
+		return cls.from_rank_and_file(
+			Rank.from_notation(rank),
+			File.from_notation(file),
+		)
 
 
 	@property
