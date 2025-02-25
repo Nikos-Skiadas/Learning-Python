@@ -2,110 +2,116 @@ from __future__ import annotations
 
 
 import enum
+import typing
 
 
-class Square(tuple[int, int]):
+SIZE = 8
 
-	def __new__(cls,
-		rank: int,
-		file: int,
-	) -> Square:
-		square = super().__new__(cls, (rank, file))
 
-		# Check if tuple of integers is within chess bounds:
-		if not "a" <= square.file <= "h" or not "1" <= square.rank <= "8":
-			raise IndexError(f"invalid square {square}")
+class Index(int):
 
-		return square
+	bound: int
+
+	def __init_subclass__(cls, *arg,
+		bound: int,
+	**kwargs):
+		super().__init_subclass__(*arg, **kwargs)
+
+		cls.bound = bound
+
+	def __new__(cls, index: int) -> typing.Self:
+		if not 0 <= (index := super().__new__(cls, index)) < cls.bound:
+			raise IndexError(f"invalid {cls.__name__.lower()} {index}")
+
+		return index
+
+
+class Rank(Index,
+	bound = SIZE,
+):
 
 	def __repr__(self) -> str:
-		return self.file + str(self.rank)
+		return str(self + 1)
 
 
 	@classmethod
-	def fromnotation(cls, notation: str) -> Square:
+	def fromnotation(cls, rank: str) -> typing.Self:
+		return cls(int(rank) - 1)
+
+
+class File(Index,
+	bound = SIZE,
+):
+
+	def __repr__(self) -> str:
+		return chr(self + ord("a"))
+
+
+	@classmethod
+	def fromnotation(cls, file: str) -> typing.Self:
+		return cls(ord(file) - ord("a"))
+
+
+class Square(Index,
+	bound = SIZE * SIZE,
+):
+
+	def __repr__(self) -> str:
+		return repr(self.file) + repr(self.rank)
+
+	def __add__(self, other: int) -> Square:
+		return Square(super().__add__(other))
+
+	def __sub__(self, other: Square) -> int:
+		return Square(super().__sub__(other))
+
+
+	@classmethod
+	def fromnotation(cls, notation: str) -> typing.Self:
 		file, rank = notation
 
-		return cls(
-			int(rank) - 1,
-			ord(file) - ord("a"),
-		)
+		return cls(Rank.fromnotation(rank) * 8 + File.fromnotation(file))
 
 
 	@property
-	def rank(self) -> str:
-		return str(self[0] + 1)
+	def rank(self) -> Rank:
+		return Rank(self // 8)
 
 	@property
-	def file(self) -> str:
-		return chr(self[1] + ord("a"))
+	def file(self) -> File:
+		return File(self % 8)
 
 	@property
 	def is_black(self) -> bool:
-		return (self[0] + self[1]) % 2 == 0
+		return (self.rank + self.file) % 2 == 0
 
 
-	def __add__(self, other: Vector) -> Square:
-		return Square(
-			self[0] + other[0],
-			self[1] + other[1],
-		)
+class Vectors(int, enum.Enum):
 
-	def __sub__(self, other: Square) -> Vector:
-		return Vector(
-			self[0] - other[0],
-			self[1] - other[1],
-		)
+	O =  0
+	N = +1 * SIZE  # king queen rook pawn(white)
+	S = -1 * SIZE  # king queen rook
+	E = +1  # king queen rook pawn(black)
+	W = -1  # king queen rook
 
+	N2 = N * 2  # pawn(white leap)
+	S2 = S * 2  # pawn(black leap)
+	E2 = E * 2  # king(castle)
+	W2 = W * 2  # king(castle)
+	E4 = E * 4  # rook(castle)
+	W3 = W * 3  # rook(castle)
 
-class Vector(tuple[int, int]):
+	NE = N + E  # queen bishop pawn(white capture)
+	SE = S + E  # queen bishop pawn(black capture)
+	SW = S + W  # queen bishop pawn(black capture)
+	NW = N + W  # queen bishop pawn(white capture)
 
-	def __new__(cls,
-		file_diff: int,
-		rank_diff: int,
-	) -> Vector:
-		return super().__new__(cls, (file_diff, rank_diff))
-
-
-	def __add__(self, other: Vector) -> Vector:
-		return Vector(
-			self[0] + other[0],
-			self[1] + other[1],
-		)
-
-	def __mul__(self, other: int) -> Vector:
-		return Vector(
-			self[0] * other,
-			self[1] * other,
-		)
-
-
-class Vectors(Vector, enum.Enum):
-
-	O = Vector( 0,  0)  # type: ignore
-	N = Vector(+1,  0)  # type: ignore  # king queen rook pawn(white)
-	S = Vector(-1,  0)  # type: ignore  # king queen rook
-	E = Vector( 0, +1)  # type: ignore  # king queen rook pawn(black)
-	W = Vector( 0, -1)  # type: ignore  # king queen rook
-
-	N2 = N * 2  # type: ignore  # pawn(white leap)
-	S2 = S * 2  # type: ignore  # pawn(black leap)
-	E2 = E * 2  # type: ignore  # king(castle)
-	W2 = W * 2  # type: ignore  # king(castle)
-	E4 = E * 4  # type: ignore  # rook(castle)
-	W3 = W * 3  # type: ignore  # rook(castle)
-
-	NE = N + E  # type: ignore  # queen bishop pawn(white capture)
-	SE = S + E  # type: ignore  # queen bishop pawn(black capture)
-	SW = S + W  # type: ignore  # queen bishop pawn(black capture)
-	NW = N + W  # type: ignore  # queen bishop pawn(white capture)
-
-	N2E = N + NE  # type: ignore  # knight
-	NE2 = NE + E  # type: ignore  # knight
-	SE2 = SE + E  # type: ignore  # knight
-	S2E = S + SE  # type: ignore  # knight
-	S2W = S + SW  # type: ignore  # knight
-	SW2 = SW + W  # type: ignore  # knight
-	NW2 = NW + W  # type: ignore  # knight
-	N2W = N + NW  # type: ignore  # knight
+	N2E = N + NE  # knight
+	NE2 = NE + E  # knight
+	SE2 = SE + E  # knight
+	S2E = S + SE  # knight
+	S2W = S + SW  # knight
+	SW2 = SW + W  # knight
+	NW2 = NW + W  # knight
+	N2W = N + NW  # knight
 
