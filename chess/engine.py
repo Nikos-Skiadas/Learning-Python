@@ -32,7 +32,6 @@ class Board(list[Piece | None]):
 
 		return representation
 
-
 	def __getitem__(self, square: str | Square) -> Piece | None:
 		if isinstance(square, str):
 			square = Square.fromnotation(square)
@@ -43,4 +42,18 @@ class Board(list[Piece | None]):
 		if isinstance(square, str):
 			square = Square.fromnotation(square)
 
+		if piece is not None:
+			piece.square = square
+
+		del self[square]
+
 		return super().__setitem__(square, piece)
+
+	def __delitem__(self, square: str | Square):
+		if isinstance(square, str):
+			square = Square.fromnotation(square)
+
+		if (piece := self[square]) is not None:
+			piece.square = None
+
+		self[square] = None
