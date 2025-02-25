@@ -90,3 +90,9 @@ class Board(list[Piece | None]):
 		board["h1"] = Rook  ("white")
 
 		return board
+
+	def move(self,
+		source: Square,
+		target: Square,
+	):
+		...

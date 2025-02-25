@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 
+import typing
+
 from chess.algebra import Square, Vectors
+
+if typing.TYPE_CHECKING: from chess.engine import Board
 
 
 class Piece:
@@ -33,18 +37,13 @@ class Piece:
 
 class Melee(Piece):
 
-	def squares(self, friends: set[Square], foes: set[Square]) -> set[Square]:
+	def squares(self, board: Board) -> set[Square]:
 		squares = set()
 
 		if self.square is not None:
 			for step in self.steps:
 				try:
-					next_square = self.square + step
-
-					if next_square in friends:
-						continue
-
-					squares.add(next_square)
+					...
 
 				except IndexError:
 					continue
@@ -54,22 +53,14 @@ class Melee(Piece):
 
 class Ranged(Piece):
 
-	def squares(self, friends: set[Square], foes: set[Square]) -> set[Square]:
+	def squares(self, board: Board) -> set[Square]:
 		squares = set()
 
 		if self.square is not None:
 			for step in self.steps:
-				for leap in range(1, 8):
+				while True:
 					try:
-						next_square = self.square + step * leap
-
-						if next_square in friends:
-							break
-
-						squares.add(next_square)
-
-						if next_square in foes:
-							break
+						...
 
 					except IndexError:
 						break
