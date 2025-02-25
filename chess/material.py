@@ -6,6 +6,9 @@ from chess.algebra import Square, Vectors
 
 class Piece:
 
+	black: str
+	white: str
+
 	value: int
 	steps: set[int]
 
@@ -21,6 +24,9 @@ class Piece:
 
 		self.color = color
 		self.square = Square.fromnotation(square)
+
+	def __repr__(self) -> str:
+		return self.black if self.color == "black" else self.white
 
 
 class Melee(Piece):
@@ -69,6 +75,9 @@ class Ranged(Piece):
 
 class Pawn(Piece):
 
+	black = "p"
+	white = "P"
+
 	value = 1
 
 	legal_steps = {
@@ -78,6 +87,9 @@ class Pawn(Piece):
 
 
 class Rook(Ranged):
+
+	black = "r"
+	white = "R"
 
 	value = 5
 
@@ -91,6 +103,9 @@ class Rook(Ranged):
 
 class Bishop(Ranged):
 
+	black = "b"
+	white = "B"
+
 	value = 3
 
 	legal_steps = {
@@ -102,6 +117,9 @@ class Bishop(Ranged):
 
 
 class Knight(Melee):
+
+	black = "n"
+	white = "N"
 
 	value = 3
 
@@ -126,6 +144,9 @@ class Knight(Melee):
 
 class Queen(Ranged):
 
+	black = "q"
+	white = "Q"
+
 	value = 9  # Rook.value + Bishop.value + Pawn.value
 
 	legal_steps = {
@@ -138,6 +159,9 @@ class Queen(Ranged):
 
 
 class King(Melee):
+
+	black = "k"
+	white = "K"
 
 	value = 0  # TODO: figure out what to do with this value
 
