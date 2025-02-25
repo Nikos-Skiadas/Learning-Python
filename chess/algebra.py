@@ -21,7 +21,7 @@ class Index(int):
 
 	def __new__(cls, index: int) -> typing.Self:
 		if not 0 <= (index := super().__new__(cls, index)) < cls.bound:
-			raise IndexError(f"invalid {cls.__name__.lower()} {index}")
+			raise IndexError(f"invalid {cls.__name__.lower()} '{index}'")
 
 		return index
 
@@ -31,12 +31,12 @@ class Rank(Index,
 ):
 
 	def __repr__(self) -> str:
-		return str(self + 1)
+		return str(8 - self)
 
 
 	@classmethod
 	def fromnotation(cls, rank: str) -> typing.Self:
-		return cls(int(rank) - 1)
+		return cls(8 - int(rank))
 
 
 class File(Index,
@@ -67,8 +67,8 @@ class Square(Index,
 
 
 	@classmethod
-	def fromnotation(cls, notation: str) -> typing.Self:
-		file, rank = notation
+	def fromnotation(cls, square: str) -> typing.Self:
+		file, rank = square
 
 		return cls(Rank.fromnotation(rank) * 8 + File.fromnotation(file))
 
