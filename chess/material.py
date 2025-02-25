@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 
-from chess.algebra import Vector, Square, Vectors
+from chess.algebra import Square, Vectors
 
 
 class Piece:
 
 	value: int
-	legal_steps: set[Vector]
+	legal_steps: set[int]
 
 
 	def __init__(self, color: str, position: str):
