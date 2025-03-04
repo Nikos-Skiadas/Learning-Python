@@ -70,8 +70,8 @@ class Ranged(Piece):
 
 class Pawn(Piece):
 
-	black = "p"
-	white = "P"
+	black: str = "\u265f"
+	white: str = "\u2659"
 
 	value = 1
 
@@ -83,8 +83,8 @@ class Pawn(Piece):
 
 class Rook(Ranged):
 
-	black = "r"
-	white = "R"
+	black: str = "\u265c"
+	white: str = "\u2656"
 
 	value = 5
 
@@ -98,8 +98,8 @@ class Rook(Ranged):
 
 class Bishop(Ranged):
 
-	black = "b"
-	white = "B"
+	black: str = "\u265d"
+	white: str = "\u2657"
 
 	value = 3
 
@@ -113,8 +113,8 @@ class Bishop(Ranged):
 
 class Knight(Melee):
 
-	black = "n"
-	white = "N"
+	black: str = "\u265e"
+	white: str = "\u2658"
 
 	value = 3
 
@@ -139,8 +139,8 @@ class Knight(Melee):
 
 class Queen(Ranged):
 
-	black = "q"
-	white = "Q"
+	black: str = "\u265b"
+	white: str = "\u2655"
 
 	value = 9  # Rook.value + Bishop.value + Pawn.value
 
@@ -155,8 +155,8 @@ class Queen(Ranged):
 
 class King(Melee):
 
-	black = "k"
-	white = "K"
+	black: str = "\u265a"
+	white: str = "\u2654"
 
 	value = 0  # TODO: figure out what to do with this value
 
