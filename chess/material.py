@@ -42,8 +42,13 @@ class Melee(Piece):
 
 		if self.square is not None:
 			for step in self.steps:
+				square = self.square
+
 				try:
-					...
+					square += step
+
+					if (other := board[square]) is None or self.color != other.color:
+						squares.add(square)
 
 				except IndexError:
 					continue
@@ -55,15 +60,26 @@ class Ranged(Piece):
 
 	def squares(self, board: Board) -> set[Square]:
 		squares = set()
+		other = None
 
 		if self.square is not None:
 			for step in self.steps:
+				square = self.square
+
 				while True:
 					try:
-						...
+						square += step
+
+						if (other := board[square]) is not None:
+							break
+
+						squares.add(square)
 
 					except IndexError:
 						break
+
+				if other is not None and self.color != other.color:
+					squares.add(square)
 
 		return squares
 
