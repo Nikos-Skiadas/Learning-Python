@@ -12,6 +12,7 @@ class Index(int):
 
 	bound: int
 
+
 	def __init_subclass__(cls, *arg,
 		bound: int,
 	**kwargs):
@@ -59,11 +60,9 @@ class Square(Index,
 	def __repr__(self) -> str:
 		return repr(self.file) + repr(self.rank)
 
-	def __add__(self, other: int) -> Square:
-		return Square(super().__add__(other))
+	def __add__(self, other: int) -> Square: return Square(super().__add__(other))
+	def __sub__(self, other: Square) -> int: return        super().__sub__(other)
 
-	def __sub__(self, other: Square) -> int:
-		return Square(super().__sub__(other))
 
 	@classmethod
 	def from_rank_and_file(cls,

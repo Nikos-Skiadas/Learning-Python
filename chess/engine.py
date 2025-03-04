@@ -28,7 +28,7 @@ class Board(list[Piece | None]):
 				piece = self[square]
 
 				representation += " "
-				representation += repr(piece) if piece is not None else "-"
+				representation += repr(piece) if piece is not None else " "
 
 			representation += f" {Rank(rank)} " + os.linesep
 
