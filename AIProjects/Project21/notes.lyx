@@ -1,0 +1,336 @@
+#LyX 2.4 created this file. For more info see https://www.lyx.org/
+\lyxformat 620
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass scrartcl
+\begin_preamble
+%\usepackage{bm}
+\usepackage{bbm}
+\usepackage{xcolor}
+\usepackage{cleveref}
+\usepackage{lstfiracode}
+\usepackage{multicol}
+%\usepackage{textcomp}
+%\usepackage{textgreek}
+%\usepackage{pdflscape}
+%\renewcommand\[{\begin{equation}}
+%\renewcommand\]{\end{equation}}
+\definecolor{red}{rgb}{0.8,0.0,0.0}
+\definecolor{blue}{rgb}{0.2,0.4,0.6}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\addtokomafont{disposition}{\rmfamily}
+\addtokomafont{descriptionlabel}{\rmfamily}
+%\setlength{\columnseprule}{0.4pt}
+\renewcommand{\arraystretch}{1.5}
+\relpenalty=10000
+\binoppenalty=10000
+\setlength{\columnsep}{0in} % Space between columns
+%\setlength{\columnseprule}{0.5pt} % Width of the vertical line (separator)
+\renewcommand{\labelenumi}{(\alph{enumi})}
+\end_preamble
+\use_default_options true
+\begin_modules
+fix-cm
+fixltx2e
+fixme
+theorems-bytype
+theorems-sec-bytype
+algorithm2e
+figs-within-sections
+tabs-within-sections
+\end_modules
+\maintain_unincluded_children no
+\language english
+\language_package auto
+\inputencoding auto-legacy
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "FiraMono" "Fira Code"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 80 80
+\use_microtype true
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 1
+\bibtex_command biber
+\index_command default
+\float_placement H
+\float_alignment center
+\paperfontsize 9
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize letter
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine biblatex
+\cite_engine_type authoryear
+\biblio_style plain
+\biblio_options maxbibnames=99
+\biblatex_bibstyle numeric
+\biblatex_citestyle numeric
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date true
+\justification false
+\use_refstyle 1
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\boxbgcolor #cccccc
+\index Index
+\shortcut idx
+\color #006600
+\end_index
+\leftmargin 0.5in
+\topmargin 1in
+\rightmargin 0.5in
+\bottommargin 1in
+\headheight 0.5in
+\headsep 0.5in
+\footskip 0.5in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip halfline
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle headings
+\tablestyle No_Borders
+\listings_params "showlines=true,language=Python,style=FiraCodeStyle,basicstyle={\ttfamily},numberstyle={\ttfamily},commentstyle={\itshape\color{gray}},keywordstyle={\bfseries\color{blue}},stringstyle={\color{red}}"
+\bullet 1 0 9 -1
+\bullet 3 0 7 -1
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\end_header
+
+\begin_body
+
+\begin_layout Standard
+Assume an independent variable 
+\begin_inset Formula $x$
+\end_inset
+
+ and a dependent variable 
+\begin_inset Formula $y$
+\end_inset
+
+,
+ whose dependence on 
+\begin_inset Formula $x$
+\end_inset
+
+ is unknown.
+ I try to model this dependence with a linear function 
+\begin_inset Formula $f$
+\end_inset
+
+ with two free weights a slope 
+\begin_inset Formula $w_{1}$
+\end_inset
+
+ and a bias 
+\begin_inset Formula $w_{0}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+f(x)=w_{1}x+w_{0}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Assume we have a collection of 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+ datapoints 
+\begin_inset Formula $(x_{i},y_{i})$
+\end_inset
+
+.
+ The loss is
+\begin_inset Formula 
+\[
+\mathcal{L}(w_{0},w_{1})\propto\sum_{i}(y_{i}-f(x_{i}))^{2}=\sum_{i}(y_{i}-w_{1}x_{i}+w_{0})^{2}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{multline*}
+\dfrac{\partial\mathcal{L}}{\partial w_{1}}=\sum_{i}\dfrac{\partial}{\partial w_{1}}(y_{i}-w_{1}x_{i}+w_{0})^{2}\\
+=2\sum_{i}(y_{i}-w_{1}x_{i}+w_{0})\dfrac{\partial}{\partial w_{1}}(y_{i}-w_{1}x_{i}+w_{0})\\
+=-2\sum_{i}(y_{i}-w_{1}x_{i}+w_{0})x_{i}=0
+\end{multline*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{gather*}
+\sum_{i}(y_{i}-w_{1}x_{i}+w_{0})x_{i}=0\\
+\sum_{i}y_{i}x_{i}-w_{1}\sum_{i}x_{i}^{2}+w_{0}\sum_{i}x_{i}=0\\
+\sum_{i}y_{i}x_{i}-w_{1}\sum_{i}x_{i}^{2}+n^{-1}\bigg(w_{1}\sum_{i}x_{i}-\sum_{i}y_{i}\bigg)\sum_{i}x_{i}=0\\
+\sum_{i}y_{i}x_{i}-w_{1}\sum_{i}x_{i}^{2}+n^{-1}w_{1}\bigg(\sum_{i}x_{i}\bigg)^{2}-n^{-1}\sum_{i}y_{i}\sum_{i}x_{i}=0\\
+\sum_{i}y_{i}x_{i}-n^{-1}\sum_{i}y_{i}\sum_{i}x_{i}=w_{1}\bigg(\sum_{i}x_{i}^{2}-n^{-1}\bigg(\sum_{i}x_{i}\bigg)^{2}\bigg)\\
+w_{1}=\dfrac{{\displaystyle \sum_{i}y_{i}x_{i}-n^{-1}\sum_{i}y_{i}\sum_{i}x_{i}}}{{\displaystyle \sum_{i}x_{i}^{2}-n^{-1}\bigg(\sum_{i}x_{i}\bigg)^{2}}}
+\end{gather*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{multline*}
+\dfrac{\partial\mathcal{L}}{\partial w_{0}}=\sum_{i}\dfrac{\partial}{\partial w_{0}}(y_{i}-w_{1}x_{i}+w_{0})^{2}\\
+=2\sum_{i}(y_{i}-w_{1}x_{i}+w_{0})\dfrac{\partial}{\partial w_{0}}(y_{i}-w_{1}x_{i}+w_{0})\\
+=2\sum_{i}(y_{i}-w_{1}x_{i}+w_{0})=0
+\end{multline*}
+
+\end_inset
+
+
+\begin_inset Formula 
+\begin{gather*}
+\sum_{i}(y_{i}-w_{1}x_{i}+w_{0})=0\\
+\sum_{i}y_{i}-w_{1}\sum_{i}x_{i}+nw_{0}=0\\
+w_{0}=n^{-1}\bigg(w_{1}\sum_{i}x_{i}-\sum_{i}y_{i}\bigg)
+\end{gather*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+f(x)=w_{1}x_{1}+w_{2}x_{2}+w_{0}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+If both 
+\begin_inset Formula $x=(x_{a})_{a=1}^{\dim X}$
+\end_inset
+
+ and 
+\begin_inset Formula $y=(y_{a})_{a=1}^{\dim Y}$
+\end_inset
+
+ are vectors,
+ then generally for linear regression:
+\begin_inset Formula 
+\[
+y_{a}\simeq f_{a}(x)=\sum_{b}w_{ab}x_{b}+b_{a}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\boldsymbol{y}=W\boldsymbol{x}+\boldsymbol{b}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Original loss:
+\begin_inset Formula 
+\[
+\mathcal{L}=\sum_{i}\|\boldsymbol{y}-W\boldsymbol{x}+\boldsymbol{b}\|^{2}
+\]
+
+\end_inset
+
+Regularized loss:
+\begin_inset Formula 
+\[
+\mathcal{L}_{\text{regularized}}=\sum_{i}\|\boldsymbol{y}-W\boldsymbol{x}+\boldsymbol{b}\|^{2}+\varOmega\Vert W\Vert^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
