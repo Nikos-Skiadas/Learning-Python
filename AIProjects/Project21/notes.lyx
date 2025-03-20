@@ -310,6 +310,14 @@ y_{a}\simeq f_{a}(x)=\sum_{b}w_{ab}x_{b}+b_{a}
 \end_inset
 
 
+\begin_inset Formula 
+\[
+f(x)=w_{1}x+w_{0}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -325,6 +333,245 @@ Regularized loss:
 \begin_inset Formula 
 \[
 \mathcal{L}_{\text{regularized}}=\sum_{i}\|\boldsymbol{y}-W\boldsymbol{x}+\boldsymbol{b}\|^{2}+\varOmega\Vert W\Vert^{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Logarithmic regression:
+\begin_inset Formula 
+\[
+f(x)=\exp(w_{1}x+w_{0})
+\]
+
+\end_inset
+
+or:
+\begin_inset Formula 
+\[
+\mathbb{R}\ni g(x)=\log f(x)=w_{1}x+w_{0}\in\mathbb{R}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Logistic regression:
+\begin_inset Formula 
+\[
+f(x)=\sigma(w_{1}x+w_{0})\in[0,1]
+\]
+
+\end_inset
+
+or:
+\begin_inset Formula 
+\[
+g(x)=\text{logit}f(x)=w_{1}x+w_{0}\in\mathbb{R}
+\]
+
+\end_inset
+
+where:
+\begin_inset Formula 
+\[
+\sigma:\mathbb{R}\longrightarrow[0,1]:x\mapsto\sigma(x)=\dfrac{1}{1+\exp(-x)}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\text{logit}:[0,1]\longrightarrow\mathbb{R}:x\mapsto\text{logit}x=\log\dfrac{x}{1-x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+One source feature 
+\begin_inset Formula $x$
+\end_inset
+
+ and one target feature 
+\begin_inset Formula $y$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+y=f(x)=wx+b
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\mathcal{L}(b,w)\propto\sum_{i}(y_{i}-f(x_{i}))^{2}=\sum_{i}\vert y_{i}-wx_{i}+b\vert^{2}
+\]
+
+\end_inset
+
+Many source features 
+\begin_inset Formula $x_{j}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\forall j$
+\end_inset
+
+,
+ and one target feature 
+\begin_inset Formula $y$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+y=f(\boldsymbol{x})=w_{1}x_{1}+w_{2}x_{2}+\ldots+w_{m}x_{m}+b=\sum_{j}w_{j}x_{j}+b=\boldsymbol{w}\cdot\boldsymbol{x}+b
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\mathcal{L}(b,\boldsymbol{w})\propto\sum_{i}(y_{i}-f(\boldsymbol{x}_{i}))^{2}=\sum_{i}\vert y_{i}-\boldsymbol{w}\cdot\boldsymbol{x_{i}}+b\vert^{2}
+\]
+
+\end_inset
+
+Also supports logistic regression:
+\begin_inset Formula 
+\[
+y=f(\boldsymbol{x})=\sigma(\boldsymbol{w}\cdot\boldsymbol{x}+b)
+\]
+
+\end_inset
+
+One source feature 
+\begin_inset Formula $x$
+\end_inset
+
+,
+ and many target features 
+\begin_inset Formula $y_{k}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\forall k$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+y_{k}=f_{k}(x)=w_{k}x+b_{k}\text{, }\forall k\text{ or }\boldsymbol{y}=\boldsymbol{f}(x)=\boldsymbol{w}x+\boldsymbol{b}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\mathcal{L}(\boldsymbol{b},\boldsymbol{w})\propto\sum_{i}(\boldsymbol{y}_{i}-\boldsymbol{f}(x_{i}))^{2}=\sum_{i}\Vert\boldsymbol{y}_{i}-\boldsymbol{w}x_{i}+\boldsymbol{b}\Vert^{2}
+\]
+
+\end_inset
+
+Many source features 
+\begin_inset Formula $x_{j}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\forall j$
+\end_inset
+
+,
+ and many target features 
+\begin_inset Formula $y_{k}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\forall k$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+y_{k}=f_{k}(\boldsymbol{x})=w_{k1}x_{1}+w_{k2}x_{2}+\ldots+w_{km}x_{m}+b_{k}=\sum_{j}w_{kj}x_{j}+b_{k}=\boldsymbol{w}_{k}\cdot\boldsymbol{x}+b_{k}\text{, }\forall k
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\boldsymbol{y}=\boldsymbol{f}(x)=W\boldsymbol{x}+\boldsymbol{b}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\mathcal{L}(\boldsymbol{b},W)\propto\sum_{i}(\boldsymbol{y}_{i}-\boldsymbol{f}(\boldsymbol{x}_{i}))^{2}=\sum_{i}\Vert\boldsymbol{y}_{i}-W\boldsymbol{x}_{i}+\boldsymbol{b}\Vert^{2}
+\]
+
+\end_inset
+
+Also supports logistic regression per target feature:
+\begin_inset Formula 
+\[
+y_{k}=\sigma(\boldsymbol{w}_{k}\cdot\boldsymbol{x}+b_{k})
 \]
 
 \end_inset
