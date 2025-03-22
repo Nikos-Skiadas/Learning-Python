@@ -160,7 +160,7 @@ class Classifier:
 		X = test_data.Text
 		y = pandas.Series(self.pipeline.predict(X),
 			index = test_data.index,  # align with test data index
-			name = test_data.Label.name,  # recover the "Label" column name
+			name = "Label",  # recover the "Label" column name
 		)
 
 	#	Optionally save perdictions for submission:
