@@ -16,13 +16,13 @@ import pandas
 import sklearn
 import sklearn.feature_extraction
 import sklearn.linear_model
+import sklearn.pipeline
 import sklearn.metrics
 import sklearn.model_selection
 
 import nltk
 import nltk.stem
 import nltk.corpus
-import sklearn.pipeline
 
 
 nltk.download('wordnet'  )  # for lemmatization
@@ -92,7 +92,7 @@ class Vectorizer(sklearn.feature_extraction.text.TfidfVectorizer):
 			preprocessor = Preprocessor(),
 			tokenizer = Tokenizer(),
 		#	analyzer = "word",
-			stop_words = "english",  # messages seem to be in english
+			stop_words = nltk.corpus.stopwords.words("english"),  # messages seem to be in english
 		#	token_pattern = "(?u)\\b\\w\\w+\\b",
 			ngram_range = ngram_range,  # NOTE: maybe tunable
 		#	max_df = 1.0,
@@ -240,7 +240,6 @@ if __name__ == "__main__":
 		model__C = list(numpy.linspace(.5, 1., 2)),
 	)
 
-#	Export predictions:
 	predictions = classifier.predict(test_data,
 		save = "submission.csv",
 	)
