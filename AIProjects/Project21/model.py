@@ -5,8 +5,12 @@ import os
 import re
 import string
 import typing
+import warnings; warnings.filterwarnings("ignore",
+	category = UserWarning,
+)
 
 import numpy
+from rich import print
 import pandas
 
 import sklearn
@@ -18,6 +22,7 @@ import sklearn.model_selection
 import nltk
 import nltk.stem
 import nltk.corpus
+import sklearn.pipeline
 
 
 nltk.download('wordnet'  )  # for lemmatization
@@ -30,7 +35,7 @@ def load_data(
 		"val",
 		"test",
 	],
-	root: str = "dataset",
+	root: str = "",
 	index: str = "ID",
 ):
 	return pandas.read_csv(os.path.join(f"{root}", f"{split}_dataset.csv"),
@@ -89,7 +94,7 @@ class Vectorizer(sklearn.feature_extraction.text.TfidfVectorizer):
 		#	analyzer = "word",
 			stop_words = "english",  # messages seem to be in english
 		#	token_pattern = "(?u)\\b\\w\\w+\\b",
-		#	ngram_range = ngram_range,  # NOTE: maybe tunable
+			ngram_range = ngram_range,  # NOTE: maybe tunable
 		#	max_df = 1.0,
 		#	min_df = 1,
 			max_features = max_features, # NOTE: tunable
@@ -106,15 +111,10 @@ class Vectorizer(sklearn.feature_extraction.text.TfidfVectorizer):
 class Model(sklearn.linear_model.LogisticRegression):
 
 	def __init__(self, *,
-		penalty: typing.Literal[
-			"l1",
-			"l2", "elasticnet"
-		] | None = "l2",
 		C: float = 1.0,
-		l1_ratio: float | None = None,
 	):
 		super().__init__(
-			penalty = penalty, # NOTE: tunable
+		#	penalty = None,
 		#	dual = False,
 		#	tol = 0.0001,
 			C = C, # NOTE: tunable
@@ -127,7 +127,7 @@ class Model(sklearn.linear_model.LogisticRegression):
 		#	verbose = 0,
 		#	warm_start = False,
 			n_jobs = -1,  # parallelization
-			l1_ratio = l1_ratio,  # NOTE: tunable
+		#	l1_ratio = None,
 		)
 
 
@@ -137,24 +137,28 @@ class Classifier:
 		vectorizer: Vectorizer,
 		model: Model,
 	):
-		self.vectorizer = vectorizer
-		self.model = model
+		self.pipeline = sklearn.pipeline.Pipeline(
+			[
+				("vectorizer", vectorizer),
+				("model", model),
+			]
+		)
 
 
 	def fit(self, train_data: pandas.DataFrame):
-		X = self.vectorizer.fit_transform(train_data.Text)
+		X = train_data.Text
 		y = train_data.Label
 
 	#	Fit model:
-		_ = self.model.fit(X, y)
+		self.pipeline.fit(X, y)
 
 		return self
 
 	def predict(self, test_data: pandas.DataFrame,
 		save: str | None = None,
 	) -> pandas.Series:
-		X = self.vectorizer.transform(test_data.Text)
-		y = pandas.Series(self.model.predict(X),
+		X = test_data.Text
+		y = pandas.Series(self.pipeline.predict(X),
 			index = test_data.index,  # align with test data index
 			name = test_data.Label.name,  # recover the "Label" column name
 		)
@@ -188,11 +192,11 @@ class Classifier:
 		)
 
 	#	Concatenate train and val split because `sklearn` is a ballbuster for fixed splits:
-		X = self.vectorizer.fit_transform(data.Text)  # NOTE: can we steal terms from the validation split?
+		X = data.Text
 		y = data.Label
 
 	#	Initialize a tuner with given parameter grid and splits on the stock model:
-		tuner = sklearn.model_selection.GridSearchCV(self.model, param_grid,
+		tuner = sklearn.model_selection.GridSearchCV(self.pipeline, param_grid,
 			scoring = "accuracy",
 			n_jobs = -1,  # parallelization
 			refit = False,  # we will do our own refitting (on the whole data) thank you very much
@@ -204,11 +208,11 @@ class Classifier:
 		)
 
 	#	Fit and tune model:
-		_ = tuner.fit(X, y)
+		tuner.fit(X, y)  # type: ignore
 
 	#	Refit model with the best parameters on the whole data (why throw the val split now that we finished tunning?):
-		self.model.set_params(**tuner.best_params_)
-		self.model.fit(X, y)
+		self.pipeline.set_params(**tuner.best_params_)  # set the best parameters for the model
+		self.pipeline.fit(X, y)  # refit it with the best parameters on the whole dataset available for training
 
 		return self
 
@@ -222,15 +226,21 @@ if __name__ == "__main__":
 		vectorizer = Vectorizer(),
 		model = Model(),
 	)
-	_ = classifier.tune(train_data, val_data,
-		penalty = [
-			"l1",
-			"l2",
-			"elasticnet",
+	classifier.tune(train_data, val_data,
+		vectorizer__max_features = [
+			128,
+			256,
+			512,
 		],
-		C = list(numpy.arange(0., 1., .5)),
-		l1_ratio = list(numpy.arange(0., 1., .5))
+		vectorizer__ngram_range = [
+			(1, 1),
+			(1, 2),
+			(2, 2),
+		],
+		model__C = list(numpy.linspace(.5, 1., 2)),
 	)
 
-	print(classifier.evaluate(train_data))
-	print(classifier.evaluate(val_data))
+#	Export predictions:
+	predictions = classifier.predict(test_data,
+		save = "submission.csv",
+	)
