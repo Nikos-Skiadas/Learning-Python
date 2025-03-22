@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 
-import math
 import os
+import re
+import string
 import typing
 
-import numpy
+import nltk; nltk.download('wordnet')
 import pandas
 import sklearn
 import sklearn.feature_extraction
@@ -26,35 +27,64 @@ def load_data(
 	)
 
 
+class Preprocessor:
+
+	def __call__(self, text: str) -> str:
+		text = re.sub(r"@\w+"   , "", text)  # mentions
+		text = re.sub(r"#\w+"   , "", text)  # hashtags
+		text = re.sub(r"\S+@\S+", "", text)  # emails
+
+		return text.translate(str.maketrans("", "", string.punctuation))  # punctuation
+
+
+class Tokenizer:
+
+	def __init__(self):
+		self.lemmatizer = nltk.WordNetLemmatizer()
+		self.stemmer = nltk.stem.PorterStemmer()
+		self.tokenizer = nltk.tokenize.TweetTokenizer(
+			preserve_case = False,
+			reduce_len = True,
+			match_phone_numbers = True,
+			strip_handles = True,
+		)
+
+	def __call__(self, text: str):
+		return [self.stemmer.stem(self.lemmatizer.lemmatize(token))
+			for token in self.tokenizer.tokenize(text) if token and not token.isdigit()]
+
+
 class Vectorizer(sklearn.feature_extraction.text.TfidfVectorizer):
 
 	def __init__(self, *,
 		max_features: int | None = None,
-		ngram_lower: int = 1,
-		ngram_upper: int = 1,
+		ngram_range: tuple[
+			int,
+			int,
+		] = (
+			1,
+			1,
+		),
 	):
 		super().__init__(
-		#	input = 'content',
-			encoding = 'utf-8',
-		#	decode_error = 'strict',
-			strip_accents = 'unicode',
+		#	input = "content",
+			encoding = "utf-8",
+		#	decode_error = "strict",
+			strip_accents = "unicode",
 			lowercase = True,
-		#	preprocessor = None,
-		#	tokenizer = None,
-		#	analyzer = 'word',
-			stop_words = 'english',  # dataset messages are in english so remove english stop words
-		#	token_pattern = '(?u)\\b\\w\\w+\\b',
-			ngram_range = (
-				ngram_lower,
-				ngram_upper,
-			),  # NOTE: maybe tunable
+			preprocessor = Preprocessor(),
+			tokenizer = Tokenizer(),
+		#	analyzer = "word",
+			stop_words = "english",  # dataset messages are in english so remove english stop words
+		#	token_pattern = "(?u)\\b\\w\\w+\\b",
+			ngram_range = ngram_range,  # NOTE: maybe tunable
 		#	max_df = 1.0,
 		#	min_df = 1,
 			max_features = max_features, # NOTE: tunable
 		#	vocabulary = None,
 		#	binary = False,
 		#	dtype = numpy.float64,
-		#	norm = 'l2',
+		#	norm = "l2",
 		#	use_idf = True,
 		#	smooth_idf = True,
 		#	sublinear_tf = False,
@@ -65,9 +95,9 @@ class Model(sklearn.linear_model.LogisticRegression):
 
 	def __init__(self, *,
 		penalty: typing.Literal[
-			'l1',
-			'l2', 'elasticnet'
-		] | None = 'l2',
+			"l1",
+			"l2", "elasticnet"
+		] | None = "l2",
 		C: float = 1.0,
 		l1_ratio: float | None = None,
 	):
@@ -80,7 +110,7 @@ class Model(sklearn.linear_model.LogisticRegression):
 		#	intercept_scaling = 1,
 		#	class_weight = None,
 			random_state = 42,  # seed
-		#	solver = 'lbfgs',
+		#	solver = "lbfgs",
 		#	max_iter = 100,
 		#	verbose = 0,
 		#	warm_start = False,
@@ -95,7 +125,13 @@ if __name__ == "__main__":
 	test_data  = load_data("test" )
 
 #	Initialize and train vectorizer:
-	vectorizer = Vectorizer()
+	vectorizer = Vectorizer(
+		ngram_range = (
+			1,
+			2,
+		),
+		max_features = 3,
+	)
 	train_X = vectorizer.fit_transform(train_data.Text)
 	train_y = train_data.Label
 
