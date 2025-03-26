@@ -129,7 +129,7 @@ class Classifier:
         data = pandas.concat([train_data, val_data])  # Combine training and validation sets
         X = data.Text
         y = data.Label
-        
+
         tuner = sklearn.model_selection.GridSearchCV(
             self.pipeline, param_grid,
             scoring="accuracy",
@@ -137,8 +137,8 @@ class Classifier:
             refit=False,  # We will refit manually
             cv=sklearn.model_selection.PredefinedSplit([-1] * len(train_data) + [0] * len(val_data)),
         )
-        
-        tuner.fit(X, y)
+
+        tuner.fit(X, y)  # type: ignore
         self.pipeline.set_params(**tuner.best_params_)  # Apply best parameters
         self.pipeline.fit(X, y)  # Refit model with optimal hyperparameters
         return self
