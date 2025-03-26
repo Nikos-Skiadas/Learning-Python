@@ -1,0 +1,151 @@
+\documentclass[12pt]{fphw}
+
+% Template-specific packages
+\usepackage[utf8]{inputenc} % Required for inputting international characters
+\usepackage[T1]{fontenc} % Output font encoding for international characters
+\usepackage{mathpazo} % Use the Palatino font
+\usepackage{alphabeta} % Use the Palatino font
+\usepackage{graphicx} % Required for including images
+\usepackage{booktabs} % Required for better horizontal rules in tables
+\usepackage{listings} % Required for insertion of code
+\usepackage{enumerate} % To modify the enumerate environment
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\graphicspath{{./images/}}
+\usepackage{framed} % or, "mdframed"
+\usepackage[framed]{ntheorem}
+\usepackage{amssymb}
+\usepackage{xcolor}
+\usepackage{tabularx}
+
+\newframedtheorem{frm-thm}{Theorem}
+% \newtheorem{theorem}{Theorem}
+\usepackage{tikz} 
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+}
+\urlstyle{same}
+%----------------------------------------------------------------------------------------
+%	ASSIGNMENT INFORMATION
+%----------------------------------------------------------------------------------------
+
+\title{Deep Learning for NLP} % Assignment title
+\author{\fillin{<first-name last-name>} \\sdi: \fillin{<sdiYYZZZZZ>}} % Student id
+\date{Fall Semester 2023} % Due date
+\institute{University of Athens \\ Department of Informatics and Telecommunications} % Institute or school name
+\class{Artificial Intelligence II (M138, M226, M262, M325) } % Course or class name
+%----------------------------------------------------------------------------------------
+\begin{document}
+\maketitle % Output the assignment title, created automatically using the information in the custom commands above
+%----------------------------------------------------------------------------------------
+%	ASSIGNMENT CONTENT
+%----------------------------------------------------------------------------------------
+
+{
+  \hypersetup{linkcolor=black}
+  \tableofcontents
+}
+\newpage
+
+\section{Abstract}
+\instructornote{Briefly describe what's the task and how you will tackle it.}
+
+\section{Data processing and analysis}
+
+\subsection{Pre-processing}
+
+\instructornote{In this step, you should describe and comment on the methods that you used for data cleaning and pre-processing. In ML and AI applications, this is the initial and really important step.
+\newline\\For example some data cleaning techniques are: Dropping small sentences; Remove links; Remove list symbols and other uni-codes.}
+
+\subsection{Analysis}
+\instructornote{In this step, you should also try to visualize the data and their statistics (e.g., word clouds, tokens frequency, etc). So the processing should be done in parallel with an analysis. }
+
+
+\subsection{Data partitioning for train, test and validation}
+\instructornote{Describe how you partitioned the dataset and why you selected these ratios}
+
+\subsection{Vectorization}
+\instructornote{Explain the technique used for vectorization}
+
+\section{Algorithms and Experiments}
+
+\subsection{Experiments}
+\instructornote{Describe how you faced this problem. For example, you can start by describing a first brute-force run and afterwords showcase techniques that you experimented with. \textbf{Caution:} we want/need to see your experiments here either they increased or decreased scores. At the same time you should comment and try to explain why an experiment failed or succeeded. You can also provide plots (e.g., ROC curves, Learning-curves, Confusion matrices, etc) showing the results of your experiment. Some techniques you can try for experiments are cross-validation, data regularization, dimension reduction, batch/partition size configuration, data pre-processing from 2.1, gradient descent}
+
+\subsubsection{Table of trials}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l|l|l|l|}
+\hline
+Trial &  &  &  & Score \\ \hline
+      &  &  &  &       \\ \hline
+      &  &  &  &       \\ \hline
+\end{tabular}
+\caption{Trials}
+\label{undefined}
+\end{table}
+
+\subsection{Hyper-parameter tuning}
+
+\instructornote{Describe the results and how you configured the model. What happens with under- over-fitting??}
+
+\subsection{Optimization techniques}
+
+\instructornote{Describe the optimization techniques you tried. Like optimization frameworks you used.}
+
+\subsection{Evaluation}
+
+\instructornote{How will you evaluate the predictions? Detail and explain the scores used (what's fscore?). Provide the results in a matrix/plots}
+
+\instructornote{Provide and comment diagrams and curves}
+
+\subsubsection{ROC curve}
+
+\subsubsection{Learning Curve}
+
+\subsubsection{Confusion matrix}
+
+
+\section{Results and Overall Analysis}
+
+\subsection{Results Analysis}
+
+\instructornote{Comment your results so far. Is this a good/bad performance? What was expected? Could you do more experiments? And if yes what would you try?}
+
+\instructornote{Provide and comment diagrams and curves}
+
+\subsubsection{Best trial}
+
+\instructornote{Showcase best trial}
+
+\subsection{Comparison with the first project} 
+
+\addwhenneeded{Use only for projects 2,3,4}\\
+\instructornote{Comment the results. Why the results are better/worse/the same?}
+
+\subsection{Comparison with the second project}
+
+\addwhenneeded{Use only for projects 3,4}\\
+\instructornote{Comment the results. Why the results are better/worse/the same?}
+
+\subsection{Comparison with the third project}
+
+\addwhenneeded{Use only for project 4}\\
+\instructornote{Comment the results. Why the results are better/worse/the same?}
+
+
+\section{Bibliography}
+
+\bibliographystyle{plain} % We choose the "plain" reference style
+\bibliography{refs} % Entries are in the refs.bib file
+
+\instructornote{You should link and cite whatever you used or "got inspired" from the web. Use the /\ cite command and add the paper/website/tutorial in refs.bib}\\
+\instructornote{Example of citing a source is like this:} \cite{knuth:1984}
+\instructornote{\href{https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex}{More about bibtex}}
+
+\end{document}
