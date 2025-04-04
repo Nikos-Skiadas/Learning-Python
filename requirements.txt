@@ -2,6 +2,7 @@ numpy
 scipy
 pandas
 scikit-learn
+nltk
 matplotlib
 seaborn
 torch
