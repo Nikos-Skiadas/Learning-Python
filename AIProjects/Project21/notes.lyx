@@ -579,5 +579,44 @@ y_{k}=\sigma(\boldsymbol{w}_{k}\cdot\boldsymbol{x}+b_{k})
 
 \end_layout
 
+\begin_layout Standard
+\begin_inset CommandInset line
+LatexCommand rule
+offset "0.5ex"
+width "100col%"
+height "1pt"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula 
+\[
+\mathcal{L}=-\sum_{i}y_{i}\log p_{i}-\sum_{i}(1-y_{i})\log(1-p_{i})
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+p_{i}=\sigma(z_{i})=\dfrac{1}{1+\exp(-z_{i})}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+z_{i}=\text{logit}(p_{i})=\log\dfrac{p_{i}}{1-p_{i}}
+\]
+
+\end_inset
+
+
+\end_layout
+
 \end_body
 \end_document

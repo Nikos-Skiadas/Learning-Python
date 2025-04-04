@@ -1,12 +1,129 @@
 from __future__ import annotations
 
 import warnings; warnings.simplefilter(action = "ignore", category = UserWarning)
-from typing import Iterable, Literal, Self
 
+import os
 from pathlib import Path
+import re
+import string
+from typing import Callable, Iterable, Literal, Self
 
 from rich.progress import track
+import pandas
 import torch; torch.set_default_device("cuda")
+
+# Importing NLTK for Natural Language Processing
+import nltk
+import nltk.stem
+import nltk.corpus
+
+# Download required NLP datasets
+nltk.download('wordnet')  # for lemmatization
+nltk.download('stopwords')  # for removing stopwords
+
+
+# Class for text preprocessing (cleaning the text)
+class Preprocessor:
+    def __call__(self, text: str) -> str:
+        text = re.sub(r"@\w+"   , "", text)  # remove mentions
+        text = re.sub(r"#\w+"   , "", text)  # remove hashtags
+        text = re.sub(r"\S+@\S+", "", text)  # remove emails
+
+        return text.translate(str.maketrans("", "", string.punctuation))  # remove punctuation
+
+
+# Class for tokenization and stemming/lemmatization
+class Tokenizer:
+
+    def __init__(self):
+        self.lemmatizer = nltk.WordNetLemmatizer()
+        self.stemmer = nltk.stem.PorterStemmer()
+        self.tokenizer = nltk.tokenize.TweetTokenizer(
+            preserve_case = False,
+            reduce_len = True,
+            strip_handles = True,
+        )
+
+    def __call__(self, text: str):
+        return [self.stemmer.stem(self.lemmatizer.lemmatize(token))
+            for token in self.tokenizer.tokenize(text) if token and not token.isdigit()]
+
+
+class Vocabulary(dict[str, int]):
+
+	def __init__(self, word2idx: dict[str, int], *,
+		pad_token = "<pad>",
+		unk_token = "<unk>",
+	):
+		super().__init__(word2idx)
+
+		self.pad_token = pad_token
+		self.unk_token = unk_token
+
+		self.pad_idx = self.get(pad_token, 0)
+		self.unk_idx = self.get(unk_token, 0)
+
+	def __call__(self, tokens: list[str]) -> list[int]:
+		return [self.get(token, self.unk_idx) for token in tokens]
+
+
+class TextTransform:
+
+	def __init__(self,
+		vocabulary: Vocabulary,
+		preprocessor: Callable | None = None,
+		tokenizer: Callable | None = None,
+		max_len: int | None = None,
+	):
+		self.vocabulary = vocabulary
+		self.preprocessor = preprocessor
+		self.tokenizer = tokenizer
+		self.max_len = max_len
+
+	def __call__(self, text: str) -> torch.Tensor:
+		if self.preprocessor: text = self.preprocessor(text)
+		if self.tokenizer: tokens = self.tokenizer(text)
+		else: tokens = text.lower().split()
+
+		indices = self.vocabulary(tokens)
+
+		if self.max_len is not None:
+			if len(indices) < self.max_len: indices += [self.vocabulary.pad_idx] * (self.max_len - len(indices))
+			else: indices = indices[:self.max_len]
+
+		return torch.tensor(indices,
+			dtype = torch.long,
+		)
+
+
+class TwitterDataset(torch.utils.data.Dataset):
+
+	# Class method to load dataset (train, val, test)
+	@classmethod
+	def load_data(cls, split: Literal["train", "val", "test"],
+		root: str = "",
+		index: str = "ID",
+	):
+		return pandas.read_csv(os.path.join(f"{root}", f"{split}_dataset.csv"),
+			index_col = index,  # Set ID column as index
+			encoding = "utf-8",
+		)
+
+
+	def __init__(self, split: Literal["train", "val", "test"], *,
+		transform: Callable,
+	):
+		self.data = self.load_data(split)
+		self.transform = transform
+
+	def __len__(self) -> int:
+		return len(self.data)
+
+	def __getitem__(self, idx: int) -> tuple[str, float]:
+		x = self.transform(self.data.text[idx])  # apply TextTransform -> tensor of token indices
+		y = float(self.data.labels[idx].item())  # get label
+
+		return x, y  # return tensor of token indices and label
 
 
 class Embedding(torch.nn.Embedding):
@@ -49,7 +166,7 @@ class Embedding(torch.nn.Embedding):
 				target_file.write(line)  # copy the rest of the lines
 
 	@classmethod
-	def load_word2vec_format(cls, word2vec_path: Path) -> tuple[dict[str, int], torch.Tensor]:
+	def load_word2vec_format(cls, word2vec_path: Path) -> tuple[Vocabulary, torch.Tensor]:
 		with open(word2vec_path, "r+", encoding="utf-8") as word2vec_file:
 			num_tokens, embedding_dim = map(int, word2vec_file.readline().strip().split())
 
@@ -63,7 +180,7 @@ class Embedding(torch.nn.Embedding):
 				word2idx[word] = index  # map word to index
 				vectors[index] = vec  # assign vector to the corresponding index
 
-		return word2idx, torch.tensor(vectors)
+		return Vocabulary(word2idx), torch.tensor(vectors)
 
 
 	def index(self, key: str | Iterable[str]) -> int | list[int]:
@@ -71,3 +188,182 @@ class Embedding(torch.nn.Embedding):
 
 	def get(self, key: str | Iterable[str]) -> torch.Tensor:
 		return self.weight[self.index(key)]
+
+
+class TwitterModel(torch.nn.Sequential):
+
+	def __init__(self, embedding: Embedding,
+		hidden_dim: int = 128,
+	):
+		super().__init__()
+		self.embedding = embedding
+
+		self.input_dim = self.embedding.embedding_dim
+		self.output_dim = 1  # binary classification (positive/negative)
+
+		super().__init__(
+			torch.nn.Linear(self.input_dim, hidden_dim),
+			torch.nn.SiLU(),
+		#	torch.nn.Dropout(),  # TODO: add dropout
+			torch.nn.Linear(hidden_dim, self.output_dim),  # single output neuron
+		#	torch.nn.Sigmoid(),  # output activation function  # FIXME: return logits instead of probabilities
+		)
+
+
+	def forward(self, input: torch.Tensor) -> torch.Tensor:
+		"""
+		x: LongTensor of shape [batch_size, seq_len] (token indices)
+		"""
+		embeddedings = self.embedding(input)  # [batch_size, seq_len, embedding_dim]
+
+		# Mask out padded positions
+		mask = (input != self.embedding.word2idx.get("<pad>", 0)).unsqueeze(-1)  # [batch_size, seq_len, 1]
+		embeddedings = embeddedings * mask  # zero out padded embeddings
+		pooled = embeddedings.sum(dim = 1) / mask.sum(dim = 1).clamp(min = 1)  # [batch_size, embedding_dim]
+		logits = self(pooled).squeeze(-1)  # [batch_size]
+
+		return logits
+
+
+class TwitterClassifier:
+
+	def __init__(self, model: TwitterModel,
+		train_dataset: TwitterDataset,
+		val_dataset: TwitterDataset,
+		batch_size: int = 32,
+		max_len: int = 32,
+	):
+		self.model = model
+
+		self.train_dataset = train_dataset
+		self.val_dataset = val_dataset
+
+		self.batch_size = batch_size
+		self.max_len = max_len
+
+		self.train_loader = torch.utils.data.DataLoader(self.train_dataset,
+			batch_size = self.batch_size,
+			shuffle = True,
+			num_workers = 4,
+			pin_memory = True,
+			drop_last = True,
+		)
+		self.val_loader = torch.utils.data.DataLoader(self.val_dataset,
+			batch_size = self.batch_size,
+			shuffle = False,
+			num_workers = 4,
+			pin_memory = True,
+			drop_last = False,
+		)
+
+
+	def compile(self,
+		learning_rate: float = 1e-3,
+		weight_decay: float = 0.,
+	):
+		self.optimizer = torch.optim.AdamW(self.model.parameters(),
+			lr = learning_rate,
+			weight_decay = weight_decay,
+		)
+		self.loss_fn = torch.nn.BCEWithLogitsLoss()
+
+	def fit(self, *,
+		epochs: int = 5,
+	) -> float:
+		for epoch in range(1, epochs + 1):
+			self.model.train()
+
+			for batch in self.train_loader:
+				x, y_true = batch
+
+				self.optimizer.zero_grad()
+				y_pred = self.model(x)
+				loss = self.loss_fn(y_pred, y_true)
+				loss.backward()
+				self.optimizer.step()
+
+		return loss.item()
+
+	def evaluate(self) -> float:
+		self.model.eval()
+
+		with torch.no_grad():
+			for batch in self.val_loader:
+				x, y_true = batch
+
+				y_pred = self.model(x)
+				loss = self.loss_fn(y_pred, y_true)
+
+		return loss.item()
+
+	def predict(self, x: torch.Tensor) -> torch.Tensor:
+		self.model.eval()
+
+		with torch.no_grad():
+			y_pred = self.model(x)
+
+		return (torch.sigmoid(y_pred) > 0.5).long()
+
+
+def train(model: TwitterModel, train_loader: torch.utils.data.DataLoader,
+	val_loader: torch.utils.data.DataLoader | None = None,
+	epochs: int = 5,
+	lr: float = 1e-3,
+	weight_decay: float = 0.,
+#	print_every: int = 1,
+) -> None:
+	optimizer = torch.optim.AdamW(model.parameters(),
+		lr = lr,
+		weight_decay = weight_decay
+	)
+
+#	loss = torch.nn.BCELoss()  # binary cross-entropy loss  # FIXME: use `BCEWithLogitsLoss` instead
+	loss_fn = torch.nn.BCEWithLogitsLoss()  # binary cross-entropy loss with logits
+
+	for epoch in range(1, epochs + 1):
+		model.train()
+		total_loss = 0
+		correct = 0
+		total = 0
+
+		for batch in train_loader:
+			x, y_true = batch
+			x, y_true = x, y_true.float()  # ensure float for BCEWithLogits
+
+			optimizer.zero_grad()
+			y_pred = model(x)
+			loss = loss_fn(y_pred, y_true)
+			loss.backward()
+			optimizer.step()
+
+	#		total_loss += loss.item()
+
+	#		# Compute running accuracy
+	#		preds = (torch.sigmoid(y_pred) > 0.5).long()
+	#		correct += (preds == y_true.long()).sum().item()
+	#		total += y_true.size(0)
+
+	#	if epoch % print_every == 0:
+	#		train_acc = 100 * correct / total
+	#		print(f"[Epoch {epoch}] Loss: {total_loss:.4f} | Train Accuracy: {train_acc:.2f}%")
+
+		# Validation Phase
+		if val_loader is not None:
+			model.eval()
+
+			with torch.no_grad():
+				for batch in val_loader:
+					x, y_true = batch
+					x, y_true = x, y_true.float()  # ensure float for BCEWithLogits
+
+					y_pred = model(x)
+					loss = loss_fn(y_pred, y_true)
+
+				#	val_loss += loss.item()
+
+				#	preds = (torch.sigmoid(y_pred) > 0.5).long()
+				#	val_correct += (preds == y_true.long()).sum().item()
+				#	val_total += y_true.size(0)
+
+		#	val_acc = 100 * val_correct / val_total
+		#	print(f"        Validation Loss: {val_loss:.4f} | Validation Accuracy: {val_acc:.2f}%")
