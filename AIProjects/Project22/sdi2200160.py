@@ -119,11 +119,15 @@ class TwitterDataset(torch.utils.data.Dataset):
 	def __len__(self) -> int:
 		return len(self.data)
 
-	def __getitem__(self, idx: int) -> tuple[str, float]:
+	def __getitem__(self, idx: int | slice):
 		x = self.transform(self.data.text[idx])  # apply TextTransform -> tensor of token indices
 		y = float(self.data.labels[idx].item())  # get label
 
 		return x, y  # return tensor of token indices and label
+
+	@property
+	def x(self):
+		...
 
 
 class Embedding(torch.nn.Embedding):
@@ -267,13 +271,15 @@ class TwitterClassifier:
 		)
 		self.loss_fn = torch.nn.BCEWithLogitsLoss()
 
-	def fit(self, *,
+	def fit(self, dataset: TwitterDataset,
 		epochs: int = 5,
-	) -> float:
-		for epoch in range(1, epochs + 1):
+	**kwargs) -> float:
+		loader = torch.utils.data.DataLoader(dataset, **kwargs)
+
+		for _ in range(1, epochs + 1):
 			self.model.train()
 
-			for batch in self.train_loader:
+			for batch in loader:
 				x, y_true = batch
 
 				self.optimizer.zero_grad()
@@ -284,11 +290,13 @@ class TwitterClassifier:
 
 		return loss.item()
 
-	def evaluate(self) -> float:
+	def evaluate(self, dataset: TwitterDataset, **kwargs) -> float:
+		loader = torch.utils.data.DataLoader(dataset, **kwargs)
+
 		self.model.eval()
 
 		with torch.no_grad():
-			for batch in self.val_loader:
+			for batch in loader:
 				x, y_true = batch
 
 				y_pred = self.model(x)
@@ -296,74 +304,16 @@ class TwitterClassifier:
 
 		return loss.item()
 
-	def predict(self, x: torch.Tensor) -> torch.Tensor:
+	def predict(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
+		loader = torch.utils.data.DataLoader(dataset, **kwargs)
+
 		self.model.eval()
 
+		y_pred = []
+
 		with torch.no_grad():
-			y_pred = self.model(x)
+			for batch in loader:
+				x, _ = batch  # ignore labels
+				y_pred.append((torch.sigmoid(self.model(x)) > 0.5).long())
 
-		return (torch.sigmoid(y_pred) > 0.5).long()
-
-
-def train(model: TwitterModel, train_loader: torch.utils.data.DataLoader,
-	val_loader: torch.utils.data.DataLoader | None = None,
-	epochs: int = 5,
-	lr: float = 1e-3,
-	weight_decay: float = 0.,
-#	print_every: int = 1,
-) -> None:
-	optimizer = torch.optim.AdamW(model.parameters(),
-		lr = lr,
-		weight_decay = weight_decay
-	)
-
-#	loss = torch.nn.BCELoss()  # binary cross-entropy loss  # FIXME: use `BCEWithLogitsLoss` instead
-	loss_fn = torch.nn.BCEWithLogitsLoss()  # binary cross-entropy loss with logits
-
-	for epoch in range(1, epochs + 1):
-		model.train()
-		total_loss = 0
-		correct = 0
-		total = 0
-
-		for batch in train_loader:
-			x, y_true = batch
-			x, y_true = x, y_true.float()  # ensure float for BCEWithLogits
-
-			optimizer.zero_grad()
-			y_pred = model(x)
-			loss = loss_fn(y_pred, y_true)
-			loss.backward()
-			optimizer.step()
-
-	#		total_loss += loss.item()
-
-	#		# Compute running accuracy
-	#		preds = (torch.sigmoid(y_pred) > 0.5).long()
-	#		correct += (preds == y_true.long()).sum().item()
-	#		total += y_true.size(0)
-
-	#	if epoch % print_every == 0:
-	#		train_acc = 100 * correct / total
-	#		print(f"[Epoch {epoch}] Loss: {total_loss:.4f} | Train Accuracy: {train_acc:.2f}%")
-
-		# Validation Phase
-		if val_loader is not None:
-			model.eval()
-
-			with torch.no_grad():
-				for batch in val_loader:
-					x, y_true = batch
-					x, y_true = x, y_true.float()  # ensure float for BCEWithLogits
-
-					y_pred = model(x)
-					loss = loss_fn(y_pred, y_true)
-
-				#	val_loss += loss.item()
-
-				#	preds = (torch.sigmoid(y_pred) > 0.5).long()
-				#	val_correct += (preds == y_true.long()).sum().item()
-				#	val_total += y_true.size(0)
-
-		#	val_acc = 100 * val_correct / val_total
-		#	print(f"        Validation Loss: {val_loss:.4f} | Validation Accuracy: {val_acc:.2f}%")
+		return torch.cat(y_pred)
