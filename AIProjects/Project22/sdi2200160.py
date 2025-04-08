@@ -22,7 +22,6 @@ nltk.download('wordnet')  # for lemmatization
 nltk.download('stopwords')  # for removing stopwords
 
 
-# Class for text preprocessing (cleaning the text)
 class Preprocessor:
     def __call__(self, text: str) -> str:
         text = re.sub(r"@\w+"   , "", text)  # remove mentions
@@ -32,7 +31,6 @@ class Preprocessor:
         return text.translate(str.maketrans("", "", string.punctuation))  # remove punctuation
 
 
-# Class for tokenization and stemming/lemmatization
 class Tokenizer:
 
     def __init__(self):
@@ -113,15 +111,15 @@ class TwitterDataset(torch.utils.data.Dataset):
 	def __init__(self, split: Literal["train", "val", "test"], *,
 		transform: Callable,
 	):
-		self.data = self.load_data(split)
+		self.data = self.load_data(split).reset_index()
 		self.transform = transform
 
 	def __len__(self) -> int:
 		return len(self.data)
 
 	def __getitem__(self, idx: int | slice):
-		x = self.transform(self.data.text[idx])  # apply TextTransform -> tensor of token indices
-		y = float(self.data.labels[idx].item())  # get label
+		x = self.transform(self.data.Text[idx])  # apply TextTransform -> tensor of token indices
+		y = float(self.data.Label[idx].item())  # get label
 
 		return x, y  # return tensor of token indices and label
 
@@ -132,7 +130,7 @@ class TwitterDataset(torch.utils.data.Dataset):
 
 class Embedding(torch.nn.Embedding):
 
-	word2idx: dict[str, int]  # word to index mapping
+	word2idx: Vocabulary  # word to index mapping
 
 
 	@classmethod
@@ -194,17 +192,19 @@ class Embedding(torch.nn.Embedding):
 		return self.weight[self.index(key)]
 
 
-class TwitterModel(torch.nn.Sequential):
+class TwitterModel(torch.nn.Module):
 
 	def __init__(self, embedding: Embedding,
 		hidden_dim: int = 128,
 	):
+		super().__init__()
+
 		self.embedding = embedding
 
 		self.input_dim = self.embedding.embedding_dim
 		self.output_dim = 1  # binary classification (positive/negative)
 
-		super().__init__(
+		self.model = torch.nn.Sequential(
 			torch.nn.Linear(self.input_dim, hidden_dim),
 			torch.nn.SiLU(),
 			torch.nn.Dropout(),  # TODO: add dropout
@@ -223,7 +223,7 @@ class TwitterModel(torch.nn.Sequential):
 		mask = (input != self.embedding.word2idx.get("<pad>", 0)).unsqueeze(-1)  # [batch_size, seq_len, 1]
 		embeddings = embeddings * mask  # zero out padded embeddings
 		pooled = embeddings.sum(dim = 1) / mask.sum(dim = 1).clamp(min = 1)  # [batch_size, embedding_dim]
-		logits = self(pooled).squeeze(-1)  # [batch_size]
+		logits = self.model(pooled).squeeze(-1)  # [batch_size]
 
 		return logits
 
@@ -231,17 +231,9 @@ class TwitterModel(torch.nn.Sequential):
 class TwitterClassifier:
 
 	def __init__(self, model: TwitterModel,
-		train_dataset: TwitterDataset,
-		val_dataset: TwitterDataset,
-		batch_size: int = 32,
 		max_len: int = 32,
 	):
 		self.model = model
-
-		self.train_dataset = train_dataset
-		self.val_dataset = val_dataset
-
-		self.batch_size = batch_size
 		self.max_len = max_len
 
 
@@ -258,12 +250,14 @@ class TwitterClassifier:
 	def fit(self, dataset: TwitterDataset,
 		epochs: int = 5,
 	**kwargs) -> float:
-		loader = torch.utils.data.DataLoader(dataset, **kwargs)
+		loader = torch.utils.data.DataLoader(dataset,
+			drop_last = True,
+		**kwargs)
 
 		for _ in range(1, epochs + 1):
 			self.model.train()
 
-			for batch in loader:
+			for batch in track(loader, "batch", len(dataset) // loader.batch_size if loader.batch_size is not None else None):
 				x, y_true = batch
 
 				self.optimizer.zero_grad()
@@ -274,30 +268,54 @@ class TwitterClassifier:
 
 		return loss.item()
 
+	@torch.no_grad
 	def evaluate(self, dataset: TwitterDataset, **kwargs) -> float:
-		loader = torch.utils.data.DataLoader(dataset, **kwargs)
+		loader = torch.utils.data.DataLoader(dataset,
+			drop_last = True,
+		**kwargs)
 
 		self.model.eval()
 
-		with torch.no_grad():
-			for batch in loader:
-				x, y_true = batch
+		for batch in loader:
+			x, y_true = batch
 
-				y_pred = self.model(x)
-				loss = self.loss_fn(y_pred, y_true)
+			y_pred = self.model(x)
+			loss = self.loss_fn(y_pred, y_true)
 
 		return loss.item()
 
+	@torch.no_grad
 	def predict(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
-		loader = torch.utils.data.DataLoader(dataset, **kwargs)
+		loader = torch.utils.data.DataLoader(dataset,
+			drop_last = True,
+		**kwargs)
 
 		self.model.eval()
 
 		y_pred = []
 
-		with torch.no_grad():
-			for batch in loader:
-				x, _ = batch  # ignore labels
-				y_pred.append((torch.sigmoid(self.model(x)) > 0.5).long())
+		for batch in loader:
+			x, _ = batch  # ignore labels
+			y_pred.append((torch.sigmoid(self.model(x)) > 0.5).long())
 
 		return torch.cat(y_pred)
+
+
+if __name__ == "__main__":
+	embedding = Embedding.from_glove(50)
+	model = TwitterModel(embedding)
+	model.compile()
+	classifier = TwitterClassifier(model)
+
+	train_data = TwitterDataset("train",
+		transform = TextTransform(embedding.word2idx,
+			preprocessor = Preprocessor(),
+			tokenizer = Tokenizer(),
+			max_len = 32,
+		)
+	)
+
+	classifier.fit(train_data,
+		epochs = 1,
+		batch_size = 32,
+	)
