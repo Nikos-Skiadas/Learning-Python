@@ -184,7 +184,7 @@ class Embedding(torch.nn.Embedding):
 				word2idx[word] = index  # map word to index
 				vectors[index] = vec  # assign vector to the corresponding index
 
-		return Vocabulary(word2idx), torch.tensor(vectors)
+		return Vocabulary(word2idx), vectors
 
 
 	def index(self, key: str | Iterable[str]) -> int | list[int]:
@@ -199,7 +199,6 @@ class TwitterModel(torch.nn.Sequential):
 	def __init__(self, embedding: Embedding,
 		hidden_dim: int = 128,
 	):
-		super().__init__()
 		self.embedding = embedding
 
 		self.input_dim = self.embedding.embedding_dim
@@ -208,7 +207,7 @@ class TwitterModel(torch.nn.Sequential):
 		super().__init__(
 			torch.nn.Linear(self.input_dim, hidden_dim),
 			torch.nn.SiLU(),
-		#	torch.nn.Dropout(),  # TODO: add dropout
+			torch.nn.Dropout(),  # TODO: add dropout
 			torch.nn.Linear(hidden_dim, self.output_dim),  # single output neuron
 		#	torch.nn.Sigmoid(),  # output activation function  # FIXME: return logits instead of probabilities
 		)
@@ -218,12 +217,12 @@ class TwitterModel(torch.nn.Sequential):
 		"""
 		x: LongTensor of shape [batch_size, seq_len] (token indices)
 		"""
-		embeddedings = self.embedding(input)  # [batch_size, seq_len, embedding_dim]
+		embeddings = self.embedding(input)  # [batch_size, seq_len, embedding_dim]
 
 		# Mask out padded positions
 		mask = (input != self.embedding.word2idx.get("<pad>", 0)).unsqueeze(-1)  # [batch_size, seq_len, 1]
-		embeddedings = embeddedings * mask  # zero out padded embeddings
-		pooled = embeddedings.sum(dim = 1) / mask.sum(dim = 1).clamp(min = 1)  # [batch_size, embedding_dim]
+		embeddings = embeddings * mask  # zero out padded embeddings
+		pooled = embeddings.sum(dim = 1) / mask.sum(dim = 1).clamp(min = 1)  # [batch_size, embedding_dim]
 		logits = self(pooled).squeeze(-1)  # [batch_size]
 
 		return logits
@@ -244,21 +243,6 @@ class TwitterClassifier:
 
 		self.batch_size = batch_size
 		self.max_len = max_len
-
-		self.train_loader = torch.utils.data.DataLoader(self.train_dataset,
-			batch_size = self.batch_size,
-			shuffle = True,
-			num_workers = 4,
-			pin_memory = True,
-			drop_last = True,
-		)
-		self.val_loader = torch.utils.data.DataLoader(self.val_dataset,
-			batch_size = self.batch_size,
-			shuffle = False,
-			num_workers = 4,
-			pin_memory = True,
-			drop_last = False,
-		)
 
 
 	def compile(self,
