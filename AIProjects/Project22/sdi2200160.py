@@ -345,8 +345,8 @@ class TwitterClassifier:
 					y_pred,
 					y_true,
 				)
-				metrics.update({       name  : [metric] for name, metric in              epoch_metrics.items()})
-				metrics.update({f"val_{name}": [metric] for name, metric in self.evaluate(val_dataset).items()})
+				metrics.update({       name  : [metric] for name, metric in self.evaluate(train_dataset).items()})
+				metrics.update({f"val_{name}": [metric] for name, metric in self.evaluate(  val_dataset).items()})
 
 				progress.update(batch_task,
 					completed = 0,
