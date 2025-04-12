@@ -245,9 +245,12 @@ class TwitterModel(torch.nn.Module):
 		embeddings = self.embedding.forward(input)
 		mask = (input != self.embedding.word2idx.pad_idx).unsqueeze(-1).float()
 		embeddings *= mask
-		pooled = embeddings.sum(1) / mask.sum(1)
+		pooled = embeddings.sum(1) / mask.sum(1).clamp(
+			min = 1e-6,
+		)
 
 		return self.model(pooled).squeeze(-1)
+
 
 class TwitterClassifier:
 
@@ -405,8 +408,8 @@ if __name__ == "__main__":
 
 	classifier = TwitterClassifier(model)
 	classifier.compile(
-		learning_rate = 1e-4,
-		weight_decay  = 1e-2,
+		learning_rate = 1e-5,
+		weight_decay  = 1e-1,
 	)
 
 	transform = TextTransform(embedding.word2idx,
