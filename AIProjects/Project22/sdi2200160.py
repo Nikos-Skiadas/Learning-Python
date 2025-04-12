@@ -359,7 +359,6 @@ class TwitterClassifier:
 					total = epochs,
 					advance = 1,
 				)
-				epoch_index += epoch
 
 		return dict(metrics)  # type: ignore
 
