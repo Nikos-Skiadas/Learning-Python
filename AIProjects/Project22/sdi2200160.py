@@ -313,7 +313,7 @@ class TwitterClassifier:
 		)
 
 		with Progress() as progress:
-			train_task = progress.add_task(description = "training epoch --/--".ljust(32), total = epochs )
+			train_task = progress.add_task(description = "finished epoch --/--".ljust(32), total = epochs )
 			batch_task = progress.add_task(description = "training loss -.----".ljust(32), total = batches)
 
 			for epoch in range(1, epochs + 1):
