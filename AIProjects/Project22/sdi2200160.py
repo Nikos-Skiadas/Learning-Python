@@ -301,7 +301,7 @@ class TwitterClassifier:
 		epochs: int = 1,
 	**kwargs) -> dict[str, list[float]]:
 		train_loader = torch.utils.data.DataLoader(train_dataset, drop_last = True, **kwargs)
-		val_loader   = torch.utils.data.DataLoader(val_dataset  , drop_last = True, **kwargs)
+		batches = len(train_dataset) // train_loader.batch_size if train_loader.batch_size is not None else None
 
 		metrics = Counter(
 			loss      = [], val_loss      = [],  # type: ignore
@@ -318,10 +318,12 @@ class TwitterClassifier:
 			)
 			batch_task = progress.add_task(
 				description = "training loss -.----".ljust(32),
-				total = len(train_dataset) // train_loader.batch_size if train_loader.batch_size is not None else None
+				total = batches,
 			)
 
 			for epoch in range(1, epochs + 1):
+				progress.reset(batch_task)
+
 				self.model.train()
 
 				for batch in train_loader:
@@ -338,21 +340,16 @@ class TwitterClassifier:
 
 					progress.update(batch_task,
 						description = f"training loss {loss.item():.4f}".ljust(32),
+						total = batches,
 						advance = 1,
 					)
 
-				epoch_metrics = self.compute(
-					y_pred,
-					y_true,
-				)
 				metrics.update({       name  : [metric] for name, metric in self.evaluate(train_dataset).items()})
 				metrics.update({f"val_{name}": [metric] for name, metric in self.evaluate(  val_dataset).items()})
 
-				progress.update(batch_task,
-					completed = 0,
-				)
 				progress.update(train_task,
 					description = f"training epoch {epoch:02d}/{epochs:02d}".ljust(32),
+					total = epochs,
 					advance = 1,
 				)
 
