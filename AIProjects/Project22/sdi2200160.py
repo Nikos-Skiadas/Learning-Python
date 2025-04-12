@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import warnings; warnings.simplefilter(action = "ignore", category = UserWarning)
 
-import math
 from collections import Counter
+import math
+import json
 import os; os.environ["TORCH_INDUCTOR_MAX_AUTOTUNE_GEMM"] = "0"  # disable autotuning
 from pathlib import Path
 import re
@@ -414,9 +415,16 @@ if __name__ == "__main__":
 		transform = transform
 	)
 
-	history = classifier.fit(
+	metrics = classifier.fit(
 		train_data,
 		val_data,
 		epochs = 10,
 		batch_size = math.isqrt(len(train_data)) + 1,
 	)
+
+	with open("sdi2200160.json", "w+",
+		encoding = "utf-8",
+	) as file:
+		json.dump(metrics, file,
+			indent = 4
+		)
