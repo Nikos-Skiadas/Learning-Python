@@ -343,10 +343,7 @@ class TwitterClassifier:
 					total_loss += loss.item()
 
 					progress.update(batch_task,
-						description = f"training loss {total_loss / (
-							batch_index +
-							epoch_index
-						):.4f}".ljust(32),
+						description = f"training loss {total_loss/batch_index:.4f}".ljust(32),
 						total = batches,
 						advance = 1,
 					)
@@ -359,7 +356,6 @@ class TwitterClassifier:
 					total = epochs,
 					advance = 1,
 				)
-				epoch_index += epoch
 
 		return dict(metrics)  # type: ignore
 
