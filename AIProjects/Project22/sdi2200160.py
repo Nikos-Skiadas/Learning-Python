@@ -298,7 +298,8 @@ class TwitterClassifier:
 		epochs: int = 1,
 	**kwargs) -> dict[str, list[float]]:
 		train_loader = torch.utils.data.DataLoader(train_dataset, drop_last = True, **kwargs)
-		batches = len(train_dataset) // train_loader.batch_size if train_loader.batch_size is not None else None
+		assert train_loader.batch_size is not None
+		batches = len(train_dataset) // train_loader.batch_size
 
 		metrics = Counter(
 			loss      = [], val_loss      = [],  # type: ignore
@@ -307,6 +308,7 @@ class TwitterClassifier:
 			recall    = [], val_recall    = [],  # type: ignore
 			f1        = [], val_f1        = [],  # type: ignore
 		)
+		total_loss = 0.
 
 		print(f"Training for {epochs} epochs with:")
 		print(
@@ -319,12 +321,14 @@ class TwitterClassifier:
 			train_task = progress.add_task(description = "finished epoch --/--".ljust(32), total = epochs )
 			batch_task = progress.add_task(description = "training loss -.----".ljust(32), total = batches)
 
-			for epoch in range(1, epochs + 1):
+			for epoch in range(epochs):
 				progress.reset(batch_task)
 
 				self.model.train()
 
-				for batch in train_loader:
+				for batch_index, batch in enumerate(train_loader,
+					start = epoch * batches + 1,
+				):
 					x, y_true = batch
 
 					self.optimizer.zero_grad()
@@ -336,8 +340,13 @@ class TwitterClassifier:
 					loss.backward()
 					self.optimizer.step()
 
+					total_loss += loss.item()
+
 					progress.update(batch_task,
-						description = f"training loss {loss.item():.4f}".ljust(32),
+						description = f"training loss {total_loss / (
+							batch_index +
+							epoch_index
+						):.4f}".ljust(32),
 						total = batches,
 						advance = 1,
 					)
@@ -346,10 +355,11 @@ class TwitterClassifier:
 				metrics.update({f"val_{name}": [metric] for name, metric in self.evaluate(  val_dataset).items()})
 
 				progress.update(train_task,
-					description = f"training epoch {epoch:02d}/{epochs:02d}".ljust(32),
+					description = f"training epoch {epoch+1:02d}/{epochs:02d}".ljust(32),
 					total = epochs,
 					advance = 1,
 				)
+				epoch_index += epoch
 
 		return dict(metrics)  # type: ignore
 
@@ -415,7 +425,7 @@ if __name__ == "__main__":
 		train_data,
 		val_data,
 		epochs = 12,
-		batch_size = int(math.log(len(train_data) + len(val_data))) + 1,
+		batch_size = int(math.log10(len(train_data) + len(val_data))) + 1,
 	)
 
 	with open("sdi2200160.json", "w+",
