@@ -355,7 +355,7 @@ class TwitterClassifier:
 				metrics.update({f"val_{name}": [metric] for name, metric in self.evaluate(  val_dataset).items()})
 
 				progress.update(train_task,
-					description = f"training epoch {epoch+1:3d}/{epochs:3d}".ljust(32),
+					description = f"finished epoch {epoch+1:3d}/{epochs:3d}".ljust(32),
 					total = epochs,
 					advance = 1,
 				)
