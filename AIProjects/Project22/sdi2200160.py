@@ -11,6 +11,7 @@ import re
 import string
 from typing import Callable, Iterable, Literal, Self
 
+from rich import print
 from rich.progress import Progress, track
 import pandas
 import torch; torch.set_default_device("cuda")
@@ -26,28 +27,28 @@ nltk.download('stopwords')  # for removing stopwords
 
 
 class Preprocessor:
-    def __call__(self, text: str) -> str:
-        text = re.sub(r"@\w+"   , "", text)  # remove mentions
-        text = re.sub(r"#\w+"   , "", text)  # remove hashtags
-        text = re.sub(r"\S+@\S+", "", text)  # remove emails
+	def __call__(self, text: str) -> str:
+		text = re.sub(r"@\w+"   , "", text)  # remove mentions
+		text = re.sub(r"#\w+"   , "", text)  # remove hashtags
+		text = re.sub(r"\S+@\S+", "", text)  # remove emails
 
-        return text.translate(str.maketrans("", "", string.punctuation))  # remove punctuation
+		return text.translate(str.maketrans("", "", string.punctuation))  # remove punctuation
 
 
 class Tokenizer:
 
-    def __init__(self):
-        self.lemmatizer = nltk.WordNetLemmatizer()
-        self.stemmer = nltk.stem.PorterStemmer()
-        self.tokenizer = nltk.tokenize.TweetTokenizer(
-            preserve_case = False,
-            reduce_len = True,
-            strip_handles = True,
-        )
+	def __init__(self):
+		self.lemmatizer = nltk.WordNetLemmatizer()
+		self.stemmer = nltk.stem.PorterStemmer()
+		self.tokenizer = nltk.tokenize.TweetTokenizer(
+			preserve_case = False,
+			reduce_len = True,
+			strip_handles = True,
+		)
 
-    def __call__(self, text: str):
-        return [self.stemmer.stem(self.lemmatizer.lemmatize(token))
-            for token in self.tokenizer.tokenize(text) if token and not token.isdigit()]
+	def __call__(self, text: str):
+		return [self.stemmer.stem(self.lemmatizer.lemmatize(token))
+			for token in self.tokenizer.tokenize(text) if token and not token.isdigit()]
 
 
 class Vocabulary(dict[str, int]):
@@ -122,7 +123,9 @@ class TwitterDataset(torch.utils.data.Dataset):
 
 	def __getitem__(self, idx: int | slice):
 		x = self.transform(self.data.Text[idx])  # apply TextTransform -> tensor of token indices
-		y = float(self.data.Label[idx].item())  # get label
+		y = torch.tensor(self.data.Label[idx],
+			dtype = torch.float,  # convert label to float
+		)  # get label
 
 		return x, y  # return tensor of token indices and label
 
@@ -239,19 +242,12 @@ class TwitterModel(torch.nn.Module):
 
 
 	def forward(self, input: torch.Tensor) -> torch.Tensor:
-		"""
-		x: LongTensor of shape [batch_size, seq_len] (token indices)
-		"""
-		embeddings = self.embedding(input)  # [batch_size, seq_len, embedding_dim]
-
-		# Mask out padded positions
-		mask = (input != self.embedding.word2idx.get("<pad>", 0)).unsqueeze(-1)  # [batch_size, seq_len, 1]
-		embeddings = embeddings * mask  # zero out padded embeddings
-		pooled = embeddings.sum(dim = 1) / mask.sum(dim = 1).clamp(min = 1)  # [batch_size, embedding_dim]
-		logits = self.model(pooled).squeeze(-1)  # [batch_size]
-
+		embeddings = self.embedding(input)
+		mask = (input != self.embedding.word2idx.pad_idx).unsqueeze(-1).float()
+		embeddings *= mask
+		pooled = embeddings.sum(1) / mask.sum(1).clamp(min=1e-8)
+		logits = self.model(pooled).squeeze(-1)
 		return logits
-
 
 class TwitterClassifier:
 
@@ -264,7 +260,7 @@ class TwitterClassifier:
 
 	def compile(self,
 		learning_rate: float = 1e-3,
-		weight_decay: float = 0.,
+		weight_decay : float = 0,
 	):
 		def accuracy (x: torch.Tensor, y: torch.Tensor) -> torch.Tensor: return (x * y).float().mean()
 		def precision(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor: return (x * y).float().sum() / x.sum()
@@ -310,6 +306,13 @@ class TwitterClassifier:
 			precision = [], val_precision = [],  # type: ignore
 			recall    = [], val_recall    = [],  # type: ignore
 			f1        = [], val_f1        = [],  # type: ignore
+		)
+
+		print(f"Training for {epochs} epochs with:")
+		print(
+			json.dumps(kwargs,
+				indent = 4,
+			)
 		)
 
 		with Progress() as progress:
@@ -394,7 +397,10 @@ if __name__ == "__main__":
 	model.compile()
 
 	classifier = TwitterClassifier(model)
-	classifier.compile()
+	classifier.compile(
+		learning_rate = 1e-4,
+		weight_decay  = 1e-2,
+	)
 
 	transform = TextTransform(embedding.word2idx,
 		preprocessor = Preprocessor(),
@@ -408,8 +414,8 @@ if __name__ == "__main__":
 	metrics = classifier.fit(
 		train_data,
 		val_data,
-		epochs = 10,
-		batch_size = math.isqrt(len(train_data)) + 1,
+		epochs = 12,
+		batch_size = int(math.log(len(train_data) + len(val_data))) + 1,
 	)
 
 	with open("sdi2200160.json", "w+",
