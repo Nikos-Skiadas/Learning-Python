@@ -321,8 +321,8 @@ class TwitterClassifier:
 		)
 
 		with Progress() as progress:
-			train_task = progress.add_task(description = "finished epoch --/--".ljust(32), total = epochs )
-			batch_task = progress.add_task(description = "training loss -.----".ljust(32), total = batches)
+			train_task = progress.add_task(description = "finished epoch ---/---".ljust(32), total = epochs )
+			batch_task = progress.add_task(description = "training loss -.------".ljust(32), total = batches)
 
 			for epoch in range(epochs):
 				progress.reset(batch_task)
@@ -346,7 +346,7 @@ class TwitterClassifier:
 					total_loss += loss.item()
 
 					progress.update(batch_task,
-						description = f"training loss {total_loss/batch_index:.4f}".ljust(32),
+						description = f"training loss {total_loss/batch_index:.6f}".ljust(32),
 						total = batches,
 						advance = 1,
 					)
@@ -355,7 +355,7 @@ class TwitterClassifier:
 				metrics.update({f"val_{name}": [metric] for name, metric in self.evaluate(  val_dataset).items()})
 
 				progress.update(train_task,
-					description = f"training epoch {epoch+1:02d}/{epochs:02d}".ljust(32),
+					description = f"training epoch {epoch+1:3d}/{epochs:3d}".ljust(32),
 					total = epochs,
 					advance = 1,
 				)
@@ -407,8 +407,8 @@ if __name__ == "__main__":
 
 	classifier = TwitterClassifier(model)
 	classifier.compile(
-		learning_rate = 1e-5,
-		weight_decay  = 1e-1,
+		learning_rate = 1e-4,
+		weight_decay  = 1e-2,
 	)
 
 	transform = TextTransform(embedding.word2idx,
