@@ -222,32 +222,51 @@ class Embedding(torch.nn.Embedding):
 
 class TwitterModel(torch.nn.Module):
 
-	def __init__(self, embedding: Embedding,
+    def __init__(self, embedding: Embedding,
 		hidden_dim: int = 128,
+		num_heads: int = 2,
 	):
-		super().__init__()
+        super().__init__()
 
-		self.embedding = embedding
+        self.embedding = embedding
+        self.embed_dim = embedding.embedding_dim
+        self.output_dim = 1
 
-		self.input_dim = self.embedding.embedding_dim
-		self.output_dim = 1  # binary classification (positive/negative)
+        # Built-in MultiheadAttention
+        self.attention = torch.nn.MultiheadAttention(
+            embed_dim = self.embed_dim,
+            num_heads = num_heads,
+            batch_first = True
+        )
 
-		self.model = torch.nn.Sequential(
-			torch.nn.Linear(self.input_dim, hidden_dim),
-			torch.nn.SiLU(),
-			torch.nn.Dropout(),  # TODO: add dropout
-			torch.nn.Linear(hidden_dim, self.output_dim),  # single output neuron
-		#	torch.nn.Sigmoid(),  # output activation function  # FIXME: return logits instead of probabilities
-		)
+        # Feed-forward layers
+        self.model = torch.nn.Sequential(
+            torch.nn.Linear(self.embed_dim, hidden_dim),
+            torch.nn.SiLU(),
+            torch.nn.Dropout(),
+            torch.nn.Linear(hidden_dim, self.output_dim),
+        )
 
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        embeddings = self.embedding(input)  # [batch_size, seq_len, embed_dim]
 
-	def forward(self, input: torch.Tensor) -> torch.Tensor:
-		embeddings = self.embedding(input)
-		mask = (input != self.embedding.word2idx.pad_idx).unsqueeze(-1).float()
-		embeddings *= mask
-		pooled = embeddings.sum(1) / mask.sum(1).clamp(min=1e-8)
-		logits = self.model(pooled).squeeze(-1)
-		return logits
+        # Mask: True for positions to ignore (padding)
+        key_padding_mask = (input == self.embedding.word2idx.pad_idx)  # [batch_size, seq_len]
+
+        # Self-attention (Query=Key=Value=embeddings)
+        attended, _ = self.attention.forward(
+            embeddings,
+            embeddings,
+            embeddings,
+            key_padding_mask=key_padding_mask
+        )  # [batch_size, seq_len, embed_dim]
+
+        # Aggregate: masked mean pooling over attended embeddings
+        mask = (~key_padding_mask).unsqueeze(-1).float()
+        pooled = (attended * mask).sum(dim=1) / mask.sum(dim=1).clamp(min=1e-8)
+
+        return self.model(pooled).squeeze(-1)
+
 
 class TwitterClassifier:
 
