@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import warnings; warnings.simplefilter(action = "ignore", category = UserWarning)
 
+import argparse
 from collections import Counter
 import math
 import json
@@ -15,8 +16,10 @@ from typing import Callable, Iterable, Literal, Self
 from rich import print
 from rich.progress import Progress, track
 
+import matplotlib.pyplot as plt
 import numpy
 import pandas
+import sklearn.metrics
 import torch; torch.set_default_device("cuda")
 
 import nltk
@@ -78,7 +81,7 @@ class Vocabulary(dict[str, int]):
 		self.unk_token = unk_token
 
 		self.pad_idx = self.get(pad_token, 0)
-		self.unk_idx = self.get(unk_token, 0)
+		self.unk_idx = self.get(unk_token, 1)
 
 	def __call__(self, tokens: list[str]) -> list[int]:
 		return [self.get(token, self.unk_idx) for token in tokens]
@@ -159,8 +162,7 @@ class Embedding(torch.nn.Embedding):
 		embedding_dim: Literal[50, 100, 200, 300] = 50,
 		pad_token: str = "<pad>",
 		unk_token: str = "<unk>",
-		**kwargs,
-	) -> Self:
+	**kwargs) -> Self:
 		source_path: Path = Path("embeddings") / f"glove.6B.{embedding_dim}d.txt"
 		target_path: Path = source_path.with_suffix(".word2vec.txt")
 
@@ -170,26 +172,26 @@ class Embedding(torch.nn.Embedding):
 
 		# Insert special tokens:
 		pad_vector = torch.zeros(tensor.shape[1], device=tensor.device)
-	#	unk_vector = torch.randn(tensor.shape[1], device=tensor.device) * 0.1  # smaller variance
+		unk_vector = torch.randn(tensor.shape[1], device=tensor.device) * 0.1  # smaller variance
 
 		# Rebuild mapping with special tokens:
 		word2idx = {
 			pad_token: 0,
-		#	unk_token: 1,
+			unk_token: 1,
 		**{word: idx + 2 for word, idx in word2idx.items()}}
 
 		# Stack special vectors:
 		tensor = torch.vstack(
 			[
 				pad_vector,
-			#	unk_vector,
+				unk_vector,
 			tensor]
 		)
 
 		self = cls.from_pretrained(tensor, **kwargs)
 		self.word2idx = Vocabulary(word2idx,
 			pad_token = pad_token,
-		#	unk_token = unk_token,
+			unk_token = unk_token,
 		)
 
 		return self
@@ -360,7 +362,7 @@ class TwitterClassifier:
 		val_dataset  : TwitterDataset,
 		epochs: int = 1,
 	**kwargs) -> dict[str, list[float]]:
-		train_loader = torch.utils.data.DataLoader(train_dataset, drop_last = True, **kwargs)
+		train_loader = torch.utils.data.DataLoader(train_dataset, **kwargs)
 		assert train_loader.batch_size is not None
 		batches = len(train_dataset) // train_loader.batch_size
 
@@ -427,7 +429,6 @@ class TwitterClassifier:
 		batch_size = kwargs.pop("batch_size", len(test_dataset))
 		loader = torch.utils.data.DataLoader(test_dataset,
 			batch_size = batch_size,
-			drop_last = False,
 		**kwargs)
 
 		self.model.eval()
@@ -449,12 +450,9 @@ class TwitterClassifier:
 			y_true,
 		)
 
-
 	@torch.no_grad
 	def predict(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
-		loader = torch.utils.data.DataLoader(dataset,
-			drop_last = True,
-		**kwargs)
+		loader = torch.utils.data.DataLoader(dataset, **kwargs)
 
 		self.model.eval()
 
@@ -466,6 +464,110 @@ class TwitterClassifier:
 
 		return torch.cat(y_pred)
 
+	@torch.no_grad
+	def predict_proba(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
+		loader = torch.utils.data.DataLoader(dataset, **kwargs)
+
+		self.model.eval()
+
+		y_probs = []
+
+		for batch in loader:
+			x, _ = batch  # ignore labels
+			y_probs.append(torch.sigmoid(self.model(x)))
+
+		return torch.cat(y_probs)
+
+
+	def classification_report_str(self, dataset: TwitterDataset, **kwargs) -> str:
+		y_true = torch.cat([y for _, y in torch.utils.data.DataLoader(dataset, **kwargs)])
+		y_pred = self.predict(dataset, **kwargs)
+
+		report = sklearn.metrics.classification_report(
+			y_true.numpy(force = True),
+			y_pred.numpy(force = True), digits = 6
+		)
+
+		return str(report)
+
+	def roc_auc(self, dataset: TwitterDataset, **kwargs) -> float:
+		y_true = torch.cat([y for _, y in torch.utils.data.DataLoader(dataset, **kwargs)])
+		y_prob = self.predict_proba(dataset, **kwargs)
+
+		score = sklearn.metrics.roc_auc_score(
+			y_true.numpy(force = True),
+			y_prob.numpy(force = True),
+		)
+
+		return float(score)
+
+	def roc_curve(self, dataset: TwitterDataset, **kwargs) -> tuple[
+		numpy.ndarray,
+		numpy.ndarray,
+		numpy.ndarray,
+	]:
+		y_true = torch.cat([y for _, y in torch.utils.data.DataLoader(dataset, **kwargs)])
+		y_prob = self.predict_proba(dataset, **kwargs)
+
+		return sklearn.metrics.roc_curve(
+			y_true.numpy(force = True),
+			y_prob.numpy(force = True),
+		)
+
+	def plot_roc_curve(self, dataset: TwitterDataset, **kwargs):
+		fpr, tpr, _ = self.roc_curve(dataset, **kwargs)
+		auc = self.roc_auc(dataset, **kwargs)
+
+		plt.figure(
+			figsize = (
+				6,
+				6,
+			)
+		)
+		plt.plot(fpr, tpr, label=f"ROC AUC = {auc:.4f}")
+		plt.plot(
+			[0, 1],
+			[0, 1], linestyle = "--", color = "gray"
+		)
+		plt.xlabel("False Positive Rate")
+		plt.ylabel("True Positive Rate")
+		plt.title("ROC Curve")
+		plt.legend()
+		plt.grid(True)
+		plt.tight_layout()
+		plt.savefig("roc_curve.png")
+		plt.show()
+
+	def plot_learning_curve(self, metrics: dict[str, list[float]],
+		keys: set[str] = {
+			"loss",
+			"accuracy",
+			"precision",
+			"recall",
+			"f1",
+		},
+	):
+		plt.figure(
+			figsize = (
+				8,
+				4,
+			)
+		)
+
+		for i, key in enumerate(keys, 1):
+			plt.subplot(1, len(keys), i)
+			plt.plot(metrics[label :=        key  ], label = label)
+			plt.plot(metrics[label := f"val_{key}"], label = label)
+			plt.xlabel("epoch")
+			plt.ylabel(key)
+			plt.title(f"{key} vs. epoch")
+			plt.legend()
+			plt.grid(True)
+
+		plt.tight_layout()
+		plt.savefig("learning_curve.png")
+		plt.show()
+
 
 def round_metrics(metrics: dict[str, list[float]],
 	digits: int = 6,
@@ -473,21 +575,65 @@ def round_metrics(metrics: dict[str, list[float]],
 	return {k: [round(v, digits) for v in values] for k, values in metrics.items()}
 
 
+# python -m sdi2200160 --hidden-dim 100 --num-layers 2 --dropout .5 --epochs 1 --learning-rate 1e-3 --weight-decay 1e-1
+
+
 if __name__ == "__main__":
 	fix_seed(42)
 
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--seed",
+		type = int,
+		default = 42,
+		help = "Random seed for reproducibility",
+	)
+	parser.add_argument("--hidden-dim",
+		type = int,
+		default = 100,
+		help = "Length of hidden layers",
+	)
+	parser.add_argument("--num-layers",
+		type = int,
+		default = 0,
+		help = "Number of hidden layers",
+	)
+	parser.add_argument("--dropout",
+		type = float,
+		default = .5,
+		help = "Dropout probability",
+	)
+	parser.add_argument("--epochs",
+		type = int,
+		default = 1,
+		help = "Number of epochs to train",
+	)
+	parser.add_argument("--learning-rate",
+		type = float,
+		default = 1e-3,
+		help = "Learning rate",
+	)
+	parser.add_argument("--weight-decay",
+		type = float,
+		default = 1e-1,
+		help = "Weight decay",
+	)
+
+	args = parser.parse_args()
+
+	fix_seed(args.seed)
+
 	embedding = Embedding.from_glove(50)
 	model = TwitterModel(embedding,
-		hidden_dim = 100,
-		num_layers = 2,
-		dropout = .5,
+		hidden_dim = args.hidden_dim,
+		num_layers = args.num_layers,
+		dropout    = args.dropout   ,
 	)
 	model.compile()
 
 	classifier = TwitterClassifier(model)
 	classifier.compile(
-		learning_rate = 1e-4,
-		weight_decay  = 1e-2,
+		learning_rate = args.learning_rate,
+		weight_decay  = args.weight_decay ,
 	)
 
 	transform = TextTransform(embedding.word2idx,
@@ -502,7 +648,7 @@ if __name__ == "__main__":
 	metrics = classifier.fit(
 		train_data,
 		val_data,
-		epochs = 2,
+		epochs = args.epochs,
 		batch_size = int(math.log10(len(train_data) + len(val_data))) + 1,
 	)
 
@@ -512,3 +658,12 @@ if __name__ == "__main__":
 		json.dump(round_metrics(metrics), file,
 			indent = 4,
 		)
+
+	print()
+	print(classifier.classification_report_str(val_data))
+	print()
+	print("ROC AUC:", classifier.roc_auc(val_data))
+	print()
+
+	classifier.plot_roc_curve(val_data)
+	classifier.plot_learning_curve(metrics)
