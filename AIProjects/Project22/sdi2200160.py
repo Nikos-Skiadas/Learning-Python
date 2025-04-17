@@ -7,23 +7,38 @@ import math
 import json
 import os; os.environ["TORCH_INDUCTOR_MAX_AUTOTUNE_GEMM"] = "0"  # disable autotuning
 from pathlib import Path
+import random
 import re
 import string
 from typing import Callable, Iterable, Literal, Self
 
 from rich import print
 from rich.progress import Progress, track
+
+import numpy
 import pandas
 import torch; torch.set_default_device("cuda")
 
-# Importing NLTK for Natural Language Processing
 import nltk
 import nltk.stem
 import nltk.corpus
 
-# Download required NLP datasets
+
 nltk.download('wordnet')  # for lemmatization
 nltk.download('stopwords')  # for removing stopwords
+
+
+def fix_seed(seed: int = 42):
+	random.seed(seed)
+
+	numpy.random.seed(seed)
+
+	torch.manual_seed(seed)
+	torch.cuda.manual_seed(seed)
+	torch.cuda.manual_seed_all(seed)  # if using multi-GPU
+
+	torch.backends.cudnn.deterministic = True
+	torch.backends.cudnn.benchmark = False
 
 
 class Preprocessor:
@@ -220,10 +235,28 @@ class Embedding(torch.nn.Embedding):
 		return self.weight[self.index(key)]
 
 
+class TwitterLayer(torch.nn.Sequential):
+
+	def __init__(self,
+		inputs_dim: int,
+		output_dim: int | None = None,
+		dropout: float = 0.5,
+	):
+		super().__init__(
+			torch.nn.SiLU(),
+			torch.nn.Dropout(
+				p = dropout,
+			),
+			torch.nn.Linear(inputs_dim, output_dim or inputs_dim),
+		)
+
+
 class TwitterModel(torch.nn.Module):
 
 	def __init__(self, embedding: Embedding,
-		hidden_dim: int = 128,
+		hidden_dim: int = 100,
+		num_layers: int = 2,
+		dropout: float = 0.5,
 	):
 		super().__init__()
 
@@ -233,11 +266,23 @@ class TwitterModel(torch.nn.Module):
 		self.output_dim = 1  # binary classification (positive/negative)
 
 		self.model = torch.nn.Sequential(
-			torch.nn.Linear(self.input_dim, hidden_dim),
-			torch.nn.SiLU(),
-			torch.nn.Dropout(),  # TODO: add dropout
-			torch.nn.Linear(hidden_dim, self.output_dim),  # single output neuron
-		#	torch.nn.Sigmoid(),  # output activation function  # FIXME: return logits instead of probabilities
+			TwitterLayer(
+				inputs_dim = self.input_dim,
+				output_dim = hidden_dim,
+				dropout = dropout,
+			),
+			*(
+				TwitterLayer(
+					inputs_dim = hidden_dim,
+					output_dim = hidden_dim,
+					dropout = dropout,
+				) for _ in range(num_layers - 1)
+			),
+			TwitterLayer(
+				inputs_dim = hidden_dim,
+				output_dim = 1,
+				dropout = dropout,
+			),
 		)
 
 
@@ -249,7 +294,7 @@ class TwitterModel(torch.nn.Module):
 			min = 1e-6,
 		)
 
-		return self.model(pooled).squeeze(-1)
+		return self.model.forward(pooled).squeeze(-1)
 
 
 class TwitterClassifier:
@@ -265,11 +310,26 @@ class TwitterClassifier:
 		learning_rate: float = 1e-3,
 		weight_decay : float = 0,
 	):
-		def accuracy (x: torch.Tensor, y: torch.Tensor) -> torch.Tensor: return (x * y).float().mean()
-		def precision(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor: return (x * y).float().sum() / x.sum()
-		def recall   (x: torch.Tensor, y: torch.Tensor) -> torch.Tensor: return (x * y).float().sum() / y.sum()
+		def accuracy(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+			return (y_pred == y_true).float().mean()
 
-		def f1       (x: torch.Tensor, y: torch.Tensor) -> torch.Tensor: return 2 / (1 / precision(x, y) + 1 / recall(x, y))
+		def precision(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+			true_positive = (y_pred * y_true).sum()
+			predicted_positive = y_pred.sum()
+
+			return true_positive / (predicted_positive + 1e-6)
+
+		def recall(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+			true_positive = (y_pred * y_true).sum()
+			actual_positive = y_true.sum()
+
+			return true_positive / (actual_positive + 1e-6)
+
+		def f1(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
+			p = precision(y_pred, y_true)
+			r = recall(y_pred, y_true)
+
+			return 2 * p * r / (p + r + 1e-6)
 
 		self.optimizer = torch.optim.AdamW(self.model.parameters(),
 			lr = learning_rate,
@@ -290,7 +350,7 @@ class TwitterClassifier:
 		y_pred: torch.Tensor,
 		y_true: torch.Tensor,
 	) -> dict[str, float]:
-		y_prob = torch.sigmoid(y_pred)
+		y_prob = (torch.sigmoid(y_pred) > 0.5).float()
 
 		return {name: metric(y_pred if name == "loss" else y_prob, y_true).item() for name, metric in self.metrics.items()}
 
@@ -366,22 +426,29 @@ class TwitterClassifier:
 	def evaluate(self, test_dataset: TwitterDataset, **kwargs) -> dict[str, float]:
 		batch_size = kwargs.pop("batch_size", len(test_dataset))
 		loader = torch.utils.data.DataLoader(test_dataset,
-			batch_size = batch_size,  # evaluate on the whole dataset
-			drop_last = True,
+			batch_size = batch_size,
+			drop_last = False,
 		**kwargs)
 
 		self.model.eval()
 
-		for batch in loader:
-			x, y_true = batch
+		y_preds = []
+		y_trues = []
 
+		for x, y_true in loader:
 			y_pred = self.model(x)
-			metrics = self.compute(
-				y_pred,
-				y_true,
-			)
 
-		return metrics
+			y_preds.append(y_pred)
+			y_trues.append(y_true)
+
+		y_pred = torch.cat(y_preds)
+		y_true = torch.cat(y_trues)
+
+		return self.compute(
+			y_pred,
+			y_true,
+		)
+
 
 	@torch.no_grad
 	def predict(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
@@ -400,9 +467,21 @@ class TwitterClassifier:
 		return torch.cat(y_pred)
 
 
+def round_metrics(metrics: dict[str, list[float]],
+	digits: int = 6,
+) -> dict[str, list[float]]:
+	return {k: [round(v, digits) for v in values] for k, values in metrics.items()}
+
+
 if __name__ == "__main__":
+	fix_seed(42)
+
 	embedding = Embedding.from_glove(50)
-	model = TwitterModel(embedding)
+	model = TwitterModel(embedding,
+		hidden_dim = 100,
+		num_layers = 2,
+		dropout = .5,
+	)
 	model.compile()
 
 	classifier = TwitterClassifier(model)
@@ -423,13 +502,13 @@ if __name__ == "__main__":
 	metrics = classifier.fit(
 		train_data,
 		val_data,
-		epochs = 12,
+		epochs = 2,
 		batch_size = int(math.log10(len(train_data) + len(val_data))) + 1,
 	)
 
 	with open("sdi2200160.json", "w+",
 		encoding = "utf-8",
 	) as file:
-		json.dump(metrics, file,
-			indent = 4
+		json.dump(round_metrics(metrics), file,
+			indent = 4,
 		)
