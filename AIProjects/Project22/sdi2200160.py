@@ -661,7 +661,6 @@ if __name__ == "__main__":
 
 	print()
 	print(classifier.classification_report_str(val_data))
-	print()
 	print("ROC AUC:", classifier.roc_auc(val_data))
 	print()
 
