@@ -4,8 +4,8 @@ import warnings; warnings.simplefilter(action = "ignore", category = UserWarning
 
 import argparse
 from collections import Counter
-import math
 import json
+import math
 import os; os.environ["TORCH_INDUCTOR_MAX_AUTOTUNE_GEMM"] = "0"  # disable autotuning
 from pathlib import Path
 import random
@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import numpy
 import pandas
 import sklearn.metrics
+import sklearn.utils
 import torch; torch.set_default_device("cuda")
 
 import nltk
@@ -30,11 +31,14 @@ import nltk.corpus
 nltk.download('wordnet')  # for lemmatization
 nltk.download('stopwords')  # for removing stopwords
 
+print()
+
 
 def fix_seed(seed: int = 42):
 	random.seed(seed)
 
 	numpy.random.seed(seed)
+	sklearn.utils.check_random_state(seed)
 
 	torch.manual_seed(seed)
 	torch.cuda.manual_seed(seed)
@@ -67,6 +71,13 @@ class Tokenizer:
 	def __call__(self, text: str):
 		return [self.stemmer.stem(self.lemmatizer.lemmatize(token))
 			for token in self.tokenizer.tokenize(text) if token and not token.isdigit()]
+
+
+def preprocess_and_tokenize(text: str) -> list[str]:
+	text = Preprocessor()(text)
+	tokens = Tokenizer()(text)
+
+	return tokens
 
 
 class Vocabulary(dict[str, int]):
@@ -114,42 +125,6 @@ class TextTransform:
 		return torch.tensor(indices,
 			dtype = torch.long,
 		)
-
-
-class TwitterDataset(torch.utils.data.Dataset):
-
-	# Class method to load dataset (train, val, test)
-	@classmethod
-	def load_data(cls, split: Literal["train", "val", "test"],
-		root: str = "",
-		index: str = "ID",
-	):
-		return pandas.read_csv(os.path.join(f"{root}", f"{split}_dataset.csv"),
-			index_col = index,  # Set ID column as index
-			encoding = "utf-8",
-		)
-
-
-	def __init__(self, split: Literal["train", "val", "test"], *,
-		transform: Callable,
-	):
-		self.data = self.load_data(split).reset_index()
-		self.transform = transform
-
-	def __len__(self) -> int:
-		return len(self.data)
-
-	def __getitem__(self, idx: int | slice):
-		x = self.transform(self.data.Text[idx])  # apply TextTransform -> tensor of token indices
-		y = torch.tensor(self.data.Label[idx],
-			dtype = torch.float,  # convert label to float
-		)  # get label
-
-		return x, y  # return tensor of token indices and label
-
-	@property
-	def x(self):
-		...
 
 
 class Embedding(torch.nn.Embedding):
@@ -236,6 +211,81 @@ class Embedding(torch.nn.Embedding):
 	def get(self, key: str | Iterable[str]) -> torch.Tensor:
 		return self.weight[self.index(key)]
 
+	def prune_with_frequencies(self,
+		frequencies: Counter[str],
+		min_frequency: int = 1,
+		max_vocab_size: int | None = None,
+		pad_token: str = "<pad>",
+		unk_token: str = "<unk>",
+	) -> Self:
+		# Filter tokens based on frequency and availability in current vocabulary:
+		tokens = [token for token, frequency in frequencies.items() if frequency >= min_frequency and token in self.word2idx]
+
+		# Sort tokens by frequency (desc), then alphabetically (asc):
+		tokens.sort(
+			key = lambda token: (-frequencies[token], token)
+		)
+
+		# Apply vocab size cap:
+		if max_vocab_size is not None:
+			tokens = tokens[:max_vocab_size]
+
+		# Build pruned token list:
+		all_tokens = [
+			pad_token,
+			unk_token,
+		] + tokens
+
+		word2idx = {token: idx for idx, token in enumerate(all_tokens)}
+
+		# Build new weight matrix:
+		embedding_dim = self.embedding_dim
+		new_weights = torch.zeros(len(all_tokens), embedding_dim)
+
+		for token, new_idx in word2idx.items():
+			if   token == pad_token: continue
+			elif token == unk_token: new_weights[new_idx] = torch.randn(embedding_dim) * 0.1
+			else:
+				old_idx = self.word2idx[token]
+				new_weights[new_idx] = self.weight[old_idx]
+
+		# Create new embedding layer with new weights:
+		new_embedding = self.from_pretrained(new_weights)
+		new_embedding.word2idx = Vocabulary(word2idx,
+			pad_token = pad_token,
+			unk_token = unk_token,
+		)
+
+		return new_embedding
+
+
+class TwitterDataset(torch.utils.data.Dataset):
+
+	def __init__(self, split: Literal["train", "val", "test"], *,
+		transform: Callable,
+	):
+		self.data = self.load_data(split).reset_index()
+		self.transform = transform
+
+	def __len__(self) -> int:
+		return len(self.data)
+
+	def __getitem__(self, idx: int | slice):
+		return self.transform(self.data.Text[idx]), torch.tensor(self.data.Label[idx],
+			dtype = torch.float,
+		)  # return tensor of token indices and label
+
+
+	@classmethod
+	def load_data(cls, split: Literal["train", "val", "test"],
+		root: str = "",
+		index: str = "ID",
+	):
+		return pandas.read_csv(os.path.join(f"{root}", f"{split}_dataset.csv"),
+			index_col = index,  # Set ID column as index
+			encoding = "utf-8",
+		)
+
 
 class TwitterLayer(torch.nn.Sequential):
 
@@ -313,25 +363,27 @@ class TwitterClassifier:
 		weight_decay : float = 0,
 	):
 		def accuracy(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
-			return (y_pred == y_true).float().mean()
+			return (y_pred * y_true).mean()
 
 		def precision(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
 			true_positive = (y_pred * y_true).sum()
 			predicted_positive = y_pred.sum()
 
-			return true_positive / (predicted_positive + 1e-6)
+			return true_positive / predicted_positive.clamp(1e-6)
 
 		def recall(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
 			true_positive = (y_pred * y_true).sum()
 			actual_positive = y_true.sum()
 
-			return true_positive / (actual_positive + 1e-6)
+			return true_positive / actual_positive.clamp(1e-6)
 
 		def f1(y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
 			p = precision(y_pred, y_true)
 			r = recall(y_pred, y_true)
 
-			return 2 * p * r / (p + r + 1e-6)
+			return 2 * p * r / (p + r).clamp(1e-6)
+
+		self.model.to(device = torch.device("cuda" if torch.cuda.is_available() else "cpu"))
 
 		self.optimizer = torch.optim.AdamW(self.model.parameters(),
 			lr = learning_rate,
@@ -352,19 +404,43 @@ class TwitterClassifier:
 		y_pred: torch.Tensor,
 		y_true: torch.Tensor,
 	) -> dict[str, float]:
-		y_prob = (torch.sigmoid(y_pred) > 0.5).float()
+		y_prob = torch.sigmoid(y_pred)
 
 		return {name: metric(y_pred if name == "loss" else y_prob, y_true).item() for name, metric in self.metrics.items()}
 
+	def prune(self, train_dataset: TwitterDataset,
+		min_frequency: int = 1,
+		max_vocab_size: int | None = None,
+		pad_token: str = "<pad>",
+		unk_token: str = "<unk>",
+	):
+		frequencies = Counter()
+
+		for text in track(train_dataset.data.Text, "counting frequencies".ljust(32), len(train_dataset.data)):
+			frequencies.update(preprocess_and_tokenize(text))
+
+		self.model.embedding = self.model.embedding.prune_with_frequencies( frequencies,
+			min_frequency = min_frequency,
+			max_vocab_size = max_vocab_size,
+			pad_token = pad_token,
+			unk_token = unk_token,
+		)
+		train_dataset.transform.vocabulary = self.model.embedding.word2idx
 
 	def fit(self,
 		train_dataset: TwitterDataset,
 		val_dataset  : TwitterDataset,
 		epochs: int = 1,
+		min_frequency: int | None = None,
+		max_vocab_size: int | None = None,
 	**kwargs) -> dict[str, list[float]]:
-		train_loader = torch.utils.data.DataLoader(train_dataset, **kwargs)
-		assert train_loader.batch_size is not None
-		batches = len(train_dataset) // train_loader.batch_size
+		self.prune(train_dataset,
+			min_frequency = min_frequency or int(math.log2(len(train_dataset))) + 1,
+			max_vocab_size = max_vocab_size or self.model.embedding.embedding_dim ** 2,
+			pad_token = self.model.embedding.word2idx.pad_token,
+			unk_token = self.model.embedding.word2idx.unk_token,
+		)
+		val_dataset.transform.vocabulary = self.model.embedding.word2idx
 
 		metrics = Counter(
 			loss      = [], val_loss      = [],  # type: ignore
@@ -375,12 +451,21 @@ class TwitterClassifier:
 		)
 		total_loss = 0.
 
+		print()
 		print(f"Training for {epochs} epochs with:")
 		print(
 			json.dumps(kwargs,
 				indent = 4,
 			)
 		)
+
+		train_loader = torch.utils.data.DataLoader(train_dataset, **kwargs)
+		assert train_loader.batch_size is not None
+		batches = len(train_dataset) // train_loader.batch_size
+
+		self.model.train()
+
+		print()
 
 		with Progress() as progress:
 			train_task = progress.add_task(description = "finished epoch ---/---".ljust(32), total = epochs )
@@ -616,6 +701,16 @@ if __name__ == "__main__":
 		type = float,
 		default = 1e-1,
 		help = "Weight decay",
+	)
+	parser.add_argument("--min-frequency",
+		type = int,
+		default = None,
+		help = "Minimum token frequency to include in vocabulary",
+	)
+	parser.add_argument("--max-vocab-size",
+		type = int,
+		default = None,
+		help = "Maximum vocabulary size",
 	)
 
 	args = parser.parse_args()
