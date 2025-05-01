@@ -828,3 +828,6 @@ if __name__ == "__main__":
 
 	classifier.plot_roc_curve(val_data)
 	classifier.plot_learning_curve(metrics)
+
+
+#	python -m sdi2200160 --glove-dim 300 --max-len 256 --dropout .1 --num-layers 3 --hidden-dim 300 --weight-decay 1e-1 --learning-rate 1e-3 --epochs 1
