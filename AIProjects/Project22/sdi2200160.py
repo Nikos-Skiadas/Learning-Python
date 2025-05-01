@@ -5,6 +5,7 @@ import warnings; warnings.simplefilter(action = "ignore", category = UserWarning
 
 import argparse
 from collections import Counter
+from functools import wraps
 import json
 import math
 from pathlib import Path
@@ -360,13 +361,40 @@ class TwitterModel(torch.nn.Module):
 		return self.model.forward(pooled).squeeze(-1)
 
 
+def preload(method):
+	cache_file = (Path.cwd() / "cache" / method.__name__).with_suffix(".pt")
+
+	@wraps(method)
+	def wrapper(self, *args, **kwargs):
+		if cache_file.is_file():
+			with cache_file.open("rb") as f:
+				return torch.load(f)
+
+		result = method(self, *args, **kwargs)
+
+		with cache_file.open("wb") as f:
+			torch.save(result, f)
+
+		return result
+
+	return wrapper
+
+
 class TwitterClassifier:
 
 	def __init__(self, model: TwitterModel,
 		max_len: int = 32,
+		path: Path | None = None,
 	):
 		self.model = model
 		self.max_len = max_len
+		self.path = path
+
+	def __enter__(self) -> Self:
+		if self.path is not None:
+			with self.path.open("wb+") as file:
+				torch.save(self.model.state_dict(), file)
+		return self
 
 
 	def compile(self,
@@ -521,6 +549,7 @@ class TwitterClassifier:
 
 		return dict(metrics)  # type: ignore
 
+	@preload
 	@torch.no_grad
 	def evaluate(self, test_dataset: TwitterDataset, **kwargs) -> dict[str, float]:
 		batch_size = kwargs.pop("batch_size", len(test_dataset))
@@ -547,6 +576,7 @@ class TwitterClassifier:
 			y_true,
 		)
 
+	@preload
 	@torch.no_grad
 	def predict(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
 		loader = torch.utils.data.DataLoader(dataset, **kwargs)
@@ -561,6 +591,7 @@ class TwitterClassifier:
 
 		return torch.cat(y_pred)
 
+	@preload
 	@torch.no_grad
 	def predict_proba(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
 		loader = torch.utils.data.DataLoader(dataset, **kwargs)
@@ -598,6 +629,7 @@ class TwitterClassifier:
 
 		return float(score)
 
+	@preload
 	def roc_curve(self, dataset: TwitterDataset, **kwargs) -> tuple[
 		np.ndarray,
 		np.ndarray,
@@ -670,9 +702,6 @@ def round_metrics(metrics: dict[str, list[float]],
 	digits: int = 6,
 ) -> dict[str, list[float]]:
 	return {k: [round(v, digits) for v in values] for k, values in metrics.items()}
-
-
-# python -m sdi2200160 --hidden-dim 100 --num-layers 2 --dropout .5 --epochs 1 --learning-rate 1e-3 --weight-decay 1e-1
 
 
 if __name__ == "__main__":
