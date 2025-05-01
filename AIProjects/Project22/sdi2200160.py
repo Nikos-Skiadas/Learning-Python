@@ -34,6 +34,11 @@ nltk.download('stopwords')  # for removing stopwords
 
 print()
 
+cache_path = Path.cwd() / "cache"; cache_path.parent.mkdir(
+	parents = True,
+	exist_ok = True,
+)
+
 
 def fix_seed(seed: int = 42):
 	random.seed(seed)
@@ -62,6 +67,7 @@ class Preprocessor:
 class Tokenizer:
 
 	def __init__(self):
+		self.stopwords = set(nltk.corpus.stopwords.words("english"))
 		self.lemmatizer = nltk.WordNetLemmatizer()
 		self.stemmer = nltk.stem.PorterStemmer()
 		self.tokenizer = nltk.tokenize.TweetTokenizer(
@@ -74,7 +80,7 @@ class Tokenizer:
 		tokens = []
 
 		for token in self.tokenizer.tokenize(text):
-			if token and not token.isdigit():
+			if token and not token.isdigit() and token not in self.stopwords:
 				token = self.lemmatizer.lemmatize(token)
 				token = self.stemmer.stem(token)
 
@@ -124,7 +130,7 @@ class TextTransform:
 	def __call__(self, text: str) -> torch.Tensor:
 		if self.preprocessor: text = self.preprocessor(text)
 		if self.tokenizer: tokens = self.tokenizer(text)
-		else: tokens = text.lower().split()
+		else: tokens = text.split()
 
 		indices = self.vocabulary(tokens)
 
@@ -362,13 +368,12 @@ class TwitterModel(torch.nn.Module):
 
 
 def preload(method):
-	cache_path = Path.cwd() / "cache"; cache_path.parent.mkdir(parents = True, exist_ok = True)
 	cache_file = cache_path / method.__name__; cache_file = cache_file.with_suffix(".pt")
 
 	@wraps(method)
 	def wrapper(self, *args, **kwargs):
 		if cache_file.is_file():
-			with cache_file.open("rb") as f:
+			with cache_file.open("r+b") as f:
 				return torch.load(f)
 
 		result = method(self, *args, **kwargs)
