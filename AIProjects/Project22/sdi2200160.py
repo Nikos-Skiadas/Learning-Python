@@ -6,7 +6,7 @@ import argparse
 from collections import Counter
 import json
 import math
-import os; os.environ["TORCH_INDUCTOR_MAX_AUTOTUNE_GEMM"] = "0"  # disable autotuning
+import os; os.environ["PYTORCHINDUCTOR_LOGLEVEL"] = "ERROR"
 from pathlib import Path
 import random
 import re
@@ -49,6 +49,7 @@ def fix_seed(seed: int = 42):
 
 
 class Preprocessor:
+
 	def __call__(self, text: str) -> str:
 		text = re.sub(r"@\w+"   , "", text)  # remove mentions
 		text = re.sub(r"#\w+"   , "", text)  # remove hashtags
@@ -69,8 +70,16 @@ class Tokenizer:
 		)
 
 	def __call__(self, text: str):
-		return [self.stemmer.stem(self.lemmatizer.lemmatize(token))
-			for token in self.tokenizer.tokenize(text) if token and not token.isdigit()]
+		tokens = []
+
+		for token in self.tokenizer.tokenize(text):
+			if token and not token.isdigit():
+				token = self.lemmatizer.lemmatize(token)
+				token = self.stemmer.stem(token)
+
+				tokens.append(token)
+
+		return tokens
 
 
 def preprocess_and_tokenize(text: str) -> list[str]:
@@ -163,7 +172,9 @@ class Embedding(torch.nn.Embedding):
 			tensor]
 		)
 
-		self = cls.from_pretrained(tensor, **kwargs)
+		self = cls.from_pretrained(tensor,
+			freeze = False,
+		**kwargs)
 		self.word2idx = Vocabulary(word2idx,
 			pad_token = pad_token,
 			unk_token = unk_token,
@@ -227,8 +238,7 @@ class Embedding(torch.nn.Embedding):
 		)
 
 		# Apply vocab size cap:
-		if max_vocab_size is not None:
-			tokens = tokens[:max_vocab_size]
+		tokens = tokens[:max_vocab_size]
 
 		# Build pruned token list:
 		all_tokens = [
@@ -414,29 +424,30 @@ class TwitterClassifier:
 		pad_token: str = "<pad>",
 		unk_token: str = "<unk>",
 	):
-		frequencies = Counter()
+		if min_frequency > 1 or max_vocab_size is not None:
+			frequencies = Counter()
 
-		for text in track(train_dataset.data.Text, "counting frequencies".ljust(32), len(train_dataset.data)):
-			frequencies.update(preprocess_and_tokenize(text))
+			for text in track(train_dataset.data.Text, "counting frequencies".ljust(32), len(train_dataset.data)):
+				frequencies.update(preprocess_and_tokenize(text))
 
-		self.model.embedding = self.model.embedding.prune_with_frequencies( frequencies,
-			min_frequency = min_frequency,
-			max_vocab_size = max_vocab_size,
-			pad_token = pad_token,
-			unk_token = unk_token,
-		)
-		train_dataset.transform.vocabulary = self.model.embedding.word2idx
+			self.model.embedding = self.model.embedding.prune_with_frequencies( frequencies,
+				min_frequency = min_frequency,
+				max_vocab_size = max_vocab_size,
+				pad_token = pad_token,
+				unk_token = unk_token,
+			)
+			train_dataset.transform.vocabulary = self.model.embedding.word2idx
 
 	def fit(self,
 		train_dataset: TwitterDataset,
 		val_dataset  : TwitterDataset,
 		epochs: int = 1,
-		min_frequency: int | None = None,
+		min_frequency: int = 1,
 		max_vocab_size: int | None = None,
 	**kwargs) -> dict[str, list[float]]:
 		self.prune(train_dataset,
-			min_frequency = min_frequency or int(math.log2(len(train_dataset))) + 1,
-			max_vocab_size = max_vocab_size or self.model.embedding.embedding_dim ** 2,
+			min_frequency = min_frequency,
+			max_vocab_size = max_vocab_size,
 			pad_token = self.model.embedding.word2idx.pad_token,
 			unk_token = self.model.embedding.word2idx.unk_token,
 		)
@@ -702,6 +713,11 @@ if __name__ == "__main__":
 		default = 1e-1,
 		help = "Weight decay",
 	)
+	parser.add_argument("--glove-dim",
+		type = int,
+		default = 50,
+		help = "GloVe embedding dimension",
+	)
 	parser.add_argument("--min-frequency",
 		type = int,
 		default = None,
@@ -712,12 +728,17 @@ if __name__ == "__main__":
 		default = None,
 		help = "Maximum vocabulary size",
 	)
+	parser.add_argument("--max-len",
+		type = int,
+		default = 32,
+		help = "Token sequence length",
+	)
 
 	args = parser.parse_args()
 
 	fix_seed(args.seed)
 
-	embedding = Embedding.from_glove(50)
+	embedding = Embedding.from_glove(args.glove_dim)
 	model = TwitterModel(embedding,
 		hidden_dim = args.hidden_dim,
 		num_layers = args.num_layers,
@@ -734,7 +755,7 @@ if __name__ == "__main__":
 	transform = TextTransform(embedding.word2idx,
 		preprocessor = Preprocessor(),
 		tokenizer = Tokenizer(),
-		max_len = 32,
+		max_len = args.max_len,
 	)
 
 	train_data = TwitterDataset("train", transform = transform)
