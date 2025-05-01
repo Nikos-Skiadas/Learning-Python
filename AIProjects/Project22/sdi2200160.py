@@ -758,6 +758,10 @@ if __name__ == "__main__":
 		action = "store_true",
 		help = "Freeze GloVe embedding layer",
 	)
+	parser.add_argument("--eval",
+		action = "store_true",
+		help = "Only perfom evaluation",
+	)
 	parser.add_argument("--min-frequency",
 		type = int,
 		default = None,
