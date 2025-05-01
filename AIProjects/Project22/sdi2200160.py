@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import os; os.environ["PYTORCHINDUCTOR_LOGLEVEL"] = "ERROR"
 import warnings; warnings.simplefilter(action = "ignore", category = UserWarning)
 
 import argparse
 from collections import Counter
 import json
 import math
-import os; os.environ["PYTORCHINDUCTOR_LOGLEVEL"] = "ERROR"
 from pathlib import Path
 import random
 import re
@@ -17,8 +17,8 @@ from rich import print
 from rich.progress import Progress, track
 
 import matplotlib.pyplot as plt
-import numpy
-import pandas
+import numpy as np
+import pandas as pd
 import sklearn.metrics
 import sklearn.utils
 import torch; torch.set_default_device("cuda")
@@ -37,7 +37,7 @@ print()
 def fix_seed(seed: int = 42):
 	random.seed(seed)
 
-	numpy.random.seed(seed)
+	np.random.seed(seed)
 	sklearn.utils.check_random_state(seed)
 
 	torch.manual_seed(seed)
@@ -144,6 +144,7 @@ class Embedding(torch.nn.Embedding):
 	@classmethod
 	def from_glove(cls,
 		embedding_dim: Literal[50, 100, 200, 300] = 50,
+		freeze: bool = False,
 		pad_token: str = "<pad>",
 		unk_token: str = "<unk>",
 	**kwargs) -> Self:
@@ -173,7 +174,7 @@ class Embedding(torch.nn.Embedding):
 		)
 
 		self = cls.from_pretrained(tensor,
-			freeze = False,
+			freeze = freeze,
 		**kwargs)
 		self.word2idx = Vocabulary(word2idx,
 			pad_token = pad_token,
@@ -291,7 +292,7 @@ class TwitterDataset(torch.utils.data.Dataset):
 		root: str = "",
 		index: str = "ID",
 	):
-		return pandas.read_csv(os.path.join(f"{root}", f"{split}_dataset.csv"),
+		return pd.read_csv(os.path.join(f"{root}", f"{split}_dataset.csv"),
 			index_col = index,  # Set ID column as index
 			encoding = "utf-8",
 		)
@@ -598,9 +599,9 @@ class TwitterClassifier:
 		return float(score)
 
 	def roc_curve(self, dataset: TwitterDataset, **kwargs) -> tuple[
-		numpy.ndarray,
-		numpy.ndarray,
-		numpy.ndarray,
+		np.ndarray,
+		np.ndarray,
+		np.ndarray,
 	]:
 		y_true = torch.cat([y for _, y in torch.utils.data.DataLoader(dataset, **kwargs)])
 		y_prob = self.predict_proba(dataset, **kwargs)
@@ -718,6 +719,10 @@ if __name__ == "__main__":
 		default = 50,
 		help = "GloVe embedding dimension",
 	)
+	parser.add_argument("--freeze",
+		action = "store_true",
+		help = "Freeze GloVe embedding layer",
+	)
 	parser.add_argument("--min-frequency",
 		type = int,
 		default = None,
@@ -738,7 +743,9 @@ if __name__ == "__main__":
 
 	fix_seed(args.seed)
 
-	embedding = Embedding.from_glove(args.glove_dim)
+	embedding = Embedding.from_glove(args.glove_dim,
+		freeze = args.freeze,
+	)
 	model = TwitterModel(embedding,
 		hidden_dim = args.hidden_dim,
 		num_layers = args.num_layers,
