@@ -362,7 +362,8 @@ class TwitterModel(torch.nn.Module):
 
 
 def preload(method):
-	cache_file = (Path.cwd() / "cache" / method.__name__).with_suffix(".pt")
+	cache_path = Path.cwd() / "cache"; cache_path.parent.mkdir(parents = True, exist_ok = True)
+	cache_file = cache_path / method.__name__; cache_file = cache_file.with_suffix(".pt")
 
 	@wraps(method)
 	def wrapper(self, *args, **kwargs):
@@ -372,7 +373,7 @@ def preload(method):
 
 		result = method(self, *args, **kwargs)
 
-		with cache_file.open("wb") as f:
+		with cache_file.open("w+b") as f:
 			torch.save(result, f)
 
 		return result
