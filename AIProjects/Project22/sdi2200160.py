@@ -155,8 +155,8 @@ class Embedding(torch.nn.Embedding):
 		word2idx, tensor = cls.load_word2vec_format(target_path)
 
 		# Insert special tokens:
-		pad_vector = torch.zeros(tensor.shape[1], device=tensor.device)
-		unk_vector = torch.randn(tensor.shape[1], device=tensor.device) * 0.1  # smaller variance
+		pad_vector = torch.zeros(tensor.shape[1], device = tensor.device)
+		unk_vector = torch.randn(tensor.shape[1], device = tensor.device) * 0.1  # smaller variance
 
 		# Rebuild mapping with special tokens:
 		word2idx = {
