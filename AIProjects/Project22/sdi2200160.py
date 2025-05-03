@@ -218,11 +218,16 @@ class Embedding(torch.nn.Embedding):
 			vectors = torch.zeros(num_tokens, embedding_dim)  # preallocate tensor for word vectors
 
 			for index, line in track(enumerate(word2vec_file), "get embeddings from word2vec".ljust(32), num_tokens):
-				word, *vec = line.strip().split()  # split word and vector
-				vec = torch.tensor(list(map(float, vec)))  # convert vector to tensor
+				word, *vec = line.strip().split()
+				vec = list(map(float, vec))
 
-				word2idx[word] = index  # map word to index
-				vectors[index] = vec  # assign vector to the corresponding index
+				if len(vec) < embedding_dim: vec += [0.0] * (embedding_dim - len(vec))
+				if len(vec) > embedding_dim: vec = vec[:embedding_dim]
+
+				vec_tensor = torch.tensor(vec)
+
+				word2idx[word] = index       # map word to index
+				vectors[index] = vec_tensor  # assign vector to the corresponding index
 
 		return Vocabulary(word2idx), vectors
 
