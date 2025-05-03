@@ -150,12 +150,15 @@ class Embedding(torch.nn.Embedding):
 
 	@classmethod
 	def from_glove(cls,
-		embedding_dim: Literal[50, 100, 200, 300] = 50,
+		embedding_dim: int = 100,
+		num_of_tokens: int = 0,  # HACK: 0 for Twitter GloVe hardcoded
 		freeze: bool = False,
 		pad_token: str = "<pad>",
 		unk_token: str = "<unk>",
 	**kwargs) -> Self:
-		source_path: Path = Path("embeddings") / f"glove.6B.{embedding_dim}d.txt"
+		source_path: Path = \
+			Path("embeddings") / f"glove.{num_of_tokens}B.{embedding_dim}d.txt" if num_of_tokens else \
+			Path("embeddings") / f"glove.twitter.27B.{embedding_dim}d.txt"
 		target_path: Path = source_path.with_suffix(".word2vec.txt")
 
 		cls.convert_glove_to_word2vec(source_path, target_path)
@@ -715,16 +718,12 @@ class TwitterClassifier:
 	def submit(self, dataset: TwitterDataset, *,
 		submission_path: Path = Path("submission.csv"),
 	):
-		y_pred = self.predict(dataset)
-
-		submission = pd.DataFrame(
-			{
-				"ID": dataset.data.index,
-				"Label": y_pred,
-			}
-		)
-
-		submission.to_csv(submission_path,
+		pd.DataFrame(
+			dict(
+				ID = dataset.data.index,
+				Label = self.predict(dataset),
+			)
+		).to_csv(submission_path,
 			index = False,
 			encoding = "utf-8",
 		)
@@ -784,8 +783,13 @@ if __name__ == "__main__":
 	)
 	parser.add_argument("--glove-dim",
 		type = int,
-		default = 50,
+		default = 100,
 		help = "GloVe embedding dimension",
+	)
+	parser.add_argument("--glove-tokens",
+		type = int,
+		default = 0,
+		help = "GloVe number of tokens (0 for Twitter GloVe)",
 	)
 	parser.add_argument("--freeze",
 		action = "store_true",
@@ -822,24 +826,21 @@ if __name__ == "__main__":
 	)
 	model.compile()
 
+	transform = TextTransform(embedding.word2idx,
+		preprocessor = Preprocessor(),
+		tokenizer = Tokenizer(),
+		max_len = args.max_len,
+	)
+	train_data = TwitterDataset("train", transform = transform)
+	val_data   = TwitterDataset("val"  , transform = transform)
+	test_data  = TwitterDataset("test" , transform = transform)
+
 #	Initialize classifier:
 	with TwitterClassifier(model) as classifier:
 		classifier.compile(
 			learning_rate = args.learning_rate,
 			weight_decay  = args.weight_decay ,
 		)
-
-	#	Generate a preprocessing and tokenization transform function for the dataset:
-		transform = TextTransform(embedding.word2idx,
-			preprocessor = Preprocessor(),
-			tokenizer = Tokenizer(),
-			max_len = args.max_len,
-		)
-
-	#	Create datasets:
-		train_data = TwitterDataset("train", transform = transform)
-		val_data   = TwitterDataset("val"  , transform = transform)
-		test_data  = TwitterDataset("test" , transform = transform)
 
 	#	Train the model:
 		metrics = classifier.fit(
@@ -848,14 +849,6 @@ if __name__ == "__main__":
 			epochs = args.epochs,
 			batch_size = int(math.log10(len(train_data) + len(val_data))) + 1,
 		)
-
-	#	Dump metrics to file:
-		with open("sdi2200160.json", "w+",
-			encoding = "utf-8",
-		) as file:
-			json.dump(round_metrics(metrics), file,
-				indent = 4,
-			)
 
 	#	Generate report:
 		print()
@@ -872,4 +865,4 @@ if __name__ == "__main__":
 		)
 
 
-#	python -m sdi2200160 --glove-dim 300 --max-len 256 --min-frequency 2 --dropout .1 --layer-dim 150 100 75 --weight-decay 1e-2 --learning-rate 1e-4 --epochs 4
+#	python -m sdi2200160 --glove-dim 100 --glove-tokens 0 --max-len 256 --min-frequency 2 --layer-dim 100 50 25 20 10 5 4 2 1 --dropout 1e-1 --weight-decay 1e-2 --learning-rate 1e-4 --epochs 1
