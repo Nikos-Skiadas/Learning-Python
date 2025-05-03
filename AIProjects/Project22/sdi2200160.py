@@ -324,8 +324,8 @@ class TwitterLayer(torch.nn.Sequential):
 class TwitterModel(torch.nn.Module):
 
 	def __init__(self, embedding: Embedding,
-		hidden_dim: int = 100,
-		num_layers: int = 2,
+		hidden_dim: int | list[int] = 100,
+		num_layers: int = 2,  # ignored if hidden_dim is a list
 		dropout: float = 0.5,
 	):
 		super().__init__()
@@ -335,26 +335,28 @@ class TwitterModel(torch.nn.Module):
 		self.input_dim = self.embedding.embedding_dim
 		self.output_dim = 1  # binary classification (positive/negative)
 
+		if isinstance(hidden_dim, int):
+			hidden_dim = [hidden_dim] * num_layers
+
+		layer_dims = [self.input_dim] + hidden_dim + [self.output_dim]  # input and output dimensions along with hidden dimensions
+
 		self.model = torch.nn.Sequential(
-			TwitterLayer(
-				inputs_dim = self.input_dim,
-				output_dim = hidden_dim,
-				dropout = dropout,
-			),
 			*(
 				TwitterLayer(
-					inputs_dim = hidden_dim,
-					output_dim = hidden_dim,
-					dropout = dropout,
-				) for _ in range(num_layers - 1)
-			),
-			TwitterLayer(
-				inputs_dim = hidden_dim,
-				output_dim = 1,
-				dropout = dropout,
-			),
+					inputs_dim = inputs_dim,
+					output_dim = output_dim, dropout = dropout
+				) for inputs_dim, output_dim in zip(
+					layer_dims[ :-1],
+					layer_dims[1:  ],
+				)
+			)
 		)
 
+		print()
+		print(f"Model summary:")
+		print()
+		print(self)
+		print()
 
 	def forward(self, input: torch.Tensor) -> torch.Tensor:
 		embeddings = self.embedding.forward(input)
@@ -372,7 +374,7 @@ def preload(method):
 
 	@wraps(method)
 	def wrapper(self, *args, **kwargs):
-		if cache_file.is_file():
+		if cache_file.exists() and cache_file.is_file():
 			with cache_file.open("r+b") as f:
 				return torch.load(f)
 
@@ -473,6 +475,7 @@ class TwitterClassifier:
 			)
 			train_dataset.transform.vocabulary = self.model.embedding.word2idx
 
+	@preload
 	def fit(self,
 		train_dataset: TwitterDataset,
 		val_dataset  : TwitterDataset,
@@ -684,7 +687,7 @@ class TwitterClassifier:
 	):
 		plt.figure(
 			figsize = (
-				8,
+				15,
 				4,
 			)
 		)
@@ -718,6 +721,12 @@ if __name__ == "__main__":
 		type = int,
 		default = 42,
 		help = "Random seed for reproducibility",
+	)
+	parser.add_argument("--layer-dims",
+		type = int,
+		nargs = "+",
+		default = None,
+		help = "Lengths of hidden layers",
 	)
 	parser.add_argument("--hidden-dim",
 		type = int,
@@ -786,7 +795,7 @@ if __name__ == "__main__":
 		freeze = args.freeze,
 	)
 	model = TwitterModel(embedding,
-		hidden_dim = args.hidden_dim,
+		hidden_dim = args.layer_dims or args.hidden_dim,
 		num_layers = args.num_layers,
 		dropout    = args.dropout   ,
 	)
@@ -797,6 +806,7 @@ if __name__ == "__main__":
 		learning_rate = args.learning_rate,
 		weight_decay  = args.weight_decay ,
 	)
+	exit()
 
 	transform = TextTransform(embedding.word2idx,
 		preprocessor = Preprocessor(),
@@ -830,4 +840,4 @@ if __name__ == "__main__":
 	classifier.plot_learning_curve(metrics)
 
 
-#	python -m sdi2200160 --glove-dim 300 --max-len 256 --dropout .1 --num-layers 3 --hidden-dim 300 --weight-decay 1e-1 --learning-rate 1e-3 --epochs 1
+#	python -m sdi2200160 --glove-dim 300 --max-len 256 --dropout .1 --num-layers 3 --layer-dim 150 100 75 60 50 30 25 20 15 12 10 6 5 4 3 2 --weight-decay 1e-1 --learning-rate 1e-3 --epochs 1
