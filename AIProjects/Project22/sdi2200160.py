@@ -392,17 +392,23 @@ class TwitterClassifier:
 
 	def __init__(self, model: TwitterModel,
 		max_len: int = 32,
-		path: Path | None = None,
+		path: Path = cache_path / "model.pt",
 	):
 		self.model = model
 		self.max_len = max_len
 		self.path = path
 
 	def __enter__(self) -> Self:
+		if self.path is not None and self.path.is_file():
+			with self.path.open("rb+") as file:
+				self.model.load_state_dict(torch.load(file))
+
+		return self
+
+	def __exit__(self, *_):
 		if self.path is not None:
 			with self.path.open("wb+") as file:
 				torch.save(self.model.state_dict(), file)
-		return self
 
 
 	def compile(self,
@@ -785,10 +791,6 @@ if __name__ == "__main__":
 		action = "store_true",
 		help = "Freeze GloVe embedding layer",
 	)
-	parser.add_argument("--eval",
-		action = "store_true",
-		help = "Only perfom evaluation",
-	)
 	parser.add_argument("--min-frequency",
 		type = int,
 		default = None,
@@ -821,53 +823,53 @@ if __name__ == "__main__":
 	model.compile()
 
 #	Initialize classifier:
-	classifier = TwitterClassifier(model)
-	classifier.compile(
-		learning_rate = args.learning_rate,
-		weight_decay  = args.weight_decay ,
-	)
-
-#	Generate a preprocessing and tokenization transform function for the dataset:
-	transform = TextTransform(embedding.word2idx,
-		preprocessor = Preprocessor(),
-		tokenizer = Tokenizer(),
-		max_len = args.max_len,
-	)
-
-#	Create datasets:
-	train_data = TwitterDataset("train", transform = transform)
-	val_data   = TwitterDataset("val"  , transform = transform)
-	test_data  = TwitterDataset("test" , transform = transform)
-
-#	Train the model:
-	metrics = classifier.fit(
-		train_data,
-		val_data,
-		epochs = args.epochs,
-		batch_size = int(math.log10(len(train_data) + len(val_data))) + 1,
-	)
-
-#	Dump metrics to file:
-	with open("sdi2200160.json", "w+",
-		encoding = "utf-8",
-	) as file:
-		json.dump(round_metrics(metrics), file,
-			indent = 4,
+	with TwitterClassifier(model) as classifier:
+		classifier.compile(
+			learning_rate = args.learning_rate,
+			weight_decay  = args.weight_decay ,
 		)
 
-#	Generate report:
-	print()
-	print(classifier.classification_report_str(val_data))
-	print("ROC AUC:", classifier.roc_auc(val_data))
-	print()
+	#	Generate a preprocessing and tokenization transform function for the dataset:
+		transform = TextTransform(embedding.word2idx,
+			preprocessor = Preprocessor(),
+			tokenizer = Tokenizer(),
+			max_len = args.max_len,
+		)
 
-	classifier.plot_roc_curve(val_data)
-	classifier.plot_learning_curve(metrics)
+	#	Create datasets:
+		train_data = TwitterDataset("train", transform = transform)
+		val_data   = TwitterDataset("val"  , transform = transform)
+		test_data  = TwitterDataset("test" , transform = transform)
 
-#	Submit predictions:
-	classifier.submit(test_data,
-		submission_path = Path("submission.csv"),
-	)
+	#	Train the model:
+		metrics = classifier.fit(
+			train_data,
+			val_data,
+			epochs = args.epochs,
+			batch_size = int(math.log10(len(train_data) + len(val_data))) + 1,
+		)
+
+	#	Dump metrics to file:
+		with open("sdi2200160.json", "w+",
+			encoding = "utf-8",
+		) as file:
+			json.dump(round_metrics(metrics), file,
+				indent = 4,
+			)
+
+	#	Generate report:
+		print()
+		print(classifier.classification_report_str(val_data))
+		print("ROC AUC:", classifier.roc_auc(val_data))
+		print()
+
+		classifier.plot_roc_curve(val_data)
+		classifier.plot_learning_curve(metrics)
+
+	#	Submit predictions:
+		classifier.submit(test_data,
+			submission_path = Path("submission.csv"),
+		)
 
 
-#	python -m sdi2200160 --glove-dim 300 --max-len 256 --dropout .1 --num-layers 3 --layer-dim 150 100 75 60 50 30 25 20 15 12 10 6 5 4 3 2 --weight-decay 1e-1 --learning-rate 1e-3 --epochs 1
+#	python -m sdi2200160 --glove-dim 300 --max-len 256 --min-frequency 2 --dropout .1 --layer-dim 150 100 75 --weight-decay 1e-2 --learning-rate 1e-4 --epochs 4
