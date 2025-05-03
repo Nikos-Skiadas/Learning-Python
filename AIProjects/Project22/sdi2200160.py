@@ -687,7 +687,7 @@ class TwitterClassifier:
 		plt.legend()
 		plt.grid(True)
 		plt.tight_layout()
-		plt.savefig("roc_curve.png")
+		plt.savefig("roc_curve.pdf")
 		plt.show()
 
 	def plot_learning_curve(self, metrics: dict[str, list[float]],
@@ -717,7 +717,7 @@ class TwitterClassifier:
 			plt.grid(True)
 
 		plt.tight_layout()
-		plt.savefig("learning_curve.png")
+		plt.savefig("learning_curve.pdf")
 		plt.show()
 
 	def submit(self, dataset: TwitterDataset, *,
