@@ -34,10 +34,7 @@ nltk.download('stopwords')  # for removing stopwords
 
 print()
 
-cache_path = Path.cwd() / "cache"; cache_path.parent.mkdir(
-	parents = True,
-	exist_ok = True,
-)
+cache_path = Path.cwd()
 
 
 def fix_seed(seed: int = 42):
@@ -297,9 +294,13 @@ class TwitterDataset(torch.utils.data.Dataset):
 		return len(self.data)
 
 	def __getitem__(self, idx: int | slice):
-		return self.transform(self.data.Text[idx]), torch.tensor(self.data.Label[idx],
-			dtype = torch.float,
-		)  # return tensor of token indices and label
+		text = self.data.Text[idx]
+		tokens = self.transform(text)
+
+		try: label = torch.tensor(self.data.Label[idx], dtype = torch.float)
+		except AttributeError: label = torch.tensor(-1, dtype = torch.float)
+
+		return tokens, label
 
 
 	@classmethod
@@ -408,7 +409,7 @@ class TwitterClassifier:
 
 	def __enter__(self) -> Self:
 		if self.path is not None and self.path.is_file():
-			with self.path.open("rb+") as file:
+			with self.path.open("rb") as file:
 				self.model.load_state_dict(torch.load(file))
 
 		return self
@@ -489,7 +490,6 @@ class TwitterClassifier:
 			)
 			train_dataset.transform.vocabulary = self.model.embedding.word2idx
 
-	@preload
 	def fit(self,
 		train_dataset: TwitterDataset,
 		val_dataset  : TwitterDataset,
@@ -572,7 +572,6 @@ class TwitterClassifier:
 
 		return dict(metrics)  # type: ignore
 
-	@preload
 	@torch.no_grad
 	def evaluate(self, test_dataset: TwitterDataset, **kwargs) -> dict[str, float]:
 		batch_size = kwargs.pop("batch_size", len(test_dataset))
@@ -599,33 +598,32 @@ class TwitterClassifier:
 			y_true,
 		)
 
-	@preload
 	@torch.no_grad
 	def predict(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
-		loader = torch.utils.data.DataLoader(dataset, **kwargs)
-
 		self.model.eval()
 
 		y_pred = []
 
-		for batch in loader:
-			x, _ = batch  # ignore labels
-			y_pred.append((torch.sigmoid(self.model(x)) > 0.5).long())
+		for i in range(len(dataset)):
+			x, _ = dataset[i]
+			x = x.unsqueeze(0)
+			logits = self.model(x)
+			preds = (torch.sigmoid(logits) > 0.5).long()
+			y_pred.append(preds)
 
 		return torch.cat(y_pred)
 
-	@preload
 	@torch.no_grad
 	def predict_proba(self, dataset: TwitterDataset, **kwargs) -> torch.Tensor:
-		loader = torch.utils.data.DataLoader(dataset, **kwargs)
-
 		self.model.eval()
 
 		y_probs = []
 
-		for batch in loader:
-			x, _ = batch  # ignore labels
-			y_probs.append(torch.sigmoid(self.model(x)))
+		for i in range(len(dataset)):
+			x, _ = dataset[i]
+			x = x.unsqueeze(0)
+			probs = torch.sigmoid(self.model(x))
+			y_probs.append(probs)
 
 		return torch.cat(y_probs)
 
@@ -652,7 +650,6 @@ class TwitterClassifier:
 
 		return float(score)
 
-	@preload
 	def roc_curve(self, dataset: TwitterDataset, **kwargs) -> tuple[
 		np.ndarray,
 		np.ndarray,
@@ -672,8 +669,8 @@ class TwitterClassifier:
 
 		plt.figure(
 			figsize = (
-				6,
-				6,
+				9,
+				9,
 			)
 		)
 		plt.plot(fpr, tpr, label=f"ROC AUC = {auc:.4f}")
@@ -688,7 +685,6 @@ class TwitterClassifier:
 		plt.grid(True)
 		plt.tight_layout()
 		plt.savefig("roc_curve.pdf")
-		plt.show()
 
 	def plot_learning_curve(self, metrics: dict[str, list[float]],
 		keys: set[str] = {
@@ -701,8 +697,8 @@ class TwitterClassifier:
 	):
 		plt.figure(
 			figsize = (
-				15,
-				4,
+				18,
+				6,
 			)
 		)
 
@@ -718,7 +714,6 @@ class TwitterClassifier:
 
 		plt.tight_layout()
 		plt.savefig("learning_curve.pdf")
-		plt.show()
 
 	def submit(self, dataset: TwitterDataset, *,
 		submission_path: Path = Path("submission.csv"),
@@ -726,7 +721,7 @@ class TwitterClassifier:
 		pd.DataFrame(
 			dict(
 				ID = dataset.data.index,
-				Label = self.predict(dataset),
+				Label = self.predict(dataset).tolist(),
 			)
 		).to_csv(submission_path,
 			index = False,
