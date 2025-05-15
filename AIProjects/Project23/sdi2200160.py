@@ -5,36 +5,6 @@ import logging; logging.basicConfig(level = logging.INFO)
 import torch; torch.set_default_device("cuda" if torch.cuda.is_available() else "cpu")
 import transformers
 
-tokenizer = transformers.BertTokenizer.from_pretrained("bert-base-uncased")
-text = "After stealing money from the bank vault, the bank robber was seen fishing on the Mississippi river bank."
-
-tokens = tokenizer(text,
-    return_tensors = "pt",  # Return PyTorch tensors
-)
-
-model = transformers.BertModel.from_pretrained("bert-base-uncased",
-    output_hidden_states = True,
-)
-model.eval()  # Set model to evaluation mode (no dropout, etc.)
-
-with torch.no_grad():
-    output = model(**tokens)
-    hidden_states = output[2]  # Tuple of hidden states from all layers
-
-token_embeddings = torch.stack(hidden_states,
-    dim = 0,
-).squeeze(
-    dim = 1,  # Remove batch dimension since it's 1
-).permute(
-    1, 0, 2,  # Change to shape: (tokens, layers, hidden_dim)
-)
-
-sentence_embedding = torch.sum(token_embeddings,
-    dim = 1,  # Sum over layers
-).mean(
-    dim = 0,  # Mean over tokens
-)
-
 
 class BertSentenceEmbedder:
 
