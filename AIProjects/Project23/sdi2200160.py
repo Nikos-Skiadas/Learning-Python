@@ -11,6 +11,7 @@ import warnings; warnings.simplefilter(action = "ignore", category = UserWarning
 from rich import print
 from rich.progress import Progress, track
 
+import evaluate
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -81,6 +82,7 @@ fix_seed()
 
 
 def twitter_dataset(
+	model_name: str = "bert-base-uncased",
 	root: Path = Path().cwd(),
 **column_types: datasets.Value):
 	if not column_types:
@@ -107,7 +109,83 @@ def twitter_dataset(
 		columns = dict(zip(dataset[split].column_names, column_types))
 		dataset[split] = dataset[split].rename_columns(columns).cast(features)
 
-		if split == "test":
-			dataset[split] = dataset[split].remove_columns("labels")
+#	tokenizer = transformers.BertTokenizer.from_pretrained(model_name)
+
+#	def tokenize(batch):
+#		return tokenizer(batch["text"],
+#			padding = "max_length",
+#			truncation = True,
+#		)
+
+#	dataset = dataset.map(tokenize)
+#	dataset.set_format(
+#		type = "torch",
+#		columns = [
+#			"input_ids",
+#			"attention_mask",
+#			"labels",
+#		],
+#	)
+
+	dataset["test"] = dataset["test"].remove_columns("labels")
 
 	return dataset
+
+model_name = "bert-base-uncased"
+model = transformers.BertForSequenceClassification.from_pretrained(model_name,
+	num_labels = 2,
+)
+
+training_args = transformers.TrainingArguments(
+	output_dir = "./results",
+	logging_dir = "./logs",
+
+	evaluation_strategy = "epoch",
+	save_strategy = "epoch",
+
+#	per_device_train_batch_size = 16,
+#	per_device_eval_batch_size = 64,
+
+	num_train_epochs = 4,
+	learning_rate = 1e-4,
+	weight_decay = 1e-2,
+
+	load_best_model_at_end = True,
+#	metric_for_best_model = "accuracy",  # `eval_loss` by default
+)
+
+
+dataset = twitter_dataset()
+
+
+def compute_metrics(eval_pred: transformers.EvalPrediction) -> dict[str, float]:
+	metrics = evaluate.combine(
+		[
+			evaluate.load("accuracy"                     ),
+			evaluate.load("precision", average = "binary"),
+			evaluate.load("recall"   , average = "binary"),
+			evaluate.load("f1"       , average = "binary"),
+		]
+	)
+
+	y_pred, y_true = eval_pred
+	y_pred = np.argmax(y_pred,
+		axis = 1,
+	)
+
+	return metrics.compute(
+		predictions = y_pred,
+		references  = y_true,
+	)
+
+
+trainer = transformers.Trainer(
+	model = model,
+	args = training_args,
+	train_dataset = dataset["train"],
+	eval_dataset = dataset["val"],
+	processing_class = transformers.BertTokenizer.from_pretrained(model_name),
+	compute_metrics = compute_metrics,
+)
+
+trainer.train()
