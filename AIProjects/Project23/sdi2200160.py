@@ -40,6 +40,7 @@ class TwitterDataset(datasets.DatasetDict):
 	def preprocessed(cls,
 		model_name: str = "bert-base-uncased",
 		root: Path = Path().cwd(),
+		trim: int | None = None,
 	**column_types: datasets.Value):
 
 		if not column_types:
@@ -69,7 +70,10 @@ class TwitterDataset(datasets.DatasetDict):
 
 		for split in dataset:
 			columns = dict(zip(dataset[split].column_names, column_types))
-			dataset[split] = dataset[split].rename_columns(columns).cast(features).select(range(64))
+			dataset[split] = dataset[split].rename_columns(columns).cast(features)
+
+			if trim is not None:
+				dataset[split] = dataset[split].select(range(trim))
 
 		logging.info("Columns renamed.")
 		logging.info("Processing dataset...")
@@ -112,23 +116,28 @@ class TwitterClassifier:
 			num_labels = num_labels,
 		)
 
+		self.trained = False
+
 
 	@classmethod
-	def load(cls, path: Path):
-		return cls(path)
+	def load(cls, model_name: str):
+		classifier = cls(Path.cwd() / model_name)
+		classifier.trained = True
+
+		return classifier
 
 	def save(self, path: Path):
 		self.model.save_pretrained(path)
-	#	self.tokenizer.save_pretrained(path)
+		self.tokenizer.save_pretrained(path)
 
 
-	def compile(self,
+	def compile(self, dataset: TwitterDataset,
 		training_args: transformers.TrainingArguments = transformers.TrainingArguments(
 			output_dir = "./results",
 			logging_dir = "./logs",
 
 			eval_strategy = "epoch",
-			save_strategy = "epoch",
+		#	save_strategy = "epoch",
 
 			per_device_train_batch_size = 32,
 			per_device_eval_batch_size = 128,
@@ -145,23 +154,24 @@ class TwitterClassifier:
 		self.trainer = transformers.Trainer(
 			model = self.model,
 			args = training_args,
+			train_dataset = dataset["train"],
+			eval_dataset = dataset["val"],
 			processing_class = self.tokenizer,
 			compute_metrics = self.compute_metrics,
 		)
 
-	def fit(self, dataset: TwitterDataset) -> dict[str, float]:
-		self.trainer.train_dataset = dataset["train"]
-		self.trainer.eval_dataset  = dataset["val"]
+	def fit(self) -> dict[str, float]:
+		if self.trained:
+			return dict()
 
 		self.model.train()
 		output = self.trainer.train()
 		self.save(Path.cwd() / "model")
+		self.trained = True
 
 		return output.metrics
 
-	def evaluate(self, dataset: TwitterDataset) -> dict[str, float]:
-		self.trainer.eval_dataset = dataset["val"]
-
+	def evaluate(self) -> dict[str, float]:
 		self.model.eval()
 
 		return self.trainer.evaluate()
@@ -221,6 +231,7 @@ if __name__ == "__main__":
 
 	dataset = TwitterDataset.preprocessed()
 	classifier = TwitterClassifier()
-	classifier.compile()
-	classifier.fit(dataset)
-	classifier.evaluate(dataset)
+#	classifier = TwitterClassifier.load("model")
+	classifier.compile(dataset)
+	classifier.fit()
+	classifier.evaluate()
