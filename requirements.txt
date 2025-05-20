@@ -6,6 +6,6 @@ nltk
 matplotlib
 seaborn
 torch
-datasets
-sentence-transformers
-transformers
+datasets[torch]
+sentence-transformers[torch]
+transformers[torch]
