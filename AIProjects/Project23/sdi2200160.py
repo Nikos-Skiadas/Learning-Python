@@ -142,8 +142,13 @@ class TwitterClassifier:
 
 			per_device_train_batch_size = 32,
 			per_device_eval_batch_size = 128,
-			fp16 = True,
 			gradient_accumulation_steps = 4,
+
+			fp16 = True,
+
+			dataloader_num_workers = 20,
+			dataloader_persistent_workers = True,
+			dataloader_pin_memory = True,
 
 			data_seed = fix_seed(),
 			seed = fix_seed(),
