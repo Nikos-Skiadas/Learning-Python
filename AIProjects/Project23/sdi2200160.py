@@ -132,7 +132,7 @@ class TwitterClassifier:
 
 
 	def compile(self, dataset: TwitterDataset,
-		training_args: transformers.TrainingArguments = transformers.TrainingArguments(
+		training_args: transformers.training_args.TrainingArguments = transformers.training_args.TrainingArguments(
 			output_dir = "./results",
 			logging_dir = "./logs",
 
@@ -151,7 +151,7 @@ class TwitterClassifier:
 		#	metric_for_best_model = "accuracy",  # `eval_loss` by default
 		)
 	):
-		self.trainer = transformers.Trainer(
+		self.trainer = transformers.trainer.Trainer(
 			model = self.model,
 			args = training_args,
 			train_dataset = dataset["train"],
@@ -205,7 +205,7 @@ class TwitterClassifier:
 			return logits.cpu()
 
 	@staticmethod
-	def compute_metrics(eval_pred: transformers.EvalPrediction) -> dict[str, float]:
+	def compute_metrics(eval_pred) -> dict[str, float]:
 		metrics = evaluate.combine(
 			[
 				evaluate.load("accuracy"                     ),
