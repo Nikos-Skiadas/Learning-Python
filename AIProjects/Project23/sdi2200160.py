@@ -143,7 +143,7 @@ class TwitterClassifier:
 			per_device_eval_batch_size = 128,
 			fp16 = True,
 
-			num_train_epochs = 4,
+			num_train_epochs = 1,
 			learning_rate = 1e-4,
 			weight_decay = 1e-2,
 
