@@ -32,6 +32,7 @@ def fix_seed(seed: int = 42):
 	torch.backends.cudnn.deterministic = True
 	torch.backends.cudnn.benchmark = False
 
+	return seed
 
 
 class TwitterDataset(datasets.DatasetDict):
@@ -137,11 +138,15 @@ class TwitterClassifier:
 			logging_dir = "./logs",
 
 			eval_strategy = "epoch",
-		#	save_strategy = "epoch",
+			save_strategy = "epoch",
 
 			per_device_train_batch_size = 32,
 			per_device_eval_batch_size = 128,
 			fp16 = True,
+			gradient_accumulation_steps = 4,
+
+			data_seed = fix_seed(),
+			seed = fix_seed(),
 
 			num_train_epochs = 1,
 			learning_rate = 1e-4,
@@ -204,8 +209,8 @@ class TwitterClassifier:
 
 			return logits.cpu()
 
-	@staticmethod
-	def compute_metrics(eval_pred) -> dict[str, float]:
+	@classmethod
+	def compute_metrics(cls, eval_pred) -> dict[str, float]:
 		metrics = evaluate.combine(
 			[
 				evaluate.load("accuracy"                     ),
@@ -225,6 +230,18 @@ class TwitterClassifier:
 			references  = y_true,
 		)
 
+	def submit(self, dataset: TwitterDataset):
+		submission = pd.DataFrame(
+			data = {
+				"index": dataset["test"]["index"],
+				"labels": self.predict(dataset["test"]["text"]),
+			}
+		)
+
+		submission.to_csv("submission.csv",
+			index = False,
+		)
+
 
 if __name__ == "__main__":
 	fix_seed()
@@ -235,3 +252,4 @@ if __name__ == "__main__":
 	classifier.compile(dataset)
 	classifier.fit()
 	classifier.evaluate()
+	classifier.submit(dataset)
