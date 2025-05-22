@@ -8,13 +8,11 @@ import random
 from typing import cast
 import warnings; warnings.simplefilter(action = "ignore", category = UserWarning)
 
-from rich import print
-from rich.progress import Progress, track
-
 import evaluate
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import sklearn.metrics
 import torch; device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 import datasets
 import transformers
@@ -235,15 +233,111 @@ class TwitterClassifier:
 			references  = y_true,
 		)
 
+	def plot(self, dataset: TwitterDataset,
+		output_dir: Path = Path("plots"),
+	):
+		output_dir.mkdir(
+			parents = True,
+			exist_ok = True,
+		)
+
+	#	Learning curves:
+		if self.trainer.state.log_history:
+			logs = pd.DataFrame(self.trainer.state.log_history)
+
+		#	Filter out unnecessary entries
+			train_logs = logs[logs["loss"].notna()]
+			eval_logs = logs[logs["eval_loss"].notna()]
+
+		#	Plot train vs eval loss:
+			plt.figure()
+			plt.plot(train_logs["step"], train_logs["loss"],
+				label = "Train Loss",
+			)
+			plt.plot(eval_logs["step"], eval_logs["eval_loss"],
+				label = "Eval Loss",
+			)
+			plt.xlabel("Step")
+			plt.ylabel("Loss")
+			plt.legend()
+			plt.title("Training vs Evaluation Loss")
+			plt.savefig(output_dir / "loss_curve.png")
+			plt.close()
+
+		#	Plot evaluation metrics:
+			metrics = ["eval_accuracy", "eval_precision", "eval_recall", "eval_f1"]
+			for metric in metrics:
+				if metric in eval_logs:
+					plt.figure()
+					plt.plot(eval_logs["step"], eval_logs[metric],
+			  			label = metric,
+					)
+					plt.xlabel("Step")
+					plt.ylabel(metric.split("_")[-1].capitalize())
+					plt.title(metric.replace("_", " ").title())
+					plt.savefig(output_dir / f"{metric}_curve.png")
+					plt.close()
+
+	#	AUC and Precision-Recall Curve on validation set:
+		validation = self.trainer.predict(dataset["val"])  # type: ignore
+		y_true = validation.label_ids
+		y_prob = torch.softmax(torch.tensor(validation.predictions),
+			dim = 1,
+		)[:, 1].numpy()
+		y_pred = np.argmax(validation.predictions,
+			axis = 1,
+		)
+
+	#	ROC Curve:
+		fpr, tpr, _ = sklearn.metrics.roc_curve(
+			y_true,  # type: ignore
+			y_prob,
+		)
+		y_true = validation.label_ids
+		roc_auc = sklearn.metrics.auc(
+			fpr,
+			tpr,
+		)
+		plt.figure()
+		plt.plot(fpr, tpr,
+		   	label = f"ROC AUC = {roc_auc:.2f}",
+		)
+		plt.plot([0, 1], [0, 1],
+			linestyle = "--",
+			color = "gray",
+		)
+		plt.xlabel("False Positive Rate")
+		plt.ylabel("True Positive Rate")
+		plt.title("ROC Curve")
+		plt.legend()
+		plt.savefig(output_dir / "roc_curve.png")
+		plt.close()
+
+	#	Precision-Recall Curve:
+		precision, recall, _ = sklearn.metrics.precision_recall_curve(
+			y_true,  # type: ignore
+			y_prob,
+		)
+		y_true = validation.label_ids
+		pr_auc = sklearn.metrics.auc(recall, precision)
+		plt.figure()
+		plt.plot(recall, precision,
+			label = f"PR AUC = {pr_auc:.2f}",
+		)
+		plt.xlabel("Recall")
+		plt.ylabel("Precision")
+		plt.title("Precision-Recall Curve")
+		plt.legend()
+		plt.savefig(output_dir / "pr_curve.png")
+		plt.close()
+
 	def submit(self, dataset: TwitterDataset):
 		submission = pd.DataFrame(
 			data = {
 				"index": dataset["test"]["index"],
 				"labels": self.predict(dataset["test"]["text"]),
 			}
-		)
-
-		submission.to_csv("submission.csv",
+		).to_csv("submission.csv",
 			index = False,
 		)
 
