@@ -167,3 +167,7 @@ cython_debug/
 *.lyx#
 
 *embeddings
+*model
+*results
+*plots
+*logs
