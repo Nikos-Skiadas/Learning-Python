@@ -145,7 +145,7 @@ class TwitterClassifier:
 			fp16 = True,
 
 			dataloader_num_workers = 20,
-			dataloader_persistent_workers = True,
+		#	dataloader_persistent_workers = True,
 			dataloader_pin_memory = True,
 
 			data_seed = fix_seed(),
@@ -332,7 +332,7 @@ class TwitterClassifier:
 		plt.close()
 
 	def submit(self, dataset: TwitterDataset):
-		submission = pd.DataFrame(
+		pd.DataFrame(
 			data = {
 				"index": dataset["test"]["index"],
 				"labels": self.predict(dataset["test"]["text"]),

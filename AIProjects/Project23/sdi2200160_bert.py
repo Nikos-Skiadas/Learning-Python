@@ -145,7 +145,7 @@ class TwitterClassifier:
 			fp16 = True,
 
 			dataloader_num_workers = 20,
-			dataloader_persistent_workers = True,
+		#	dataloader_persistent_workers = True,
 			dataloader_pin_memory = True,
 
 			data_seed = fix_seed(),
