@@ -332,7 +332,7 @@ class TwitterClassifier:
 		plt.close()
 
 	def submit(self, dataset: TwitterDataset):
-		submission = pd.DataFrame(
+		pd.DataFrame(
 			data = {
 				"index": dataset["test"]["index"],
 				"labels": self.predict(dataset["test"]["text"]),
