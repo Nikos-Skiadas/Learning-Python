@@ -258,7 +258,7 @@ class TwitterClassifier:
 		)
 
 	def plot(self, dataset: TwitterDataset,
-		output_dir: Path = Path("plots"),
+		output_dir: Path = root / "plots",
 	):
 		output_dir.mkdir(
 			parents = True,
@@ -379,4 +379,5 @@ if __name__ == "__main__":
 		classifier.compile(dataset)
 		classifier.fit()
 		classifier.evaluate()
+		classifier.plot(dataset)
 		classifier.submit(dataset)

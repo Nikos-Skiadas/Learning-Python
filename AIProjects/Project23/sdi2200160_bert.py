@@ -258,7 +258,7 @@ class TwitterClassifier:
 		)
 
 	def plot(self, dataset: TwitterDataset,
-		output_dir: Path = Path("plots"),
+		output_dir: Path = root / "plots",
 	):
 		output_dir.mkdir(
 			parents = True,
@@ -373,10 +373,11 @@ class TwitterClassifier:
 if __name__ == "__main__":
 	fix_seed()
 
-	dataset = TwitterDataset.preprocessed(trim = 256)
+	dataset = TwitterDataset.preprocessed()
 
 	with TwitterClassifier("bert-base-uncased") as classifier:
 		classifier.compile(dataset)
 		classifier.fit()
 		classifier.evaluate()
+		classifier.plot(dataset)
 		classifier.submit(dataset)
