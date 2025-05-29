@@ -345,7 +345,7 @@ class TwitterClassifier:
 if __name__ == "__main__":
 	fix_seed()
 
-	dataset = TwitterDataset.preprocessed()
+	dataset = TwitterDataset.preprocessed(trim = 256)
 	classifier = TwitterClassifier()
 #	classifier = TwitterClassifier.load("model")
 	classifier.compile(dataset)
