@@ -33,12 +33,22 @@ def fix_seed(seed: int = 42):
 	return seed
 
 
+root = Path.cwd(); root.mkdir(
+	parents = True,
+	exist_ok = True,
+)
+models_path = root / "models"; models_path.mkdir(
+	parents = True,
+	exist_ok = True,
+)
+
+
 class TwitterDataset(datasets.DatasetDict):
 
 	@classmethod
 	def preprocessed(cls,
 		model_name: str = "bert-base-uncased",
-		root: Path = Path().cwd(),
+		root: Path = root,
 		trim: int | None = None,
 	**column_types: datasets.Value):
 
@@ -107,7 +117,9 @@ class TwitterClassifier:
 		model_name: str | Path = "bert-base-uncased",
 		num_labels: int = 2,
 	) -> None:
-		self.model_name = model_name
+		self.trained = (path := models_path / model_name).exists()
+
+		self.model_name = model_name if not self.trained else path
 		self.num_labels = num_labels
 
 		self.tokenizer = transformers.BertTokenizer.from_pretrained(model_name)
@@ -115,19 +127,17 @@ class TwitterClassifier:
 			num_labels = num_labels,
 		)
 
-		self.trained = False
 
+	def __enter__(self):
+		logging.info(f"Loading model {self.model_name}...")
 
-	@classmethod
-	def load(cls, model_name: str):
-		classifier = cls(Path.cwd() / model_name)
-		classifier.trained = True
+		return self
 
-		return classifier
+	def __exit__(self, *_):
+		self.model.save_pretrained(models_path / self.model_name)
+		self.tokenizer.save_pretrained(models_path / self.model_name)
 
-	def save(self, path: Path):
-		self.model.save_pretrained(path)
-		self.tokenizer.save_pretrained(path)
+		return True
 
 
 	def compile(self, dataset: TwitterDataset,
@@ -159,6 +169,8 @@ class TwitterClassifier:
 		#	metric_for_best_model = "accuracy",  # `eval_loss` by default
 		)
 	):
+		logging.info("Compiling model and initializing its trainer...")
+
 		self.trainer = transformers.trainer.Trainer(
 			model = self.model,
 			args = training_args,
@@ -170,16 +182,26 @@ class TwitterClassifier:
 
 	def fit(self) -> dict[str, float]:
 		if self.trained:
+			logging.info("Model already trained. Skipping training.")
+
 			return dict()
+
+		logging.info("Training model...")
 
 		self.model.train()
 		output = self.trainer.train()
-		self.save(Path.cwd() / "model")
 		self.trained = True
 
 		return output.metrics
 
 	def evaluate(self) -> dict[str, float]:
+		if not self.trained:
+			logging.error("Model not trained. Cannot evaluate.")
+
+			return dict()
+
+		logging.info("Evaluating model...")
+
 		self.model.eval()
 
 		return self.trainer.evaluate()
@@ -223,6 +245,8 @@ class TwitterClassifier:
 			]
 		)
 
+		logging.info("Computing metrics...")
+
 		y_pred, y_true = eval_pred
 		y_pred = np.argmax(y_pred,
 			axis = 1,
@@ -240,6 +264,8 @@ class TwitterClassifier:
 			parents = True,
 			exist_ok = True,
 		)
+
+		logging.info("Plotting results...")
 
 	#	Learning curves:
 		if self.trainer.state.log_history:
@@ -332,6 +358,8 @@ class TwitterClassifier:
 		plt.close()
 
 	def submit(self, dataset: TwitterDataset):
+		logging.info("Submitting predictions...")
+
 		pd.DataFrame(
 			data = {
 				"index": dataset["test"]["index"],
@@ -346,9 +374,9 @@ if __name__ == "__main__":
 	fix_seed()
 
 	dataset = TwitterDataset.preprocessed(trim = 256)
-	classifier = TwitterClassifier()
-#	classifier = TwitterClassifier.load("model")
-	classifier.compile(dataset)
-	classifier.fit()
-	classifier.evaluate()
-	classifier.submit(dataset)
+
+	with TwitterClassifier("bert-base-uncased") as classifier:
+		classifier.compile(dataset)
+		classifier.fit()
+		classifier.evaluate()
+		classifier.submit(dataset)
