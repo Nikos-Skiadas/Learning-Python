@@ -46,7 +46,7 @@ class TwitterDataset(datasets.DatasetDict):
 
 	@classmethod
 	def preprocessed(cls,
-		model_name: str = "bert-base-uncased",
+		model_name: str = "distilbert-base-uncased",
 		root: Path = root,
 		trim: int | None = None,
 	**column_types: datasets.Value):
@@ -113,7 +113,7 @@ class TwitterDataset(datasets.DatasetDict):
 class TwitterClassifier:
 
 	def __init__(self,
-		model_name: str | Path = "bert-base-uncased",
+		model_name: str | Path = "distilbert-base-uncased",
 		num_labels: int = 2,
 	) -> None:
 		self.trained = (path := models_path / model_name).exists()
@@ -347,7 +347,7 @@ if __name__ == "__main__":
 
 	dataset = TwitterDataset.preprocessed()
 
-	with TwitterClassifier("bert-base-uncased") as classifier:
+	with TwitterClassifier("distilbert-base-uncased") as classifier:
 		classifier.compile(dataset)
 		classifier.fit()
 		classifier.evaluate()
