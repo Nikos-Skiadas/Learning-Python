@@ -349,7 +349,7 @@ if __name__ == "__main__":
 
 	with TwitterClassifier("bert-base-uncased") as classifier:
 		classifier.compile(dataset)
-	#	classifier.fit()
+		classifier.fit()
 		classifier.evaluate()
-	#	classifier.plot(dataset)
-	#	classifier.submit(dataset)
+		classifier.plot(dataset)
+		classifier.submit(dataset)

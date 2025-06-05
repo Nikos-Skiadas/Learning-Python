@@ -345,7 +345,7 @@ class TwitterClassifier:
 if __name__ == "__main__":
 	fix_seed()
 
-	dataset = TwitterDataset.preprocessed(trim = 256)
+	dataset = TwitterDataset.preprocessed()
 
 	with TwitterClassifier("bert-base-uncased") as classifier:
 		classifier.compile(dataset)
