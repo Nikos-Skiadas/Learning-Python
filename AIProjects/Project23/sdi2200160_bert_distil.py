@@ -217,22 +217,31 @@ class TwitterClassifier:
 			dim = 1,
 		)[:, 1].tolist()
 
-
 	def logits(self, texts: list[str] | str) -> torch.Tensor:
 		if isinstance(texts, str):
 			texts = [texts]
 
-		tokens = self.tokenizer(texts,
-			return_tensors = "pt",
-			padding = True,
-			truncation = True,
+		def tokenize(batch):
+			return self.tokenizer(batch["text"],
+				padding = "max_length",
+				truncation = True,
+			)
+
+		dummy_dataset = datasets.Dataset.from_dict({"text": texts})
+		dummy_dataset = dummy_dataset.map(tokenize,
+			batched = True,
 		)
-		tokens = {k: v.to(device) for k, v in tokens.items()}
 
-		with torch.no_grad():
-			logits = self.model(**tokens).logits
+		dummy_dataset.set_format(
+			type = "torch",
+			columns = [
+				"input_ids",
+				"attention_mask",
+			],
+		)
 
-			return logits.cpu()
+		return torch.tensor(self.trainer.predict(dummy_dataset).predictions)  # type: ignore[arg-type]
+
 
 	@classmethod
 	def compute_metrics(cls, eval_pred) -> dict[str, float]:
