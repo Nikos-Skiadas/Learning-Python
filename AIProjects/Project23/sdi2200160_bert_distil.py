@@ -8,7 +8,6 @@ import random
 from typing import cast
 import warnings; warnings.simplefilter(action = "ignore", category = UserWarning)
 
-import evaluate
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -245,26 +244,17 @@ class TwitterClassifier:
 
 	@classmethod
 	def compute_metrics(cls, eval_pred) -> dict[str, float]:
-		metrics = evaluate.combine(
-			[
-				evaluate.load("accuracy"                     ),
-				evaluate.load("precision", average = "binary"),
-				evaluate.load("recall"   , average = "binary"),
-				evaluate.load("f1"       , average = "binary"),
-			]
-		)
-
 		logging.info("Computing metrics...")
 
 		y_pred, y_true = eval_pred
-		y_pred = np.argmax(y_pred,
-			axis = 1,
-		)
+		y_pred = np.argmax(y_pred, axis = 1)
 
-		return metrics.compute(
-			predictions = y_pred,
-			references  = y_true,
-		)
+		return {
+			"accuracy": sklearn.metrics.accuracy_score(y_true, y_pred),
+			"precision": sklearn.metrics.precision_score(y_true, y_pred, average = "binary"),
+			"recall": sklearn.metrics.recall_score(y_true, y_pred, average = "binary"),
+			"f1": sklearn.metrics.f1_score(y_true, y_pred, average = "binary"),
+		}  # type: ignore[return]
 
 	def plot(self, dataset: TwitterDataset,
 		output_dir: Path = Path("plots"),
