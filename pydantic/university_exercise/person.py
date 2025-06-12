@@ -1,3 +1,29 @@
+'''HOMEWORK:
+
+Below is a code snippet that defines several data classes representing a person, their name, email, address, phone number, and other related information.
+
+Write a `secretary.py` module that contains a `Secretary` class that represents a university department. Implement additional classes as needed, for example a `University` class.
+
+Write a `course.py` module that contains a `Course` class that represents a university course. Implement additional classes as needed, for example a `Student` class.
+
+The `Person` class may need an update (for example an `id` attribute?).
+Also mind the special type of `Person`, a `Student` or a `Teacher.
+Also mind the interaction between `Person`, `Secretary` and `Course`.
+
+Finally do not forget to implement methods. For example:
+-	a course may have students and teachers
+	-	for students hold grades as well?
+-	a person may have courses with (or without) grades
+	-	if a student, then courses may have grades
+	-	if a teacher, then courses may not have grades
+-	a secretary may have students and courses
+-	a student may have an average grade (running average of all grades in all courses)
+-	...
+
+Look up the old `C++` homework about this project and fill in whatever else is necessary.
+'''
+
+
 from __future__ import annotations
 
 
