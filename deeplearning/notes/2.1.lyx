@@ -1,0 +1,534 @@
+#LyX 2.4 created this file. For more info see https://www.lyx.org/
+\lyxformat 620
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass scrartcl
+\begin_preamble
+%\usepackage{bm}
+\usepackage{bbm}
+\usepackage{xcolor}
+\usepackage{cleveref}
+%\usepackage{textcomp}
+%\usepackage{textgreek}
+%\usepackage{pdflscape}
+%\renewcommand\[{\begin{equation}}
+%\renewcommand\]{\end{equation}}
+\definecolor{red}{rgb}{0.8,0.0,0.0}
+\definecolor{blue}{rgb}{0.2,0.4,1.0}
+\definecolor{magenta}{rgb}{0.6,0.2,8.0}
+\addtokomafont{disposition}{\rmfamily}
+\addtokomafont{descriptionlabel}{\rmfamily}
+%\setlength{\columnseprule}{0.4pt}
+\renewcommand{\arraystretch}{1.5}
+\relpenalty=10000
+\binoppenalty=10000
+\end_preamble
+\use_default_options true
+\begin_modules
+fix-cm
+fixltx2e
+fixme
+theorems-bytype
+theorems-sec-bytype
+\end_modules
+\maintain_unincluded_children no
+\language english
+\language_package default
+\inputencoding auto-legacy
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command biber
+\index_command default
+\float_placement class
+\float_alignment class
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize letter
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine biblatex
+\cite_engine_type authoryear
+\biblio_style plain
+\biblio_options maxbibnames=99
+\biblatex_bibstyle numeric
+\biblatex_citestyle numeric
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date true
+\justification false
+\use_refstyle 1
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\index Index
+\shortcut idx
+\color #006600
+\end_index
+\leftmargin 0.5in
+\topmargin 1in
+\rightmargin 0.5in
+\bottommargin 1in
+\headheight 0.5in
+\headsep 0.5in
+\footskip 0.5in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip halfline
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle headings
+\tablestyle No_Borders
+\bullet 1 0 9 -1
+\bullet 3 0 7 -1
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Basic concepts
+\end_layout
+
+\begin_layout Standard
+scalar:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x\in\mathbb{R}$
+\end_inset
+
+ (
+\family typewriter
+float
+\family default
+)
+\end_layout
+
+\begin_layout Standard
+vector:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x$
+\end_inset
+
+ is a finite sequence of scalars:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+let 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+ be the so called dimension of the vector which is the number of scalars
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x_{1},x_{2},\ldots,x_{n}$
+\end_inset
+
+ are all the scalars (in sequence) so we need a number index 
+\begin_inset Formula $i\in\mathbb{N}_{n}$
+\end_inset
+
+ to name them
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x=[\begin{array}{cccc}
+x_{1} & x_{2} & \cdots & x_{n}\end{array}]$
+\end_inset
+
+ is the vector
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x\in\underset{n}{\underbrace{\mathbb{R}\times\mathbb{R}\times\ldots\times\mathbb{R}}}=\mathbb{R}^{n}$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+matrix:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x$
+\end_inset
+
+ can be seen as a finite sequence of scalars:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+let 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+ and 
+\begin_inset Formula $m\in\mathbb{N}$
+\end_inset
+
+ be the so called dimensions of the matrix
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x_{11},x_{12},\ldots,x_{1m},x_{21},x_{22},\ldots,x_{2m},\ldots,x_{n1},x_{n2},\ldots,x_{nm}$
+\end_inset
+
+ are all the scalars (in sequence)
+\end_layout
+
+\begin_layout Itemize
+the scalars are to be arranged in an 
+\begin_inset Formula $n\times m$
+\end_inset
+
+ rectangle
+\begin_inset Formula 
+\[
+x=\left[\begin{array}{cccc}
+x_{11} & x_{12} & \cdots & x_{1m}\\
+x_{21} & x_{22} & \cdots & x_{2m}\\
+\vdots & \vdots & \ddots & \vdots\\
+x_{n1} & x_{n2} & \cdots & x_{nm}
+\end{array}\right]
+\]
+
+\end_inset
+
+so we need two indices to name them
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $x\in\mathbb{R}^{n\times m}$
+\end_inset
+
+ so 
+\begin_inset Formula $x$
+\end_inset
+
+ is also a vector but is more
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+an 
+\begin_inset Formula $n\times m$
+\end_inset
+
+ matrix 
+\begin_inset Formula $x$
+\end_inset
+
+ can be seen as a vector of vectors
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+a vector of dimension 
+\begin_inset Formula $n$
+\end_inset
+
+ containing vectors of dimension 
+\begin_inset Formula $m$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+a vector of dimension 
+\begin_inset Formula $m$
+\end_inset
+
+ containing vectors of dimension 
+\begin_inset Formula $n$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+this logic allows slicing a matrix into vectors
+\end_layout
+
+\begin_layout Itemize
+for example the 
+\begin_inset Formula $ith$
+\end_inset
+
+ row as a slice is a vector
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+tensor:
+\end_layout
+
+\begin_layout Itemize
+it is the generalization of the structure sequence built here:
+\begin_inset Formula 
+\[
+\text{scalar}\longrightarrow\text{vector}\longrightarrow\text{matrix}\longrightarrow\text{tensor}_{\text{rank}=3}\longrightarrow\text{tensor}_{\text{rank}=4}\longrightarrow\ldots
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+scalars are tensors of rank 0
+\end_layout
+
+\begin_layout Itemize
+vectors are tensors of rank 1
+\end_layout
+
+\begin_layout Itemize
+matrices are tensors of rank 2
+\end_layout
+
+\begin_layout Itemize
+...
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+for example a tensor of rank 3 is a vector of matrices or a matrix of vectors or a vector of vectors of vectors...
+\end_layout
+
+\begin_layout Standard
+It is very convenient to handle all these constructs by their indices.
+\end_layout
+
+\begin_layout Itemize
+A scalar is denoted as is,
+ 
+\begin_inset Formula $x$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+A vector is denoted as 
+\begin_inset Formula $x_{a}$
+\end_inset
+
+,
+ where leaving 
+\begin_inset Formula $a$
+\end_inset
+
+ undefined,
+ means any index 
+\begin_inset Formula $a\in\mathbb{N}_{n}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+A matrix is denoted as 
+\begin_inset Formula $x_{ab}$
+\end_inset
+
+,
+ similarly with a vector,
+ but now we have two abstract indices 
+\begin_inset Formula $a\in\mathbb{N}_{n}$
+\end_inset
+
+ and 
+\begin_inset Formula $b\in\mathbb{N}_{m}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+More generally a tensor is denoted as 
+\begin_inset Formula $x_{a_{1}a_{2}\ldots a_{\text{rank}x}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Section
+Extra structure
+\end_layout
+
+\begin_layout Subsection
+Scalars
+\end_layout
+
+\begin_layout Standard
+Scalars have two operations:
+\end_layout
+
+\begin_layout Description
+addition 
+\begin_inset Formula $+:\mathbb{R}\times\mathbb{R}\longrightarrow\mathbb{R}:x,y\longmapsto x+y$
+\end_inset
+
+ with an inverse (subtraction)
+\end_layout
+
+\begin_layout Description
+multiplication 
+\begin_inset Formula $\cdot:\mathbb{R}\times\mathbb{R}\longrightarrow\mathbb{R}:x,y\longmapsto xy$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Vectors
+\end_layout
+
+\begin_layout Standard
+Vectors have addition defined by
+\begin_inset Formula 
+\[
+x+y=[\begin{array}{cccc}
+x_{1}+y_{1} & x_{2}+y_{2} & \cdots & x_{n}+y_{n}\end{array}]=x_{a}+x_{y}
+\]
+
+\end_inset
+
+which is well defined because 
+\begin_inset Formula $x_{a}$
+\end_inset
+
+ and 
+\begin_inset Formula $y_{a}$
+\end_inset
+
+ are scalars 
+\begin_inset Formula $\forall a$
+\end_inset
+
+,
+ and addition is defined for scalars.
+ 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $y$
+\end_inset
+
+ must have the same dimension!
+\end_layout
+
+\begin_layout Standard
+Vectors have multiplication with a scalar 
+\begin_inset Formula $a$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\lambda x=[\begin{array}{cccc}
+\lambda x_{1} & \lambda x_{2} & \cdots & \lambda x_{n}\end{array}]
+\]
+
+\end_inset
+
+which is well defined because 
+\begin_inset Formula $x_{a}$
+\end_inset
+
+ is a scalar 
+\begin_inset Formula $\forall a$
+\end_inset
+
+,
+ and multiplication is defined for scalars.
+\end_layout
+
+\begin_layout Standard
+Vectors have an scalar product defined by
+\begin_inset Formula 
+\[
+x\cdot y=x_{1}y_{1}+x_{2}y_{2}+\ldots+x_{n}y_{n}=\sum\nolimits_{a=1}^{n}x_{a}y_{a}
+\]
+
+\end_inset
+
+which is well defined because 
+\begin_inset Formula $x_{a}$
+\end_inset
+
+ and 
+\begin_inset Formula $y_{a}$
+\end_inset
+
+ are scalars 
+\begin_inset Formula $\forall a$
+\end_inset
+
+,
+ and both addition and multiplication is defined for scalars.
+ This is the most basic form of contraction.
+\end_layout
+
+\end_body
+\end_document
