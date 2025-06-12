@@ -2,7 +2,7 @@ from __future__ import annotations
 
 
 from datetime import datetime
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ClassVar, Self
 
 
@@ -81,35 +81,22 @@ class Person:
 
 	count: ClassVar[int] = 0
 
+
 	name: Name
 	email: Email
-	birthday: datetime
 	address: Address
 	phone: Phone
+
+	birthday: datetime = field(default_factory = datetime.now)
+	friends: list[Self] = field(default_factory = list)
 
 
 	def __post_init__(self):
 		self.__class__.count += 1
-		self.friends: set[Self]  = set()
-
-		if isinstance(self.birthday, str):
-			self.birthday = datetime.fromisoformat(self.birthday)
 
 	def __del__(self):
 		self.__class__.count -= 1
 
-	def __hash__(self):
-		return hash(self.name)
-
-	def __eq__(self, other: Self) -> bool:
-		return self.name == other.name
-
-
-	@classmethod
-	def born(cls, *args, **kwargs) -> Self:
-		return cls(*args,
-			birthday = datetime.now(),
-		**kwargs)
 
 	@property
 	def age(self) -> int:
@@ -119,5 +106,5 @@ class Person:
 		return f"Hello, my name is {self.name} and I am {self.age} years old."
 
 	def add(self, other: Self) -> None:
-		self.friends.add(other)
-		other.friends.add(self)
+		self.friends.append(other)
+		other.friends.append(self)
