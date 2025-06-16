@@ -411,6 +411,40 @@ More generally a tensor is denoted as
 .
 \end_layout
 
+\begin_layout Standard
+Every tensor can be serialized into a vector.
+ Lets examing an 
+\begin_inset Formula $n\times m$
+\end_inset
+
+ matrix example:
+\begin_inset Formula 
+\begin{multline*}
+\left[\begin{array}{cccc}
+x_{11} & x_{12} & \cdots & x_{1m}\\
+x_{21} & x_{22} & \cdots & x_{2m}\\
+\vdots & \vdots & \ddots & \vdots\\
+x_{n1} & x_{n2} & \cdots & x_{nm}
+\end{array}\right]\longrightarrow\\
+\longrightarrow[\begin{array}{ccccccccccccc}
+x_{11} & x_{12} & \cdots & x_{1m} & x_{21} & x_{22} & \cdots & x_{2m} & \cdots & x_{n1} & x_{n2} & \cdots & x_{nm}\end{array}]=\\
+=[\begin{array}{ccccccccccccc}
+x_{1} & x_{2} & \cdots & x_{m} & x_{m+1} & x_{m+2} & \cdots & x_{2m} & \cdots & x_{(n-1)\cdot m+1} & x_{(n-1)\cdot m+2} & \cdots & x_{n\cdot m}\end{array}]
+\end{multline*}
+
+\end_inset
+
+or in index notation:
+\begin_inset Formula 
+\[
+x_{ab}\longmapsto x_{(a-1)\cdot m+b}
+\]
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Extra structure
 \end_layout
@@ -448,7 +482,7 @@ Vectors have addition defined by
 \begin_inset Formula 
 \[
 x+y=[\begin{array}{cccc}
-x_{1}+y_{1} & x_{2}+y_{2} & \cdots & x_{n}+y_{n}\end{array}]=x_{a}+x_{y}
+x_{1}+y_{1} & x_{2}+y_{2} & \cdots & x_{n}+y_{n}\end{array}]=x_{a}+y_{a}
 \]
 
 \end_inset
@@ -476,18 +510,29 @@ which is well defined because
 \end_inset
 
  must have the same dimension!
+ We can also substract two vectors.
+ The zero vector is thus
+\begin_inset Formula 
+\[
+0=[\begin{array}{cccc}
+0 & 0 & \cdots & 0\end{array}]
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
 Vectors have multiplication with a scalar 
-\begin_inset Formula $a$
+\begin_inset Formula $\lambda$
 \end_inset
 
 
 \begin_inset Formula 
 \[
 \lambda x=[\begin{array}{cccc}
-\lambda x_{1} & \lambda x_{2} & \cdots & \lambda x_{n}\end{array}]
+\lambda x_{1} & \lambda x_{2} & \cdots & \lambda x_{n}\end{array}]=\lambda x_{a}
 \]
 
 \end_inset
@@ -505,7 +550,7 @@ which is well defined because
 \end_layout
 
 \begin_layout Standard
-Vectors have an scalar product defined by
+Vectors have an dot product defined by
 \begin_inset Formula 
 \[
 x\cdot y=x_{1}y_{1}+x_{2}y_{2}+\ldots+x_{n}y_{n}=\sum\nolimits_{a=1}^{n}x_{a}y_{a}
@@ -528,6 +573,314 @@ which is well defined because
 ,
  and both addition and multiplication is defined for scalars.
  This is the most basic form of contraction.
+\end_layout
+
+\begin_layout Standard
+Note that 
+\begin_inset Formula $x\cdot y=0$
+\end_inset
+
+ if 
+\begin_inset Formula $x=0$
+\end_inset
+
+ or 
+\begin_inset Formula $y=0$
+\end_inset
+
+ or 
+\begin_inset Formula $x\bot y$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+This defines a notion of norm for a vector
+\begin_inset Formula 
+\[
+\Vert x\Vert=\sqrt{x\cdot x}=\sqrt{\vert x_{1}\vert^{2}+\vert x_{2}\vert^{2}+\ldots+\vert x_{n}\vert^{2}}=\sqrt{\sum\nolimits_{a=1}^{n}x_{a}x_{a}}=\sqrt{\sum\nolimits_{a=1}^{n}\vert x_{a}\vert^{2}}
+\]
+
+\end_inset
+
+with 
+\begin_inset Formula $\Vert x\Vert=0$
+\end_inset
+
+ if and only if 
+\begin_inset Formula $x=0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsection
+Matrices
+\end_layout
+
+\begin_layout Standard
+Addition and multiplication with a scalar is similarly defined.
+\end_layout
+
+\begin_layout Standard
+Matrices differ from vectors in that they have their own product!
+ Let 
+\begin_inset Formula $n\times k$
+\end_inset
+
+ matrix 
+\begin_inset Formula $x$
+\end_inset
+
+ and 
+\begin_inset Formula $k\times m$
+\end_inset
+
+ matrix 
+\begin_inset Formula $y$
+\end_inset
+
+.
+\begin_inset Formula 
+\[
+\begin{array}{cc}
+ & \left[\begin{array}{cccc}
+y_{11} & y_{12} & \cdots & y_{1m}\\
+y_{21} & y_{22} & \cdots & y_{2m}\\
+\vdots & \vdots & \ddots & \vdots\\
+y_{k1} & y_{k2} & \cdots & y_{km}
+\end{array}\right]\\
+\left[\begin{array}{cccc}
+x_{11} & x_{12} & \cdots & x_{1k}\\
+x_{21} & x_{22} & \cdots & x_{2k}\\
+\vdots & \vdots & \ddots & \vdots\\
+x_{n1} & x_{n2} & \cdots & x_{nk}
+\end{array}\right] & \left[\begin{array}{cccc}
+z_{11} & z_{12} & \cdots & z_{1m}\\
+z_{21} & z_{22} & \cdots & z_{2m}\\
+\vdots & \vdots & \ddots & \vdots\\
+z_{n1} & z_{n2} & \cdots & z_{nm}
+\end{array}\right]
+\end{array}
+\]
+
+\end_inset
+
+or
+\begin_inset Formula 
+\[
+z_{ab}=\sum\nolimits_{c=1}^{k}x_{ac}y_{cb}=x_{a\_}\cdot y_{\_b}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Square matrices
+\end_layout
+
+\begin_layout Standard
+There exists a special kind of matrices,
+ the square matrices,
+ which are of the form 
+\begin_inset Formula $n\times n$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+.
+ They are special because,
+ the matrix product is not only valid for them,
+ but it can be stacked too.
+ For example,
+ for any matrices 
+\begin_inset Formula $x$
+\end_inset
+
+,
+ 
+\begin_inset Formula $y$
+\end_inset
+
+ and 
+\begin_inset Formula $z$
+\end_inset
+
+ of the same size 
+\begin_inset Formula $n\times n$
+\end_inset
+
+,
+ the product 
+\begin_inset Formula $xyz$
+\end_inset
+
+ is defined and also of size 
+\begin_inset Formula $n\times n$
+\end_inset
+
+!
+\end_layout
+
+\begin_layout Standard
+Careful though!
+ The matrix product is not commutative!
+ 
+\begin_inset Formula $xy\ne yx$
+\end_inset
+
+ generally.
+ Also,
+ a unit element makes sense with such a product on square matrices:
+\begin_inset Formula 
+\[
+I=\left[\begin{array}{cccc}
+1 & 0 & \cdots & 0\\
+0 & 1 & \cdots & 0\\
+\vdots & \vdots & \ddots & \vdots\\
+0 & 0 & \cdots & 1
+\end{array}\right]
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Square matrices have:
+\end_layout
+
+\begin_layout Itemize
+a trace:
+\begin_inset Formula 
+\[
+\text{tr}x=x_{11}+x_{22}+\ldots+x_{nn}=\sum\nolimits_{a=1}^{n}x_{aa}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+a determinant:
+\begin_inset Formula 
+\[
+\det x=\ldots
+\]
+
+\end_inset
+
+For example for 
+\begin_inset Formula $n=2$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+\det x=x_{11}x_{22}-x_{12}x_{21}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Because square matrices have both addition and a product,
+ polynomials are defined on matrix spaces.
+ For example
+\begin_inset Formula 
+\[
+\exp x=\sum\nolimits_{k=0}^{\infty}\dfrac{x^{n}}{n!}
+\]
+
+\end_inset
+
+makes sence for both 
+\begin_inset Formula $x$
+\end_inset
+
+ scalar and 
+\begin_inset Formula $x$
+\end_inset
+
+ matrix,
+ giving a definition of the exponential mapping on matrices.
+ An interesting property is
+\begin_inset Formula 
+\[
+\det(\exp x)=\exp(\text{tr}x)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The transpose of a matrix the one that has as rows the columns of the other:
+\begin_inset Formula 
+\[
+\left[\begin{array}{cccc}
+x_{11} & x_{12} & \cdots & x_{1m}\\
+x_{21} & x_{22} & \cdots & x_{2m}\\
+\vdots & \vdots & \ddots & \vdots\\
+x_{n1} & x_{n2} & \cdots & x_{nm}
+\end{array}\right]^{\top}=\left[\begin{array}{cccc}
+x_{11} & x_{21} & \cdots & x_{n1}\\
+x_{12} & x_{22} & \cdots & x_{n2}\\
+\vdots & \vdots & \ddots & \vdots\\
+x_{1m} & x_{2m} & \cdots & x_{mn}
+\end{array}\right]
+\]
+
+\end_inset
+
+If 
+\begin_inset Formula $x$
+\end_inset
+
+ is a square matrix,
+ 
+\begin_inset Formula $x^{\top}$
+\end_inset
+
+has the same size.
+ Also 
+\begin_inset Formula $\text{tr}x^{\top}=\text{tr}x$
+\end_inset
+
+.
+ Note that
+\begin_inset Formula 
+\[
+x_{ab}^{\top}=x_{ba}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Is there a dot product for (square) matrices?
+ Yes!
+\begin_inset Formula 
+\[
+\sum\nolimits_{b=1}^{n}\sum\nolimits_{a=1}^{n}x_{ab}y_{ab}=\sum\nolimits_{b=1}^{n}\Big(\sum\nolimits_{a=1}^{n}x_{ba}^{\top}y_{ab}\Big)=\sum\nolimits_{b=1}^{n}(x^{\top}y)_{bb}=\text{tr}(x^{\top}y)
+\]
+
+\end_inset
+
+
 \end_layout
 
 \end_body
