@@ -27,8 +27,9 @@ Look up the old `C++` homework about this project and fill in whatever else is n
 from __future__ import annotations
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 from dataclasses import dataclass, field
+from statistics import StatisticsError, mean
 from typing import ClassVar, Self
 
 
@@ -68,6 +69,7 @@ class City:
 	def __repr__(self) -> str:
 		return f"{self.zip} {self.name}, {self.country.name}"
 
+
 @dataclass
 class Country:
 
@@ -105,16 +107,15 @@ class Phone:
 @dataclass
 class Person:
 
-	count: ClassVar[int] = 0
+	count: ClassVar[int] = 1
 
-
+	id: int = field(init = False, default_factory = lambda: Person.count)
 	name: Name
 	email: Email
 	address: Address
 	phone: Phone
 
-	birthday: datetime = field(default_factory = datetime.now)
-	friends: list[Self] = field(default_factory = list)
+	created: datetime = field(default_factory = lambda: datetime.now(timezone.utc))
 
 
 	def __post_init__(self):
@@ -123,14 +124,54 @@ class Person:
 	def __del__(self):
 		self.__class__.count -= 1
 
+	def __hash__(self) -> int:
+		return hash(self.id)
+
 
 	@property
-	def age(self) -> int:
-		return (datetime.now() - self.birthday).days // 365
+	def year(self) -> int:
+		return (datetime.now() - self.created).days // 365
 
-	def greet(self) -> str:
-		return f"Hello, my name is {self.name} and I am {self.age} years old."
 
-	def add(self, other: Self) -> None:
-		self.friends.append(other)
-		other.friends.append(self)
+@dataclass
+class Student(Person):
+
+	courses: dict[Course, float] = field(default_factory = dict)
+
+
+	@property
+	def grade(self) -> float:
+		try: return mean(self.courses.values())
+		except StatisticsError:	return 0.
+
+	@property
+	def graduable(self) -> bool:
+		return self.grade >= .5 and self.year >= 5  # NOTE: 5 years is arbitrary, fetch from university policy instead.
+
+
+@dataclass
+class Teacher(Person):
+
+	courses: set[Course] = field(default_factory = set)
+
+
+@dataclass
+class Course:
+
+	code: str
+	name: str
+	year: int
+
+	teacher: Teacher
+	students: dict[Student, float] = field(default_factory = dict)
+
+	optional: bool = False
+
+	created: datetime = field(default_factory = lambda: datetime.now(timezone.utc))
+
+
+	def __repr__(self) -> str:
+		return f"{self.name} ({self.code})"
+
+	def __hash__(self) -> int:
+		return hash(self.code)
