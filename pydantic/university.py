@@ -136,12 +136,12 @@ class Person:
 @dataclass
 class Student(Person):
 
-	courses: dict[Course, float] = field(default_factory = dict)
+	courses: dict[Course, float | None] = field(default_factory = dict)
 
 
 	@property
 	def grade(self) -> float:
-		try: return mean(self.courses.values())
+		try: return mean(grade for grade in self.courses.values() if grade is not None)
 		except StatisticsError:	return 0.
 
 	@property
@@ -149,10 +149,23 @@ class Student(Person):
 		return self.grade >= .5 and self.year >= 5  # NOTE: 5 years is arbitrary, fetch from university policy instead.
 
 
+	def register_to(self, course: Course,
+		grade: float | None = None,
+	):
+		self.courses.setdefault(course, grade)
+		course.students.setdefault(self, grade)
+
+
+
 @dataclass
 class Teacher(Person):
 
 	courses: set[Course] = field(default_factory = set)
+
+
+	def assign(self, course: Course) -> None:
+		self.courses.add(course)
+		course.teacher = self
 
 
 @dataclass
@@ -162,8 +175,8 @@ class Course:
 	name: str
 	year: int
 
-	teacher: Teacher
-	students: dict[Student, float] = field(default_factory = dict)
+	teacher: Teacher | None = None
+	students: dict[Student, float | None] = field(default_factory = dict)
 
 	optional: bool = False
 
@@ -175,3 +188,28 @@ class Course:
 
 	def __hash__(self) -> int:
 		return hash(self.code)
+
+
+	def assign_to(self, teacher: Teacher):
+		self.teacher = teacher
+		teacher.courses.add(self)
+
+	def register(self, student: Student,
+		grade: float | None = None,
+	):
+		self.students.setdefault(student, grade)
+		student.courses.setdefault(self, grade)
+
+
+@dataclass
+class Department:
+
+	name: str
+	domain: str
+	address: Address
+	phone: Phone
+
+	teachers: set[Teacher] = field(default_factory = set)
+	students: set[Student] = field(default_factory = set)
+
+	courses: set[Course] = field(default_factory = set)
