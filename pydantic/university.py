@@ -1,6 +1,6 @@
 '''HOMEWORK:
 
-Below is a code snippet that defines several data classes representing a person, their name, email, address, phone number, and other related information.
+Below is a id snippet that defines several data classes representing a person, their name, email, address, phone number, and other related information.
 
 Write a `secretary.py` module that contains a `Secretary` class that represents a university department. Implement additional classes as needed, for example a `University` class.
 
@@ -51,7 +51,7 @@ class Email:
 
 	user: str
 	domain: str
-	suffix: str = "com"
+	suffix: str = "edu"
 
 
 	def __repr__(self) -> str:
@@ -74,11 +74,11 @@ class City:
 class Country:
 
 	name: str
-	code: int
+	id: int
 
 
 	def __repr__(self) -> str:
-		return f"{self.name} ({self.code})"
+		return f"{self.name} ({self.id})"
 
 
 @dataclass
@@ -101,7 +101,7 @@ class Phone:
 
 
 	def __repr__(self) -> str:
-		return f"{self.country.code:+} {self.number}"
+		return f"{self.country.id:+} {self.number}"
 
 
 @dataclass
@@ -111,9 +111,10 @@ class Person:
 
 	id: int = field(init = False, default_factory = lambda: Person.count)
 	name: Name
-	email: Email
 	address: Address
 	phone: Phone
+
+	department: Department | None = None
 
 	created: datetime = field(default_factory = lambda: datetime.now(timezone.utc))
 
@@ -132,6 +133,12 @@ class Person:
 	def year(self) -> int:
 		return (datetime.now() - self.created).days // 365
 
+	@property
+	def email(self) -> Email | None:
+		handle = f"{self.name}.{self.id}".lower().replace(" ",".")
+
+		return Email(handle, self.department.domain) if self.department is not None else None
+
 
 @dataclass
 class Student(Person):
@@ -149,12 +156,12 @@ class Student(Person):
 		return self.grade >= .5 and self.year >= 5  # NOTE: 5 years is arbitrary, fetch from university policy instead.
 
 
-	def register_to(self, course: Course,
-		grade: float | None = None,
-	):
-		self.courses.setdefault(course, grade)
-		course.students.setdefault(self, grade)
+	def register(self, course: Course):
+		if self.department is None: raise ValueError("Student and course must belong to the same department.")
+		if course.department is None: raise ValueError("Course must belong to a department.")
 
+		self.courses.setdefault(course)
+		course.students.setdefault(self)
 
 
 @dataclass
@@ -163,18 +170,25 @@ class Teacher(Person):
 	courses: set[Course] = field(default_factory = set)
 
 
-	def assign(self, course: Course) -> None:
-		self.courses.add(course)
-		course.teacher = self
+	def evaluate(self, student: Student, course: Course, grade: float):
+		if student not in course.students: raise ValueError("Student is not enrolled in the course.")
+		if course not in self.courses: raise ValueError("Teacher is not assigned to the course.")
+		if course.department != self.department: raise ValueError("Wrong department for course.")
+
+		# What if the student has already a grade for this course? Maybe update it only if greater than the existing one?
+
+		student.courses[course] = grade
+		course.students[student] = grade
 
 
 @dataclass
 class Course:
 
-	code: str
+	id: str
 	name: str
 	year: int
 
+	department: Department | None = None
 	teacher: Teacher | None = None
 	students: dict[Student, float | None] = field(default_factory = dict)
 
@@ -184,26 +198,16 @@ class Course:
 
 
 	def __repr__(self) -> str:
-		return f"{self.name} ({self.code})"
+		return f"{self.name} ({self.id})"
 
 	def __hash__(self) -> int:
-		return hash(self.code)
-
-
-	def assign_to(self, teacher: Teacher):
-		self.teacher = teacher
-		teacher.courses.add(self)
-
-	def register(self, student: Student,
-		grade: float | None = None,
-	):
-		self.students.setdefault(student, grade)
-		student.courses.setdefault(self, grade)
+		return hash(self.id)
 
 
 @dataclass
 class Department:
 
+	id: str
 	name: str
 	domain: str
 	address: Address
@@ -211,5 +215,24 @@ class Department:
 
 	teachers: set[Teacher] = field(default_factory = set)
 	students: set[Student] = field(default_factory = set)
+	courses : set[Course ] = field(default_factory = set)
 
-	courses: set[Course] = field(default_factory = set)
+
+	def __hash__(self) -> int:
+		return hash(self.id)
+
+
+	def hire(self, teacher: Teacher):
+		self.teachers.add(teacher)
+		teacher.department = self
+
+	def enroll(self, student: Student):
+		self.students.add(student)
+		student.department = self
+
+	def assign(self, course: Course, teacher: Teacher):
+		self.courses.add(course)
+		course.department = self
+
+		teacher.courses.add(course)
+		course.teacher = teacher
