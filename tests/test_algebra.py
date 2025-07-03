@@ -69,3 +69,19 @@ class TestMatrix:
 				[-3., -4.],
 			]
 		)
+
+	def test_transpose(self):
+		assert self.x.transpose == Matrix[float](
+			[
+				[1., 3.],
+				[2., 4.],
+			]
+		)
+
+	def test_matmul(self):
+		assert self.x @ self.y == Matrix[float](
+			[
+				[19., 22.],
+				[43., 50.],
+			]
+		)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 
-from typing import Literal, Protocol, Self, Sequence, runtime_checkable
+from typing import Literal, Protocol, Self, Sequence, cast, runtime_checkable
 
 
 type Number = int | float
@@ -77,6 +77,10 @@ class Vector[F: Ring](tuple[F, ...]):
 	def __neg__(self) -> Self:
 		return self * -1
 
+	def __matmul__(self, other: Self, /) -> F:
+		assert self.dimension == other.dimension
+		return sum(left * right for left, right in zip(self, other))  # type: ignore
+
 
 x = Vector[float]([1., 2., 3.])
 
@@ -85,3 +89,15 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 
 	def __new__(cls, data: Sequence[Sequence[F]]) -> Self:
 		return super().__new__(cls, [Vector(row) for row in data])
+
+
+	def __matmul__(self, other: Self, /) -> Self:
+		other = other.transpose
+
+		assert self.dimension == other.dimension
+		return self.__class__([[left @ right for right in other] for left in self])
+
+
+	@property
+	def transpose(self) -> Self:
+		return self.__class__(tuple(zip(*self)))
