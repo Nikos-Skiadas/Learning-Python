@@ -82,7 +82,8 @@ class Vector[F: Ring](tuple[F, ...]):
 		return sum(left * right for left, right in zip(self, other))  # type: ignore
 
 
-x = Vector[float]([1., 2., 3.])
+	def __abs__(self) -> float:
+		...  # return the norm of a vector
 
 
 class Matrix[F: Ring](Vector[Vector[F]]):
@@ -97,7 +98,18 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 		assert self.dimension == other.dimension
 		return self.__class__([[left @ right for right in other] for left in self])
 
+	def __abs__(self) -> float:
+		...  # return the Frobenius norm of a matrix or another one if you prefer
+
 
 	@property
 	def transpose(self) -> Self:
 		return self.__class__(tuple(zip(*self)))
+
+	@property
+	def trace(self) -> F:
+		...
+
+	@property
+	def determinant(self) -> F:
+		...  # NOTE: VERY DIFFICULT
