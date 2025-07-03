@@ -1,65 +1,87 @@
 from __future__ import annotations
 
 
-import typing
+from typing import Literal, Protocol, Self, Sequence, runtime_checkable
 
 
-@typing.runtime_checkable
-class AlgebraProtocol(typing.Protocol):
-
-	def __add__    (self, other): ...  # a + b
-	def __sub__    (self, other): ...  # a - b
-	def __mul__    (self, other): ...  # a * b
-	def __truediv__(self, other): ...  # a / b
-
-	def __pos__(self): ...  # +a
-	def __neg__(self): ...  # -a
+type Number = int | float
 
 
-type Scalar = float
+@runtime_checkable
+class Ring(Protocol):
+	def  __add__    (self, other, /) -> Self: ...
+	def __radd__    (self, other, /) -> Self: ...
+	def  __sub__    (self, other, /) -> Self: ...
+	def  __mul__    (self, other, /) -> Self: ...
+	def __rmul__    (self, other, /) -> Self: ...
+	def  __truediv__(self, other, /) -> Self: ...
+
+	def __pos__(self) -> Self: ...
+	def __neg__(self) -> Self: ...
 
 
-class Vector2(tuple[float, float]):
+class Scalar(float):
 
-	def __add__(self, other: Vector2) -> Vector2:
-		return Vector2(
-			[
-				self[0] + other[0],
-				self[1] + other[1],
-			]
-		)
+	def  __add__    (self, other: Number, /) -> Self: return self.__class__(self + other)
+	def  __sub__    (self, other: Number, /) -> Self: return self.__class__(self - other)
+	def  __mul__    (self, other: Number, /) -> Self: return self.__class__(self * other)
+	def  __truediv__(self, other: Number, /) -> Self: return self.__class__(self / other)
+
+	def __radd__    (self, other: Number, /) -> Self: return self.__class__(self + other)
+	def __rsub__    (self, other: Number, /) -> Self: return self.__class__(self - other)
+	def __rmul__    (self, other: Number, /) -> Self: return self.__class__(self * other)
+	def __rtruediv__(self, other: Number, /) -> Self: return self.__class__(self / other)
+
+	def __pos__(self) -> Self: return self.__class__(+self)
+	def __neg__(self) -> Self: return self.__class__(-self)
 
 
-class Vector(tuple[Scalar, ...]):
+class Vector[F: Ring](tuple[F, ...]):
 
 	@property
-	def dimension(self: Vector) -> int:
+	def dimension(self) -> int:
 		return len(self)
 
 
-	def __add__(self: Vector, other: Vector) -> Vector:
-		assert self.dimension == other.dimension
-		return Vector([left + right for left, right in zip(self, other)])
+	def __add__(self, other: Self | Literal[0], /) -> Self:
+		if isinstance(other, int) and other == 0:
+			return self
 
-	def __sub__(self: Vector, other: Vector) -> Vector:
+		assert self.dimension == other.dimension
+		return self.__class__([left + right for left, right in zip(self, other)])
+
+	def __radd__(self, other: Self | Literal[0], /) -> Self:
+		return self + other
+
+	def __sub__(self, other: Self | Literal[0], /) -> Self:
+		if isinstance(other, int) and other == 0:
+			return +self
+
 		return self + (-other)
 
-	def __mul__(self: Vector, times: Scalar) -> Vector:
-		return Vector([left * times for left in self])
+	def __rsub__(self, other: Self | Literal[0], /) -> Self:
+		return (-self) + other
 
-	def __rmul__(self: Vector, times: Scalar) -> Vector:
+	def __mul__(self, times: Number, /) -> Self:
+		return self.__class__([left * times for left in self])
+
+	def __rmul__(self, times: Number, /) -> Self:
 		return self * times
 
-	def __truediv__(self: Vector, times: Scalar) -> Vector:
-		return self * (1 / times)
+	def __truediv__(self, times: Number, /) -> Self:
+		return (1 / times) * self
 
-	def __pos__(self: Vector) -> Vector:
+	def __pos__(self) -> Self:
 		return self
 
-	def __neg__(self: Vector) -> Vector:
+	def __neg__(self) -> Self:
 		return self * -1
 
 
-if __name__ == "__main__":
-	x = Vector([2,3,5])
-	y = Vector([3,5,7])
+x = Vector[float]([1., 2., 3.])
+
+
+class Matrix[F: Ring](Vector[Vector[F]]):
+
+	def __new__(cls, data: Sequence[Sequence[F]]) -> Self:
+		return super().__new__(cls, [Vector(row) for row in data])
