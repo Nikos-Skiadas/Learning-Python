@@ -90,8 +90,10 @@ class Vector[F: Ring](tuple[F, ...]):
 
 class Matrix[F: Ring](Vector[Vector[F]]):
 
-	def __new__(cls, data: Sequence[Sequence[F]]) -> Self:
-		return super().__new__(cls, [Vector(row) for row in data])
+	def __new__(cls,
+		data: Sequence[Sequence[F]] | None = None,
+	) -> Self:
+		return super().__new__(cls, [Vector(row) for row in data] if data is not None else [])
 
 	def __matmul__(self, other: Self | Literal[1], /) -> Self:
 		if isinstance(other, int) and other == 1:
@@ -119,5 +121,4 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 
 class Tensor[F: Ring](Vector[Matrix[F]]):
 
-	def __new__(cls, data: Sequence[Sequence[Sequence[F]]]) -> Self:
-		return super().__new__(cls, [Matrix(row) for row in data])
+	...
