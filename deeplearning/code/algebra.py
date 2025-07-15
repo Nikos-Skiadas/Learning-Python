@@ -83,7 +83,7 @@ class Vector[F: Ring](tuple[F, ...]):
 
 
 	def __abs__(self) -> float:
-		...  # return the norm of a vector
+		return sum((x * x for x in self)) ** 0.5
 
 
 class Matrix[F: Ring](Vector[Vector[F]]):
@@ -99,7 +99,7 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 		return self.__class__([[left @ right for right in other] for left in self])
 
 	def __abs__(self) -> float:
-		...  # return the Frobenius norm of a matrix or another one if you prefer
+		return sum((abs(row) ** 2 for row in self)) ** 0.5
 
 
 	@property
@@ -108,7 +108,10 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 
 	@property
 	def trace(self) -> F:
-		...
+		if self.dimension == self[0].dimension
+			return sum(self[i][i] for i in range(self.dimension))
+		else 
+			return 0
 
 	@property
 	def determinant(self) -> F:
