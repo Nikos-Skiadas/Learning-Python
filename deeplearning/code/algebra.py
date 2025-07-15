@@ -115,3 +115,9 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 		assert self.dimension == self[0].dimension
 		return sum(self[i][i] for i in range(self.dimension))  # type: ignore[return-value]
 		return sum(row[i] for i, row in enumerate(self))  # type: ignore[return-value]
+
+
+class Tensor[F: Ring](Vector[Matrix[F]]):
+
+	def __new__(cls, data: Sequence[Sequence[Sequence[F]]]) -> Self:
+		return super().__new__(cls, [Matrix(row) for row in data])
