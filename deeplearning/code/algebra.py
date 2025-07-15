@@ -5,7 +5,7 @@ from math import sqrt
 from typing import Literal, Protocol, Self, Sequence, runtime_checkable
 
 
-type Number = int | float
+type Number = int | float | complex
 
 
 @runtime_checkable
