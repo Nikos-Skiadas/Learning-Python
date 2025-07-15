@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 
-from typing import Literal, Protocol, Self, Sequence, cast, runtime_checkable
+from math import sqrt
+from typing import Literal, Protocol, Self, Sequence, runtime_checkable
 
 
 type Number = int | float
@@ -18,6 +19,8 @@ class Ring(Protocol):
 
 	def __pos__(self) -> Self: ...
 	def __neg__(self) -> Self: ...
+
+	def __abs__(self) -> float: ...
 
 
 class Scalar(float):
@@ -79,11 +82,10 @@ class Vector[F: Ring](tuple[F, ...]):
 
 	def __matmul__(self, other: Self, /) -> F:
 		assert self.dimension == other.dimension
-		return sum(left * right for left, right in zip(self, other))  # type: ignore
-
+		return sum(left * right for left, right in zip(self, other))  # type: ignore[return-value]
 
 	def __abs__(self) -> float:
-		return sum((x * x for x in self)) ** 0.5
+		return sqrt(sum(abs(left) ** 2 for left in self))
 
 
 class Matrix[F: Ring](Vector[Vector[F]]):
@@ -91,15 +93,11 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 	def __new__(cls, data: Sequence[Sequence[F]]) -> Self:
 		return super().__new__(cls, [Vector(row) for row in data])
 
-
 	def __matmul__(self, other: Self, /) -> Self:
 		other = other.transpose
 
 		assert self.dimension == other.dimension
 		return self.__class__([[left @ right for right in other] for left in self])
-
-	def __abs__(self) -> float:
-		return sum((abs(row) ** 2 for row in self)) ** 0.5
 
 
 	@property
@@ -108,11 +106,9 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 
 	@property
 	def trace(self) -> F:
-		if self.dimension == self[0].dimension
-			return sum(self[i][i] for i in range(self.dimension))
-		else 
-			return 0
+		assert self.dimension == self[0].dimension
+		return sum(self[i][i] for i in range(self.dimension))  # type: ignore[return-value]
 
 	@property
 	def determinant(self) -> F:
-		...  # NOTE: VERY DIFFICULT
+		...
