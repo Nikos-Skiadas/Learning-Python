@@ -93,11 +93,17 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 	def __new__(cls, data: Sequence[Sequence[F]]) -> Self:
 		return super().__new__(cls, [Vector(row) for row in data])
 
-	def __matmul__(self, other: Self, /) -> Self:
+	def __matmul__(self, other: Self | Literal[1], /) -> Self:
+		if isinstance(other, int) and other == 1:
+			return self
+
 		other = other.transpose
 
 		assert self.dimension == other.dimension
 		return self.__class__([[left @ right for right in other] for left in self])
+
+	def __rmatmul__(self, other: Self | Literal[1], /) -> Self:
+		return self @ other
 
 
 	@property
@@ -108,3 +114,4 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 	def trace(self) -> F:
 		assert self.dimension == self[0].dimension
 		return sum(self[i][i] for i in range(self.dimension))  # type: ignore[return-value]
+		return sum(row[i] for i, row in enumerate(self))  # type: ignore[return-value]
