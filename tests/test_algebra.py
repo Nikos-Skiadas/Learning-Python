@@ -85,3 +85,7 @@ class TestMatrix:
 				[43., 50.],
 			]
 		)
+
+	def test_trace(self):
+		assert self.x.trace ==  5.
+		assert self.y.trace == 13.

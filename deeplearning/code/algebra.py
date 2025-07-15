@@ -108,7 +108,3 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 	def trace(self) -> F:
 		assert self.dimension == self[0].dimension
 		return sum(self[i][i] for i in range(self.dimension))  # type: ignore[return-value]
-
-	@property
-	def determinant(self) -> F:
-		...
