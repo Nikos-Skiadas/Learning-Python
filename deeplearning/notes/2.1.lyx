@@ -883,5 +883,100 @@ Is there a dot product for (square) matrices?
 
 \end_layout
 
+\begin_layout Standard
+Let 
+\begin_inset Formula $X$
+\end_inset
+
+ be a vector space with 
+\begin_inset Formula $\dim X=n:\mathbb{N}$
+\end_inset
+
+ and 
+\begin_inset Formula $(\boldsymbol{a}_{1},\ldots,\boldsymbol{a}_{n})$
+\end_inset
+
+ a basis of 
+\begin_inset Formula $X$
+\end_inset
+
+ (
+\begin_inset Formula $X=\text{span}(\boldsymbol{a}_{1},\ldots,\boldsymbol{a}_{n})$
+\end_inset
+
+):
+ 
+\begin_inset Formula $\forall\boldsymbol{x}:X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\exists!(x_{1},\ldots,x_{n})$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\boldsymbol{x}=\sum\nolimits_{i=1}^{n}y_{i}\boldsymbol{a}_{i}
+\]
+
+\end_inset
+
+Let 
+\begin_inset Formula $(\boldsymbol{b}_{1},\ldots,\boldsymbol{b}_{n})$
+\end_inset
+
+ a different base of 
+\begin_inset Formula $X$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\forall i$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+\boldsymbol{b}_{i}=\sum\nolimits_{j=1}^{n}b_{ij}\boldsymbol{a}_{j}\text{ or }\boldsymbol{a}_{i}=\sum\nolimits_{j=1}^{n}a_{ij}\boldsymbol{b}_{j}
+\]
+
+\end_inset
+
+How can I write 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ as a linear combination of 
+\begin_inset Formula $(\boldsymbol{b}_{1},\ldots,\boldsymbol{b}_{n})$
+\end_inset
+
+ knowing 
+\begin_inset Formula $\boldsymbol{x}$
+\end_inset
+
+ as a linear combination of 
+\begin_inset Formula $(\boldsymbol{a}_{1},\ldots,\boldsymbol{a}_{n})$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\boldsymbol{x}=\sum\nolimits_{i=1}^{n}y_{i}\boldsymbol{a}_{i}=\sum\nolimits_{i=1}^{n}y_{i}\sum\nolimits_{j=1}^{n}a_{ij}\boldsymbol{b}_{j}=\sum\nolimits_{i=1}^{n}\sum\nolimits_{j=1}^{n}y_{i}a_{ij}\boldsymbol{b}_{j}=\sum\nolimits_{i=1}^{n}z_{i}\boldsymbol{b}_{i}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+z_{i}=\sum\nolimits_{j=1}^{n}y_{i}a_{ij}
+\]
+
+\end_inset
+
+
+\end_layout
+
 \end_body
 \end_document
