@@ -3,89 +3,81 @@ from __future__ import annotations
 
 from deeplearning.code.algebra import *
 
+import numpy
+
+
+_A = numpy.random.rand(2, 3); A = Matrix(_A)
+_B = numpy.random.rand(3, 2); B = Matrix(_B)
+
+_x = numpy.random.rand(2); x = Vector(_x)
+_y = numpy.random.rand(3); y = Vector(_y)
+
+
+def equal(a, b):
+	return numpy.allclose(
+		numpy.array(a),
+		numpy.array(b),
+	)
+
+
+class TestVector:
+
+	def test_add(self):
+		assert equal(x + x, _x + _x)
+		assert equal(y + y, _y + _y)
+
+	def test_sub(self):
+		assert equal(x - x, _x - _x)
+		assert equal(y - y, _y - _y)
+
+	def test_mul(self):
+		assert equal(x * 2, _x *  2)
+		assert equal(2 * x,  2 * _x)
+		assert equal(y * 3, _y *  3)
+		assert equal(3 * y,  3 * _y)
+
+	def test_div(self):
+		assert equal(x / 2, _x / 2)
+		assert equal(y / 3, _y / 3)
+
+	def test_abs(self):
+		assert abs(x) == numpy.linalg.norm(_x)
+		assert abs(y) == numpy.linalg.norm(_y)
+
+	def	test_matmul(self):
+		assert equal(x @ x, _x @ _x)
+		assert equal(y @ y, _y @ _y)
+
+		assert equal(x @ A, _x @ _A)
+		assert equal(y @ B, _y @ _B)
 
 class TestMatrix:
 
-	x = Matrix[float](
-		[
-			[1., 2.],
-			[3., 4.],
-		]
-	)
-	y = Matrix[float](
-		[
-			[5., 6.],
-			[7., 8.],
-		]
-	)
-
 	def test_add(self):
-		assert self.x + self.y == Matrix[float](
-			[
-				[ 6.,  8.],
-				[10., 12.],
-			]
-		)
+		assert equal(A + A, _A + _A)
+		assert equal(B + B, _B + _B)
 
 	def test_sub(self):
-		assert self.x - self.y == Matrix[float](
-			[
-				[-4., -4.],
-				[-4., -4.],
-			]
-		)
+		assert equal(A - A, _A - _A)
+		assert equal(B - B, _B - _B)
 
 	def test_mul(self):
-		assert self.x * 2 == Matrix[float](
-			[
-				[ 2.,  4.],
-				[ 6.,  8.],
-			]
-		)
+		assert equal(A * 2, _A *  2)
+		assert equal(2 * A,  2 * _A)
+		assert equal(B * 3, _B *  3)
+		assert equal(3 * B,  3 * _B)
 
-	def test_rmul(self):
-		assert 2 * self.x == Matrix[float](
-			[
-				[ 2.,  4.],
-				[ 6.,  8.],
-			]
-		)
+	def test_div(self):
+		assert equal(A / 2, _A / 2)
+		assert equal(B / 3, _B / 3)
 
-	def test_truediv(self):
-		assert self.x / 2 == Matrix[float](
-			[
-				[0.5, 1.],
-				[1.5, 2.],
-			]
-		)
-
-	def test_pos(self):
-		assert +self.x == self.x
-
-	def test_neg(self):
-		assert -self.x == Matrix[float](
-			[
-				[-1., -2.],
-				[-3., -4.],
-			]
-		)
-
-	def test_transpose(self):
-		assert self.x.transpose == Matrix[float](
-			[
-				[1., 3.],
-				[2., 4.],
-			]
-		)
+	def test_abs(self):
+		assert abs(A) == numpy.linalg.norm(_A)
+		assert abs(B) == numpy.linalg.norm(_B)
 
 	def test_matmul(self):
-		assert self.x @ self.y == Matrix[float](
-			[
-				[19., 22.],
-				[43., 50.],
-			]
-		)
+		assert equal(A @ y, _A @ _y)
+		assert equal(B @ x, _B @ _x)
 
-	def test_trace(self):
-		assert self.x.trace ==  5.
-		assert self.y.trace == 13.
+		assert equal(A @ B, _A @ _B)
+		assert equal(B @ A, _B @ _A)

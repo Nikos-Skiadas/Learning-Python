@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from math import sqrt
-from typing import Literal, Protocol, Self, Sequence, runtime_checkable
+from typing import Literal, Protocol, Self, Iterable, runtime_checkable
 
 
 type Number = int | float | complex
@@ -47,23 +47,23 @@ class Vector[F: Ring](tuple[F, ...]):
 		return len(self)
 
 
-	def __add__(self, other: Self | Literal[0], /) -> Self:
+	def __add__(self, other: Vector[F] | Literal[0], /) -> Self:
 		if isinstance(other, int) and other == 0:
 			return self
 
 		assert self.dimension == other.dimension
 		return self.__class__([left + right for left, right in zip(self, other)])
 
-	def __radd__(self, other: Self | Literal[0], /) -> Self:
+	def __radd__(self, other: Vector[F] | Literal[0], /) -> Self:
 		return self + other
 
-	def __sub__(self, other: Self | Literal[0], /) -> Self:
+	def __sub__(self, other: Vector[F] | Literal[0], /) -> Self:
 		if isinstance(other, int) and other == 0:
 			return +self
 
 		return self + (-other)
 
-	def __rsub__(self, other: Self | Literal[0], /) -> Self:
+	def __rsub__(self, other: Vector[F] | Literal[0], /) -> Self:
 		return (-self) + other
 
 	def __mul__(self, times: Number, /) -> Self:
@@ -81,51 +81,50 @@ class Vector[F: Ring](tuple[F, ...]):
 	def __neg__(self) -> Self:
 		return self * -1
 
-	def __matmul__(self, other: Self | Matrix[F], /) -> F | Self:
+	def __matmul__(self, other: Vector[F] | Matrix[F], /) -> F | Self:
 		if isinstance(other, Matrix): return self.mat(other)
 		else                        : return self.dot(other)
 
 	def __abs__(self) -> float:
 		return sqrt(sum(abs(left) ** 2 for left in self))
 
-	def dot(self, other: Self, /) -> F:
+
+	def dot(self, other: Vector[F], /) -> F:
 		assert self.dimension == other.dimension
 		return sum(left * right for left, right in zip(self, other))  # type: ignore[return-value]
 
 	def mat(self, other: Matrix[F], /) -> Self:
-		...  # similar to `Matrix.mat`
+		return self.__class__(other.transpose.dot(self))
 
-	def is_linear_combination_of(self, *others: Self) -> bool:
+	def is_linear_combination_of(self, *others: Vector[F]) -> bool:
 		return Matrix([self, *others]).rank <= len(others)
 
-	def change_basis(self, *others: Self) -> Self:
+	def change_basis(self, *others: Vector[F]) -> Self:
 		assert len(others) == self.dimension
-
-		...
+		return self.mat(Matrix([*others]).inverse)
 
 
 class Matrix[F: Ring](Vector[Vector[F]]):
 
 	def __new__(cls,
-		data: Sequence[Sequence[F]] | None = None,
+		data: Iterable[Iterable[F]] | None = None,
 	) -> Self:
 		return super().__new__(cls, [Vector(row) for row in data] if data is not None else [])
 
-	def __matmul__(self, other: Self | Vector[F] | Literal[1], /) -> Self | Vector[F]:
-		if isinstance(other, Vector): return self.dot(other)
-		else                        : return self.mat(other)
-
-	def dot(self, other: Vector[F], /) -> Vector[F]:
-		...  # similar to `Vector.mat`
-
-	def mat(self, other: Self | Literal[1], /) -> Self:
+	def __matmul__(self, other: Matrix[F] | Vector[F] | Literal[1], /) -> Self | Vector[F]:
 		if isinstance(other, int) and other == 1:
 			return self
 
-		other = other.transpose
+		if isinstance(other, Matrix): return self.mat(other)
+		else                        : return self.dot(other)
 
-		assert self.dimension == other.dimension
-		return self.__class__([[left.dot(right) for right in other] for left in self])  # TODO: Use `Vector.mat` or `Matrix.dot`
+
+	def dot(self, other: Vector[F], /) -> Vector[F]:
+		assert self.transpose.dimension == other.dimension
+		return Vector(left.dot(other) for left in self)
+
+	def mat(self, other: Matrix[F], /) -> Self:
+		return self.__class__(left.mat(other) for left in self)
 
 
 	@property
@@ -176,19 +175,19 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 
 	@property
 	def transpose(self) -> Self:
-		return self.__class__(tuple(zip(*self)))
+		return self.__class__(zip(*self))
 
 	@property
 	def trace(self) -> F:
 		assert self.dimension == self[0].dimension
-		return sum(self[i][i] for i in range(self.dimension))  # type: ignore[return-value]
-		return sum(row[i] for i, row in enumerate(self))  # type: ignore[return-value]
+		return sum(left[i] for i, left in enumerate(self))  # type: ignore[return-value]
 
 	@property
 	def inverse(self) -> Self:
 		assert self.dimension == self[0].dimension
 		assert self.rank == self.dimension
-		...
+
+		return NotImplemented
 
 
 class Tensor[F: Ring](Vector[Matrix[F]]):

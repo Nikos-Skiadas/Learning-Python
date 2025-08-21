@@ -976,6 +976,14 @@ z_{i}=\sum\nolimits_{j=1}^{n}y_{i}a_{ij}
 \end_inset
 
 
+\begin_inset Formula 
+\[
+\boldsymbol{z}=\boldsymbol{y}A\text{ or }\boldsymbol{z}A^{-1}=\boldsymbol{y}\text{ or }\boldsymbol{z}B=\boldsymbol{y}\text{ or }\boldsymbol{z}=\boldsymbol{y}B^{-1}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \end_body
