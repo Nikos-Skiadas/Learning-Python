@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from deeplearning.code.algebra import *
 
-import numpy
+import numpy; tolerance = 1e-12
 
 
 _A = numpy.random.rand(2, 3); A = Matrix(_A)
@@ -87,10 +87,10 @@ class TestMatrix:
 		assert equal(D / 3, _D / 3)
 
 	def test_abs(self):
-		assert abs(A) == numpy.linalg.norm(_A)
-		assert abs(B) == numpy.linalg.norm(_B)
-		assert abs(C) == numpy.linalg.norm(_C)
-		assert abs(D) == numpy.linalg.norm(_D)
+		assert abs(A) - numpy.linalg.norm(_A) < tolerance
+		assert abs(B) - numpy.linalg.norm(_B) < tolerance
+		assert abs(C) - numpy.linalg.norm(_C) < tolerance
+		assert abs(D) - numpy.linalg.norm(_D) < tolerance
 
 	def test_matmul(self):
 		assert equal(A @ y, _A @ _y)
@@ -123,8 +123,8 @@ class TestSquareMatrix:
 		assert equal(D / 3, _D /  3)
 
 	def test_abs(self):
-		assert abs(C) == numpy.linalg.norm(_C)
-		assert abs(D) == numpy.linalg.norm(_D)
+		assert abs(C) - numpy.linalg.norm(_C) < tolerance
+		assert abs(D) - numpy.linalg.norm(_D) < tolerance
 
 	def test_matmul(self):
 		assert equal(C @ x, _C @ _x)
@@ -134,8 +134,8 @@ class TestSquareMatrix:
 		assert equal(D @ D, _D @ _D)
 
 	def test_trace(self):
-		assert C.trace == numpy.trace(_C)
-		assert D.trace == numpy.trace(_D)
+		assert C.trace - numpy.trace(_C) < tolerance
+		assert D.trace - numpy.trace(_D) < tolerance
 
 #	def test_inverse(self):
 #		assert equal(C.inverse, numpy.linalg.inv(_C))

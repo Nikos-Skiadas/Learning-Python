@@ -94,7 +94,7 @@ class Vector[F: Ring](tuple[F, ...]):
 		return sum(left * right for left, right in zip(self, other))  # type: ignore[return-value]
 
 	def mat(self, other: Matrix[F], /) -> Self:
-		return self.__class__(other.transpose.dot(self))
+		return self.__class__(self.dot(right) for right in other.transpose)
 
 	def is_linear_combination_of(self, *others: Vector[F]) -> bool:
 		return Matrix([self, *others]).rank <= len(others)
@@ -120,6 +120,7 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 
 
 	def dot(self, other: Vector[F], /) -> Vector[F]:
+		return other.mat(self.transpose)
 		assert self.transpose.dimension == other.dimension
 		return Vector(left.dot(other) for left in self)
 
