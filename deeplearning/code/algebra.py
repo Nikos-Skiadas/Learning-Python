@@ -101,7 +101,7 @@ class Vector[F: Ring](tuple[F, ...]):
 
 	def change_basis(self, *others: Vector[F]) -> Self:
 		assert len(others) == self.dimension
-		return self.mat(Matrix([*others]).inverse)
+		return self.mat(SquareMatrix([*others]).inverse)
 
 
 class Matrix[F: Ring](Vector[Vector[F]]):
@@ -177,19 +177,19 @@ class Matrix[F: Ring](Vector[Vector[F]]):
 	def transpose(self) -> Self:
 		return self.__class__(zip(*self))
 
+
+class SquareMatrix[F: Ring](Matrix[F]):
+
 	@property
 	def trace(self) -> F:
-		assert self.dimension == self[0].dimension
 		return sum(left[i] for i, left in enumerate(self))  # type: ignore[return-value]
 
 	@property
+	def determinant(self) -> F:
+		return NotImplemented
+
+	@property
 	def inverse(self) -> Self:
-		assert self.dimension == self[0].dimension
 		assert self.rank == self.dimension
 
 		return NotImplemented
-
-
-class Tensor[F: Ring](Vector[Matrix[F]]):
-
-	...
