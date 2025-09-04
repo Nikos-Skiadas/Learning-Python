@@ -137,732 +137,1095 @@ theorems-sec-bytype
 \begin_body
 
 \begin_layout Section
-Basic concepts
+Linear Algebra
 \end_layout
 
-\begin_layout Standard
-scalar:
+\begin_layout Subsection
+Groups
 \end_layout
 
-\begin_layout Itemize
-\begin_inset Formula $x\in\mathbb{R}$
+\begin_layout Definition
+A set 
+\begin_inset Formula $G$
 \end_inset
 
- (
-\family typewriter
-float
-\family default
-)
-\end_layout
-
-\begin_layout Standard
-vector:
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $x$
+ with an operation 
+\begin_inset Formula $\circ:G\times G\longrightarrow G$
 \end_inset
 
- is a finite sequence of scalars:
+ such that:
 \end_layout
 
 \begin_deeper
-\begin_layout Itemize
-let 
-\begin_inset Formula $n\in\mathbb{N}$
-\end_inset
-
- be the so called dimension of the vector which is the number of scalars
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $x_{1},x_{2},\ldots,x_{n}$
-\end_inset
-
- are all the scalars (in sequence) so we need a number index 
-\begin_inset Formula $i\in\mathbb{N}_{n}$
-\end_inset
-
- to name them
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $x=[\begin{array}{cccc}
-x_{1} & x_{2} & \cdots & x_{n}\end{array}]$
-\end_inset
-
- is the vector
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $x\in\underset{n}{\underbrace{\mathbb{R}\times\mathbb{R}\times\ldots\times\mathbb{R}}}=\mathbb{R}^{n}$
-\end_inset
-
-
-\end_layout
-
-\end_deeper
-\begin_layout Standard
-matrix:
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $x$
-\end_inset
-
- can be seen as a finite sequence of scalars:
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-let 
-\begin_inset Formula $n\in\mathbb{N}$
-\end_inset
-
- and 
-\begin_inset Formula $m\in\mathbb{N}$
-\end_inset
-
- be the so called dimensions of the matrix
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $x_{11},x_{12},\ldots,x_{1m},x_{21},x_{22},\ldots,x_{2m},\ldots,x_{n1},x_{n2},\ldots,x_{nm}$
-\end_inset
-
- are all the scalars (in sequence)
-\end_layout
-
-\begin_layout Itemize
-the scalars are to be arranged in an 
-\begin_inset Formula $n\times m$
-\end_inset
-
- rectangle
-\begin_inset Formula 
-\[
-x=\left[\begin{array}{cccc}
-x_{11} & x_{12} & \cdots & x_{1m}\\
-x_{21} & x_{22} & \cdots & x_{2m}\\
-\vdots & \vdots & \ddots & \vdots\\
-x_{n1} & x_{n2} & \cdots & x_{nm}
-\end{array}\right]
-\]
-
-\end_inset
-
-so we need two indices to name them
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $x\in\mathbb{R}^{n\times m}$
-\end_inset
-
- so 
-\begin_inset Formula $x$
-\end_inset
-
- is also a vector but is more
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-an 
-\begin_inset Formula $n\times m$
-\end_inset
-
- matrix 
-\begin_inset Formula $x$
-\end_inset
-
- can be seen as a vector of vectors
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-a vector of dimension 
-\begin_inset Formula $n$
-\end_inset
-
- containing vectors of dimension 
-\begin_inset Formula $m$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Itemize
-a vector of dimension 
-\begin_inset Formula $m$
-\end_inset
-
- containing vectors of dimension 
-\begin_inset Formula $n$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Itemize
-this logic allows slicing a matrix into vectors
-\end_layout
-
-\begin_layout Itemize
-for example the 
-\begin_inset Formula $ith$
-\end_inset
-
- row as a slice is a vector
-\end_layout
-
-\end_deeper
-\begin_layout Standard
-tensor:
-\end_layout
-
-\begin_layout Itemize
-it is the generalization of the structure sequence built here:
-\begin_inset Formula 
-\[
-\text{scalar}\longrightarrow\text{vector}\longrightarrow\text{matrix}\longrightarrow\text{tensor}_{\text{rank}=3}\longrightarrow\text{tensor}_{\text{rank}=4}\longrightarrow\ldots
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_deeper
-\begin_layout Itemize
-scalars are tensors of rank 0
-\end_layout
-
-\begin_layout Itemize
-vectors are tensors of rank 1
-\end_layout
-
-\begin_layout Itemize
-matrices are tensors of rank 2
-\end_layout
-
-\begin_layout Itemize
-...
-\end_layout
-
-\end_deeper
-\begin_layout Itemize
-for example a tensor of rank 3 is a vector of matrices or a matrix of vectors or a vector of vectors of vectors...
-\end_layout
-
-\begin_layout Standard
-It is very convenient to handle all these constructs by their indices.
-\end_layout
-
-\begin_layout Itemize
-A scalar is denoted as is,
+\begin_layout Description
+associativity:
  
-\begin_inset Formula $x$
+\begin_inset Formula $\forall a,b,c\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $(a\circ b)\circ c=a\circ(b\circ c)=a\circ b\circ c$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+identity:
+ 
+\begin_inset Formula $\exists!e\in G$
+\end_inset
+
+ (identity element),
+ 
+\begin_inset Formula $\forall a\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\circ e=e\circ a=a$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+reciprocal:
+ 
+\begin_inset Formula $\forall a\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\exists!\bar{a}\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\circ\bar{a}=\bar{a}\circ a=e$
+\end_inset
+
+,
+\end_layout
+
+\end_deeper
+\begin_layout Definition
+is a called a 
+\emph on
+group
+\emph default
+.
+\end_layout
+
+\begin_layout Definition
+If on top:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+commutativity:
+ 
+\begin_inset Formula $\forall a,b\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\circ b=b\circ a$
+\end_inset
+
+,
+\end_layout
+
+\end_deeper
+\begin_layout Definition
+\begin_inset Formula $G$
+\end_inset
+
+ is an 
+\emph on
+abelian
+\emph default
+ group.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that:
+\end_layout
+
+\begin_layout Itemize
+The identity 
+\begin_inset Formula $e$
+\end_inset
+
+ is self-reciprocal,
+ 
+\begin_inset Formula $\bar{e}=e$
 \end_inset
 
 .
 \end_layout
 
 \begin_layout Itemize
-A vector is denoted as 
-\begin_inset Formula $x_{a}$
+\begin_inset Formula $\forall a\in G$
 \end_inset
 
 ,
- where leaving 
+ the reciprocal of 
+\begin_inset Formula $\bar{a}$
+\end_inset
+
+ is 
 \begin_inset Formula $a$
 \end_inset
 
- undefined,
- means any index 
-\begin_inset Formula $a\in\mathbb{N}_{n}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Itemize
-A matrix is denoted as 
-\begin_inset Formula $x_{ab}$
-\end_inset
-
-,
- similarly with a vector,
- but now we have two abstract indices 
-\begin_inset Formula $a\in\mathbb{N}_{n}$
-\end_inset
-
- and 
-\begin_inset Formula $b\in\mathbb{N}_{m}$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Itemize
-More generally a tensor is denoted as 
-\begin_inset Formula $x_{a_{1}a_{2}\ldots a_{\text{rank}x}}$
-\end_inset
-
 .
 \end_layout
 
 \begin_layout Standard
-Every tensor can be serialized into a vector.
- Lets examing an 
-\begin_inset Formula $n\times m$
+A subsgroup 
+\begin_inset Formula $H\leq G$
 \end_inset
 
- matrix example:
-\begin_inset Formula 
-\begin{multline*}
-\left[\begin{array}{cccc}
-x_{11} & x_{12} & \cdots & x_{1m}\\
-x_{21} & x_{22} & \cdots & x_{2m}\\
-\vdots & \vdots & \ddots & \vdots\\
-x_{n1} & x_{n2} & \cdots & x_{nm}
-\end{array}\right]\longrightarrow\\
-\longrightarrow[\begin{array}{ccccccccccccc}
-x_{11} & x_{12} & \cdots & x_{1m} & x_{21} & x_{22} & \cdots & x_{2m} & \cdots & x_{n1} & x_{n2} & \cdots & x_{nm}\end{array}]=\\
-=[\begin{array}{ccccccccccccc}
-x_{1} & x_{2} & \cdots & x_{m} & x_{m+1} & x_{m+2} & \cdots & x_{2m} & \cdots & x_{(n-1)\cdot m+1} & x_{(n-1)\cdot m+2} & \cdots & x_{n\cdot m}\end{array}]
-\end{multline*}
-
+ is a subset 
+\begin_inset Formula $H\subseteq G$
 \end_inset
 
-or in index notation:
-\begin_inset Formula 
-\[
-x_{ab}\longmapsto x_{(a-1)\cdot m+b}
-\]
-
+ that is also a group under 
+\begin_inset Formula $+$
 \end_inset
 
-
+.
 \end_layout
 
-\begin_layout Section
-Extra structure
+\begin_layout Example
+A set 
+\begin_inset Formula $G$
+\end_inset
+
+ with 
+\begin_inset Formula $+$
+\end_inset
+
+ is an additive group,
+ or with 
+\begin_inset Formula $\cdot$
+\end_inset
+
+ is a multiplicative group.
 \end_layout
 
-\begin_layout Subsection
-Scalars
+\begin_layout Example
+Additive groups:
 \end_layout
 
-\begin_layout Standard
-Scalars have two operations:
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{N},+}$
+\end_inset
+
+:
+ Is not a group,
+ because there are no opposites.
 \end_layout
 
 \begin_layout Description
-addition 
-\begin_inset Formula $+:\mathbb{R}\times\mathbb{R}\longrightarrow\mathbb{R}:x,y\longmapsto x+y$
+\begin_inset Formula $\boldsymbol{\mathbb{Z},+}$
 \end_inset
 
- with an inverse (subtraction)
+:
+ Is an abelian group with 0 as identity element.
 \end_layout
 
 \begin_layout Description
-multiplication 
-\begin_inset Formula $\cdot:\mathbb{R}\times\mathbb{R}\longrightarrow\mathbb{R}:x,y\longmapsto xy$
+\begin_inset Formula $\boldsymbol{\mathbb{Z}_{*},+}$
 \end_inset
 
-
+:
+ Is not a group,
+ because there is no identity element (0).
 \end_layout
 
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Q},+}$
+\end_inset
+
+:
+ Is an abelian group with 0 as identity element.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{R},+}$
+\end_inset
+
+:
+ Is an abelian group with 0 as identity element.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{C},+}$
+\end_inset
+
+:
+ Is an abelian group with 
+\begin_inset Formula $0+\imath0$
+\end_inset
+
+ as identity element.
+\end_layout
+
+\end_deeper
+\begin_layout Example
+Multiplicative groups:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Z}_{+}=\mathbb{N}_{*},\cdot}$
+\end_inset
+
+:
+ Is not a group because there are no inverses.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Z},\cdot}$
+\end_inset
+
+:
+ Is not a group because there are no inverses.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Q}_{+},\cdot}$
+\end_inset
+
+:
+ Is an abelian group with 1 as identity element.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Q}_{*},\cdot}$
+\end_inset
+
+:
+ Is an abelian group with 1 as identity element.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Q},\cdot}$
+\end_inset
+
+:
+ Is not a group because 0 (destructive element) has no inverse.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{R}_{+},\cdot}$
+\end_inset
+
+:
+ Is an abelian group with 1 as identity element.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{R}_{*},\cdot}$
+\end_inset
+
+:
+ Is an abelian group with 1 as identity element.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{C}_{*},\cdot}$
+\end_inset
+
+:
+ Is an abelian group with 
+\begin_inset Formula $1+\imath0$
+\end_inset
+
+ as identity element.
+\end_layout
+
+\end_deeper
 \begin_layout Subsection
-Vectors
+Fields
 \end_layout
 
-\begin_layout Standard
-Vectors have addition defined by
-\begin_inset Formula 
-\[
-x+y=[\begin{array}{cccc}
-x_{1}+y_{1} & x_{2}+y_{2} & \cdots & x_{n}+y_{n}\end{array}]=x_{a}+y_{a}
-\]
-
+\begin_layout Definition
+A set 
+\begin_inset Formula $\mathbb{F}$
 \end_inset
 
-which is well defined because 
-\begin_inset Formula $x_{a}$
+ with 
+\begin_inset Formula $+:\mathbb{F}\times\mathbb{F}\longrightarrow\mathbb{F}$
 \end_inset
 
  and 
-\begin_inset Formula $y_{a}$
+\begin_inset Formula $\cdot:\mathbb{F}\times\mathbb{F}\longrightarrow\mathbb{F}$
 \end_inset
 
- are scalars 
-\begin_inset Formula $\forall a$
-\end_inset
+ such that:
+\end_layout
 
-,
- and addition is defined for scalars.
+\begin_deeper
+\begin_layout Description
+addition:
  
-\begin_inset Formula $x$
+\begin_inset Formula $\mathbb{F}$
 \end_inset
 
- and 
-\begin_inset Formula $y$
+ with 
+\begin_inset Formula $+$
 \end_inset
 
- must have the same dimension!
- We can also substract two vectors.
- The zero vector is thus
-\begin_inset Formula 
-\[
-0=[\begin{array}{cccc}
-0 & 0 & \cdots & 0\end{array}]
-\]
-
-\end_inset
-
-
+ is an (additive) abelian group with identity 0,
 \end_layout
 
-\begin_layout Standard
-Vectors have multiplication with a scalar 
-\begin_inset Formula $\lambda$
+\begin_layout Description
+multiplication:
+ 
+\begin_inset Formula $\mathbb{F}_{*}=\mathbb{F}\setminus\{0\}$
 \end_inset
 
-
-\begin_inset Formula 
-\[
-\lambda x=[\begin{array}{cccc}
-\lambda x_{1} & \lambda x_{2} & \cdots & \lambda x_{n}\end{array}]=\lambda x_{a}
-\]
-
+ with 
+\begin_inset Formula $\cdot$
 \end_inset
 
-which is well defined because 
-\begin_inset Formula $x_{a}$
-\end_inset
+ is a (multiplicative) abelian group,
+ where:
+\end_layout
 
- is a scalar 
-\begin_inset Formula $\forall a$
+\begin_deeper
+\begin_layout Description
+distributivity:
+ 
+\begin_inset Formula $\forall a,b,c\in\mathbb{F}$
 \end_inset
 
 ,
- and multiplication is defined for scalars.
+\begin_inset Formula 
+\begin{gather*}
+a\cdot(b+c)=a\cdot b+a\cdot c\\
+(a+b)\cdot c=a\cdot c+b\cdot c
+\end{gather*}
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Definition
+is called a 
+\emph on
+field
+\emph default
+.
 \end_layout
 
 \begin_layout Standard
-Vectors have an dot product defined by
-\begin_inset Formula 
-\[
-x\cdot y=x_{1}y_{1}+x_{2}y_{2}+\ldots+x_{n}y_{n}=\sum\nolimits_{a=1}^{n}x_{a}y_{a}
-\]
-
+\begin_inset Separator plain
 \end_inset
 
-which is well defined because 
-\begin_inset Formula $x_{a}$
-\end_inset
 
- and 
-\begin_inset Formula $y_{a}$
-\end_inset
+\end_layout
 
- are scalars 
-\begin_inset Formula $\forall a$
+\begin_layout Standard
+Note that:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in\mathbb{F}$
 \end_inset
 
 ,
- and both addition and multiplication is defined for scalars.
- This is the most basic form of contraction.
+ 
+\begin_inset Formula $a\cdot0=0\cdot a=0$
+\end_inset
+
+.
+ The additive identity of fields is also called the 
+\emph on
+destructive element
+\emph default
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a,b\in\mathbb{F}$
+\end_inset
+
+,
+ if 
+\begin_inset Formula $a\cdot b=0$
+\end_inset
+
+ then either 
+\begin_inset Formula $a=0$
+\end_inset
+
+ or 
+\begin_inset Formula $b=0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in\mathbb{F},$
+\end_inset
+
+ 
+\begin_inset Formula $(-1)a=-a$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall b\in\mathbb{F}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $-a\cdot b=(-a)\cdot b=a\cdot(-b)$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
-Note that 
-\begin_inset Formula $x\cdot y=0$
+A subsfield 
+\begin_inset Formula $\mathbb{G}\leq\mathbb{F}$
+\end_inset
+
+ is a subset 
+\begin_inset Formula $\mathbb{G}\subseteq\mathbb{F}$
+\end_inset
+
+ that is also a field under 
+\begin_inset Formula $+$
+\end_inset
+
+ and 
+\begin_inset Formula $\cdot$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Example
+\begin_inset space ~
+\end_inset
+
+
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{N},+,\cdot}$
+\end_inset
+
+:
+ Is not a field,
+ because it is neither an additive nor a multiplicative group.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Z},+,\cdot}$
+\end_inset
+
+:
+ Is not a field,
+ because it is an additive group but it is not a multiplicative group.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{Q},+,\cdot}$
+\end_inset
+
+:
+ Is a field.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{R},+,\cdot}$
+\end_inset
+
+:
+ Is a field.
+\end_layout
+
+\begin_layout Description
+\begin_inset Formula $\boldsymbol{\mathbb{C},+}$
+\end_inset
+
+:
+ Is a field.
+\end_layout
+
+\end_deeper
+\begin_layout Subsection
+Vector spaces
+\end_layout
+
+\begin_layout Definition
+A set 
+\begin_inset Formula $V$
+\end_inset
+
+ with respect to a field 
+\begin_inset Formula $\mathbb{F}$
+\end_inset
+
+ such that:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+addition:
+ 
+\begin_inset Formula $\exists+:V\times V\rightarrow V$
+\end_inset
+
+ such that 
+\begin_inset Formula $V$
+\end_inset
+
+ is an abelian group,
+\end_layout
+
+\begin_layout Description
+scalar
+\begin_inset space ~
+\end_inset
+
+(distributive)
+\begin_inset space ~
+\end_inset
+
+multiplication:
+ 
+\begin_inset Formula $\exists\cdot:\mathbb{F}\times V\longrightarrow V$
+\end_inset
+
+ such that:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+scalar
+\begin_inset space ~
+\end_inset
+
+distributivity:
+ 
+\begin_inset Formula $\forall a,b\in\mathbb{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $(a+b)\boldsymbol{x}=a\boldsymbol{x}+b\boldsymbol{x}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+vector
+\begin_inset space ~
+\end_inset
+
+distributivity:
+ 
+\begin_inset Formula $\forall a\in\mathbb{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall\boldsymbol{x},\boldsymbol{y}\in V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a(\boldsymbol{x}+\boldsymbol{y})=a\boldsymbol{x}+a\boldsymbol{y}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+weak
+\begin_inset space ~
+\end_inset
+
+associativity:
+ 
+\begin_inset Formula $\forall a,b\in\mathbb{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $(ab)\boldsymbol{x}=a(b\boldsymbol{x})=ab\boldsymbol{x}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+identity:
+ 
+\begin_inset Formula $\exists!1\in\mathbb{F}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $1\boldsymbol{x}=\boldsymbol{x}$
+\end_inset
+
+,
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Definition
+is called a 
+\emph on
+vector space
+\emph default
+ (over a field 
+\begin_inset Formula $\mathbb{F}$
+\end_inset
+
+).
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Note that:
+\end_layout
+
+\begin_layout Itemize
+Both 
+\begin_inset Formula $0\in\mathbb{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $\boldsymbol{0}\in V$
+\end_inset
+
+ are destructive with respect to 
+\begin_inset Formula $\cdot$
+\end_inset
+
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in\mathbb{F}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\boldsymbol{0}=\boldsymbol{0}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $0\boldsymbol{x}=\boldsymbol{0}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in\mathbb{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
+
+,
+ if 
+\begin_inset Formula $a\boldsymbol{x}=\boldsymbol{0}$
+\end_inset
+
+ then either 
+\begin_inset Formula $a=0$
+\end_inset
+
+ or 
+\begin_inset Formula $\boldsymbol{x}=0$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $(-1)\boldsymbol{x}=-\boldsymbol{x}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+A field 
+\begin_inset Formula $\mathbb{F}$
+\end_inset
+
+ is (trivially) a vector space over itself.
+\end_layout
+
+\begin_layout Standard
+A subspace 
+\begin_inset Formula $U\leq V$
+\end_inset
+
+ is a subset 
+\begin_inset Formula $U\subseteq V$
+\end_inset
+
+ that is also a vector space over 
+\begin_inset Formula $\mathbb{F}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+Let 
+\begin_inset Formula $V$
+\end_inset
+
+ be a vector space over a field 
+\begin_inset Formula $\mathbb{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $A=\{\boldsymbol{x}_{1},\ldots,\boldsymbol{x}_{n}\}\subseteq V$
+\end_inset
+
+ a finite set of vectors,
+ for some 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+.
+ A vector 
+\begin_inset Formula $\boldsymbol{y}\in V$
+\end_inset
+
+ is a 
+\emph on
+linear combination
+\emph default
+ of 
+\begin_inset Formula $A$
 \end_inset
 
  if 
-\begin_inset Formula $x=0$
+\begin_inset Formula $\exists\{a_{1},\ldots,a_{n}\}\subseteq\mathbb{F}$
 \end_inset
 
- or 
-\begin_inset Formula $y=0$
+ such that:
+\begin_inset Formula 
+\[
+\boldsymbol{y}=\sum\nolimits_{i=1}^{n}a_{i}\boldsymbol{x}_{i}
+\]
+
 \end_inset
 
- or 
-\begin_inset Formula $x\bot y$
+
+\end_layout
+
+\begin_layout Definition
+\begin_inset Formula $\text{span}A\leq V$
+\end_inset
+
+ is the smallest subspace containing the vectors 
+\begin_inset Formula $A\subseteq V$
+\end_inset
+
+.
+ It turns out it consists of all possible linear combinations of the vectors in 
+\begin_inset Formula $A$
 \end_inset
 
 .
 \end_layout
 
 \begin_layout Standard
-This defines a notion of norm for a vector
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+Let 
+\begin_inset Formula $V$
+\end_inset
+
+ be a vector space over a field 
+\begin_inset Formula $\mathbb{F}$
+\end_inset
+
+.
+ A finite set of vectors 
+\begin_inset Formula $X=\{\boldsymbol{x}_{1},\ldots,\boldsymbol{x}_{n}\}\subseteq V$
+\end_inset
+
+ is 
+\emph on
+linearly independent
+\emph default
+ if 
+\begin_inset Formula $\forall\{a_{1},\ldots,a_{n}\}\subseteq\mathbb{F}$
+\end_inset
+
+ linear combination of 
+\begin_inset Formula $X$
+\end_inset
+
+,
+ if
 \begin_inset Formula 
 \[
-\Vert x\Vert=\sqrt{x\cdot x}=\sqrt{\vert x_{1}\vert^{2}+\vert x_{2}\vert^{2}+\ldots+\vert x_{n}\vert^{2}}=\sqrt{\sum\nolimits_{a=1}^{n}x_{a}x_{a}}=\sqrt{\sum\nolimits_{a=1}^{n}\vert x_{a}\vert^{2}}
+\sum\nolimits_{i=1}^{n}a_{i}\boldsymbol{x}_{i}=\boldsymbol{0}
 \]
 
 \end_inset
 
-with 
-\begin_inset Formula $\Vert x\Vert=0$
+then 
+\begin_inset Formula $\forall i\in\mathbb{N}_{n}$
 \end_inset
 
- if and only if 
-\begin_inset Formula $x=0$
+,
+ 
+\begin_inset Formula $a_{i}=0$
 \end_inset
 
 .
 \end_layout
 
-\begin_layout Subsection
-Matrices
-\end_layout
-
-\begin_layout Standard
-Addition and multiplication with a scalar is similarly defined.
-\end_layout
-
-\begin_layout Standard
-Matrices differ from vectors in that they have their own product!
- Let 
-\begin_inset Formula $n\times k$
+\begin_layout Definition
+If 
+\begin_inset Formula $\text{span}X=V$
 \end_inset
 
- matrix 
-\begin_inset Formula $x$
+,
+ then 
+\begin_inset Formula $X$
 \end_inset
 
- and 
-\begin_inset Formula $k\times m$
-\end_inset
-
- matrix 
-\begin_inset Formula $y$
+ is called a 
+\emph on
+basis
+\emph default
+ of 
+\begin_inset Formula $V$
 \end_inset
 
 .
-\begin_inset Formula 
-\[
-\begin{array}{cc}
- & \left[\begin{array}{cccc}
-y_{11} & y_{12} & \cdots & y_{1m}\\
-y_{21} & y_{22} & \cdots & y_{2m}\\
-\vdots & \vdots & \ddots & \vdots\\
-y_{k1} & y_{k2} & \cdots & y_{km}
-\end{array}\right]\\
-\left[\begin{array}{cccc}
-x_{11} & x_{12} & \cdots & x_{1k}\\
-x_{21} & x_{22} & \cdots & x_{2k}\\
-\vdots & \vdots & \ddots & \vdots\\
-x_{n1} & x_{n2} & \cdots & x_{nk}
-\end{array}\right] & \left[\begin{array}{cccc}
-z_{11} & z_{12} & \cdots & z_{1m}\\
-z_{21} & z_{22} & \cdots & z_{2m}\\
-\vdots & \vdots & \ddots & \vdots\\
-z_{n1} & z_{n2} & \cdots & z_{nm}
-\end{array}\right]
-\end{array}
-\]
-
+ Given a basis 
+\begin_inset Formula $X$
 \end_inset
 
-or
-\begin_inset Formula 
-\[
-z_{ab}=\sum\nolimits_{c=1}^{k}x_{ac}y_{cb}=x_{a\_}\cdot y_{\_b}
-\]
-
+,
+ every vector 
+\begin_inset Formula $\boldsymbol{x}\in V$
 \end_inset
 
+ has a unique linear combination of 
+\begin_inset Formula $X$
+\end_inset
 
+.
+\end_layout
+
+\begin_layout Definition
+\begin_inset Formula $\dim V=\vert X\vert=n$
+\end_inset
+
+ is called the (finite) 
+\emph on
+dimension
+\emph default
+ of 
+\begin_inset Formula $V$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsubsection
-Square matrices
+Linear Maps
 \end_layout
 
-\begin_layout Standard
-There exists a special kind of matrices,
- the square matrices,
- which are of the form 
-\begin_inset Formula $n\times n$
-\end_inset
-
-,
- 
-\begin_inset Formula $\forall n\in\mathbb{N}$
-\end_inset
-
-.
- They are special because,
- the matrix product is not only valid for them,
- but it can be stacked too.
- For example,
- for any matrices 
-\begin_inset Formula $x$
-\end_inset
-
-,
- 
-\begin_inset Formula $y$
+\begin_layout Definition
+Let 
+\begin_inset Formula $V$
 \end_inset
 
  and 
-\begin_inset Formula $z$
+\begin_inset Formula $U$
 \end_inset
 
- of the same size 
-\begin_inset Formula $n\times n$
+ be vector spaces over a field 
+\begin_inset Formula $\mathbb{F}$
 \end_inset
 
-,
- the product 
-\begin_inset Formula $xyz$
+.
+ A map 
+\begin_inset Formula $f:V\longrightarrow U$
 \end_inset
 
- is defined and also of size 
-\begin_inset Formula $n\times n$
+ that respects vector operations,
+ meaning that 
+\begin_inset Formula $\forall\{a_{1},\ldots,a_{n}\}\subseteq\mathbb{F}$
 \end_inset
 
-!
+ and 
+\begin_inset Formula $\{\boldsymbol{x}_{1},\ldots,\boldsymbol{x}_{n}\}\subseteq V$
+\end_inset
+
+ for some 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+f\Big(\sum\nolimits_{i=1}^{\dim V}a_{i}\boldsymbol{x}_{i}\Big)=\sum\nolimits_{i=1}^{\dim V}a_{i}f(\boldsymbol{x}_{i})
+\]
+
+\end_inset
+
+is a 
+\emph on
+linear map
+\emph default
+.
 \end_layout
 
 \begin_layout Standard
-Careful though!
- The matrix product is not commutative!
+Note that a linear map 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+ preserves the zero vectors:
  
-\begin_inset Formula $xy\ne yx$
-\end_inset
-
- generally.
- Also,
- a unit element makes sense with such a product on square matrices:
-\begin_inset Formula 
-\[
-I=\left[\begin{array}{cccc}
-1 & 0 & \cdots & 0\\
-0 & 1 & \cdots & 0\\
-\vdots & \vdots & \ddots & \vdots\\
-0 & 0 & \cdots & 1
-\end{array}\right]
-\]
-
+\begin_inset Formula $f(\boldsymbol{0}_{V})=\boldsymbol{0}_{U}$
 \end_inset
 
 
 \end_layout
 
 \begin_layout Standard
-Square matrices have:
-\end_layout
+Let 
+\begin_inset Formula $\{\boldsymbol{v}_{1},\ldots,\boldsymbol{v}_{\dim V}\}\subseteq V$
+\end_inset
 
-\begin_layout Itemize
-a trace:
+ a basis and 
+\begin_inset Formula $\{\boldsymbol{u}_{1},\ldots,\boldsymbol{u}_{\dim U}\}\subseteq U$
+\end_inset
+
+ a basis.
+ Let 
+\begin_inset Formula $\boldsymbol{y}=f(\boldsymbol{x}\in V)\in U$
+\end_inset
+
+ where:
 \begin_inset Formula 
 \[
-\text{tr}x=x_{11}+x_{22}+\ldots+x_{nn}=\sum\nolimits_{a=1}^{n}x_{aa}
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Itemize
-a determinant:
-\begin_inset Formula 
-\[
-\det x=\ldots
-\]
-
-\end_inset
-
-For example for 
-\begin_inset Formula $n=2$
-\end_inset
-
-,
-\begin_inset Formula 
-\[
-\det x=x_{11}x_{22}-x_{12}x_{21}
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-Because square matrices have both addition and a product,
- polynomials are defined on matrix spaces.
- For example
-\begin_inset Formula 
-\[
-\exp x=\sum\nolimits_{k=0}^{\infty}\dfrac{x^{n}}{n!}
-\]
-
-\end_inset
-
-makes sence for both 
-\begin_inset Formula $x$
-\end_inset
-
- scalar and 
-\begin_inset Formula $x$
-\end_inset
-
- matrix,
- giving a definition of the exponential mapping on matrices.
- An interesting property is
-\begin_inset Formula 
-\[
-\det(\exp x)=\exp(\text{tr}x)
-\]
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
-The transpose of a matrix the one that has as rows the columns of the other:
-\begin_inset Formula 
-\[
-\left[\begin{array}{cccc}
-x_{11} & x_{12} & \cdots & x_{1m}\\
-x_{21} & x_{22} & \cdots & x_{2m}\\
-\vdots & \vdots & \ddots & \vdots\\
-x_{n1} & x_{n2} & \cdots & x_{nm}
-\end{array}\right]^{\top}=\left[\begin{array}{cccc}
-x_{11} & x_{21} & \cdots & x_{n1}\\
-x_{12} & x_{22} & \cdots & x_{n2}\\
-\vdots & \vdots & \ddots & \vdots\\
-x_{1m} & x_{2m} & \cdots & x_{mn}
-\end{array}\right]
+\boldsymbol{y}=\sum\nolimits_{j=1}^{\dim U}y_{j}\boldsymbol{u}_{j}\text{ and }\boldsymbol{x}=\sum\nolimits_{i=1}^{\dim V}x_{i}\boldsymbol{v}_{i}
 \]
 
 \end_inset
 
 If 
-\begin_inset Formula $x$
+\begin_inset Formula $f$
 \end_inset
 
- is a square matrix,
+ is linear:
+\begin_inset Formula 
+\[
+\boldsymbol{y}=f(\boldsymbol{x})=f\Big(\sum\nolimits_{i=1}^{\dim V}x_{i}\boldsymbol{v}_{i}\Big)=\sum\nolimits_{i=1}^{\dim V}x_{i}f(\boldsymbol{v}_{i})
+\]
+
+\end_inset
+
+which implies that 
+\begin_inset Formula $f$
+\end_inset
+
+ is determined by 
+\begin_inset Formula $f(\boldsymbol{v}_{i})\in U$
+\end_inset
+
+,
  
-\begin_inset Formula $x^{\top}$
+\begin_inset Formula $\forall i\in\mathbb{N}:$
 \end_inset
 
-has the same size.
- Also 
-\begin_inset Formula $\text{tr}x^{\top}=\text{tr}x$
-\end_inset
 
-.
- Note that
 \begin_inset Formula 
 \[
-x_{ab}^{\top}=x_{ba}
+f(\boldsymbol{v}_{i})=\sum\nolimits_{j=1}^{\dim U}a_{ji}\boldsymbol{u}_{j}
 \]
 
 \end_inset
@@ -871,11 +1234,18 @@ x_{ab}^{\top}=x_{ba}
 \end_layout
 
 \begin_layout Standard
-Is there a dot product for (square) matrices?
- Yes!
+Note that:
 \begin_inset Formula 
 \[
-\sum\nolimits_{b=1}^{n}\sum\nolimits_{a=1}^{n}x_{ab}y_{ab}=\sum\nolimits_{b=1}^{n}\Big(\sum\nolimits_{a=1}^{n}x_{ba}^{\top}y_{ab}\Big)=\sum\nolimits_{b=1}^{n}(x^{\top}y)_{bb}=\text{tr}(x^{\top}y)
+\sum\nolimits_{j=1}^{\dim U}y_{j}\boldsymbol{u}_{j}=f\Big(\sum\nolimits_{i=1}^{\dim V}x_{i}\boldsymbol{v}_{i}\Big)=\sum\nolimits_{i=1}^{\dim V}x_{i}f(\boldsymbol{v}_{i})=\sum\nolimits_{i=1}^{\dim V}x_{i}\sum\nolimits_{j=1}^{\dim U}a_{ji}\boldsymbol{u}_{j}=\sum\nolimits_{j=1}^{\dim U}\Big(\sum\nolimits_{i=1}^{\dim V}a_{ji}x_{i}\Big)\boldsymbol{u}_{j}
+\]
+
+\end_inset
+
+meaning that:
+\begin_inset Formula 
+\[
+y_{j}=f_{j}(\boldsymbol{x})=\sum\nolimits_{i=1}^{\dim V}a_{ji}x_{i}
 \]
 
 \end_inset
@@ -883,107 +1253,121 @@ Is there a dot product for (square) matrices?
 
 \end_layout
 
-\begin_layout Standard
-Let 
-\begin_inset Formula $X$
+\begin_layout Proposition
+\begin_inset Formula $Let$
 \end_inset
 
- be a vector space with 
-\begin_inset Formula $\dim X=n:\mathbb{N}$
+ 
+\begin_inset Formula $f:V\longrightarrow U$
 \end_inset
 
  and 
-\begin_inset Formula $(\boldsymbol{a}_{1},\ldots,\boldsymbol{a}_{n})$
+\begin_inset Formula $g:W\longrightarrow V$
 \end_inset
 
- a basis of 
-\begin_inset Formula $X$
-\end_inset
-
- (
-\begin_inset Formula $X=\text{span}(\boldsymbol{a}_{1},\ldots,\boldsymbol{a}_{n})$
-\end_inset
-
-):
- 
-\begin_inset Formula $\forall\boldsymbol{x}:X$
+ be linear maps with 
+\begin_inset Formula $U$
 \end_inset
 
 ,
  
-\begin_inset Formula $\exists!(x_{1},\ldots,x_{n})$
+\begin_inset Formula $V$
 \end_inset
 
-:
-\begin_inset Formula 
-\[
-\boldsymbol{x}=\sum\nolimits_{i=1}^{n}y_{i}\boldsymbol{a}_{i}
-\]
-
+ and 
+\begin_inset Formula $W$
 \end_inset
 
-Let 
-\begin_inset Formula $(\boldsymbol{b}_{1},\ldots,\boldsymbol{b}_{n})$
-\end_inset
-
- a different base of 
-\begin_inset Formula $X$
+ linear spaces over a field 
+\begin_inset Formula $\mathbb{F}$
 \end_inset
 
 .
- 
-\begin_inset Formula $\forall i$
+ The composition 
+\begin_inset Formula $f\circ g:W\longrightarrow U$
+\end_inset
+
+ is also linear.
+\end_layout
+
+\begin_layout Standard
+For given bases in 
+\begin_inset Formula $U$
 \end_inset
 
 ,
+ 
+\begin_inset Formula $V$
+\end_inset
+
+ and 
+\begin_inset Formula $W$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ 
+\begin_inset Formula $B$
+\end_inset
+
+ and 
+\begin_inset Formula $C$
+\end_inset
+
+ the matrix representations of 
+\begin_inset Formula $f$
+\end_inset
+
+,
+ 
+\begin_inset Formula $g$
+\end_inset
+
+ and 
+\begin_inset Formula $f\circ g$
+\end_inset
+
+ respectively:
 \begin_inset Formula 
 \[
-\boldsymbol{b}_{i}=\sum\nolimits_{j=1}^{n}b_{ij}\boldsymbol{a}_{j}\text{ or }\boldsymbol{a}_{i}=\sum\nolimits_{j=1}^{n}a_{ij}\boldsymbol{b}_{j}
+(f\circ g)_{i}(\boldsymbol{x})=f_{i}(g(\boldsymbol{x}))=\sum\nolimits_{j=1}^{\dim V}a_{ij}g_{j}(\boldsymbol{x})=\sum\nolimits_{j=1}^{\dim V}a_{ij}\sum\nolimits_{k=1}^{\dim W}b_{jk}x_{k}=\sum\nolimits_{k=1}^{\dim W}\Big(\sum\nolimits_{j=1}^{\dim V}a_{ij}b_{jk}\Big)x_{k}
 \]
 
 \end_inset
 
-How can I write 
-\begin_inset Formula $\boldsymbol{x}$
+The representation 
+\begin_inset Formula $C$
 \end_inset
 
- as a linear combination of 
-\begin_inset Formula $(\boldsymbol{b}_{1},\ldots,\boldsymbol{b}_{n})$
+ of 
+\begin_inset Formula $f\circ g$
 \end_inset
 
- knowing 
-\begin_inset Formula $\boldsymbol{x}$
-\end_inset
-
- as a linear combination of 
-\begin_inset Formula $(\boldsymbol{a}_{1},\ldots,\boldsymbol{a}_{n})$
-\end_inset
-
-:
+ is then:
 \begin_inset Formula 
 \[
-\boldsymbol{x}=\sum\nolimits_{i=1}^{n}y_{i}\boldsymbol{a}_{i}=\sum\nolimits_{i=1}^{n}y_{i}\sum\nolimits_{j=1}^{n}a_{ij}\boldsymbol{b}_{j}=\sum\nolimits_{i=1}^{n}\sum\nolimits_{j=1}^{n}y_{i}a_{ij}\boldsymbol{b}_{j}=\sum\nolimits_{i=1}^{n}z_{i}\boldsymbol{b}_{i}
+c_{ik}=\sum\nolimits_{j=1}^{\dim V}a_{ij}b_{jk}
 \]
 
 \end_inset
 
+which defines the 
+\emph on
+matrix product
+\emph default
+.
+\end_layout
 
-\begin_inset Formula 
-\[
-z_{i}=\sum\nolimits_{j=1}^{n}y_{i}a_{ij}
-\]
-
+\begin_layout Standard
+Note that the set of square matrices of size 
+\begin_inset Formula $n\in\mathbb{N}$
 \end_inset
 
-
-\begin_inset Formula 
-\[
-\boldsymbol{z}=\boldsymbol{y}A\text{ or }\boldsymbol{z}A^{-1}=\boldsymbol{y}\text{ or }\boldsymbol{z}B=\boldsymbol{y}\text{ or }\boldsymbol{z}=\boldsymbol{y}B^{-1}
-\]
-
-\end_inset
-
-
+ is an abelian group with matrix addition and a monoid with matrix multiplication.
 \end_layout
 
 \end_body
