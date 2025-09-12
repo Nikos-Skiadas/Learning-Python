@@ -1167,12 +1167,22 @@ Note that a linear map
 \begin_inset Formula $f:V\longrightarrow U$
 \end_inset
 
- preserves the zero vectors:
- 
+ preserves the zero vectors as 
 \begin_inset Formula $f(\boldsymbol{0}_{V})=\boldsymbol{0}_{U}$
 \end_inset
 
+.
+ Indeed,
+ 
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
 
+,
+ 
+\begin_inset Formula $f(\boldsymbol{0}_{V})=f(\boldsymbol{x}-\boldsymbol{x})=f(\boldsymbol{x})-f(\boldsymbol{x})=\boldsymbol{0}_{U}$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Standard
@@ -1362,12 +1372,330 @@ matrix product
 .
 \end_layout
 
+\begin_layout Example
+A change of base on 
+\begin_inset Formula $V$
+\end_inset
+
+ is also a linear map 
+\begin_inset Formula $f:V\longrightarrow V$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $\{\boldsymbol{a}_{1},\ldots,\boldsymbol{a}_{\dim V}\}\subseteq V$
+\end_inset
+
+ and 
+\begin_inset Formula $\{\boldsymbol{b}_{1},\ldots,\boldsymbol{b}_{\dim V}\}\subseteq V$
+\end_inset
+
+ be bases of 
+\begin_inset Formula $V$
+\end_inset
+
+.
+ Naturally,
+ the vectors of the latter are linear combinations of the former.
+ 
+\begin_inset Formula $\forall j\in\mathbb{N}_{\dim V}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\boldsymbol{b}_{j}=\sum\nolimits_{i=1}^{\dim V}\boldsymbol{a}_{i}b_{ij}\text{ or }\boldsymbol{a}_{i}=\sum\nolimits_{j=1}^{\dim V}\boldsymbol{b}_{j}a_{ji}
+\]
+
+\end_inset
+
+For 
+\begin_inset Formula $\boldsymbol{x}\in V$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+\boldsymbol{v}=\sum\nolimits_{j=1}^{\dim V}y_{j}\boldsymbol{b}_{j}=\sum\nolimits_{i=1}^{\dim V}x_{i}\boldsymbol{a}_{i}=\sum\nolimits_{i=1}^{\dim V}x_{i}\sum\nolimits_{j=1}^{\dim V}\boldsymbol{b}_{j}a_{ji}=\sum\nolimits_{j=1}^{\dim V}\Big(\sum\nolimits_{i=1}^{\dim V}a_{ji}x_{i}\big)\boldsymbol{b}_{j}
+\]
+
+\end_inset
+
+or
+\begin_inset Formula 
+\[
+y_{j}=\sum\nolimits_{i=1}^{\dim V}a_{ji}x_{i}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A linear map 
+\begin_inset Formula $f:V\longrightarrow V$
+\end_inset
+
+ is called an endomorphism.
+\end_layout
+
+\begin_layout Definition
+Let 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+ be a linear map.
+ The kernel of 
+\begin_inset Formula $f$
+\end_inset
+
+ is the subspace 
+\begin_inset Formula $\ker f\leq V$
+\end_inset
+
+ such that,
+ 
+\begin_inset Formula $\forall\boldsymbol{x}\in\ker f$
+\end_inset
+
+,
+ 
+\begin_inset Formula $f(\boldsymbol{x})=\boldsymbol{0}_{U}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Definition
+The image of 
+\begin_inset Formula $f$
+\end_inset
+
+ is the 
+\emph on
+subspace
+\emph default
+ 
+\begin_inset Formula $f(V)\leq U$
+\end_inset
+
+ such that,
+ 
+\begin_inset Formula $\forall\boldsymbol{y}\in f(V)$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\exists\boldsymbol{x}\in V$
+\end_inset
+
+ such that 
+\begin_inset Formula $f(\boldsymbol{x})=\boldsymbol{y}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Note that because 
+\begin_inset Formula $f(\boldsymbol{0}_{V})=\boldsymbol{0}_{U}$
+\end_inset
+
+ (or because 
+\begin_inset Formula $\ker f$
+\end_inset
+
+ is a vector space),
+ 
+\begin_inset Formula $\boldsymbol{0}_{V}\in\ker f$
+\end_inset
+
+ at minimum.
+\end_layout
+
+\begin_layout Exercise
+Prove that the map 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+ such that 
+\begin_inset Formula $\forall\boldsymbol{x}\in V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $f(\boldsymbol{x})=\boldsymbol{0}_{U}$
+\end_inset
+
+,
+ is linear.
+\end_layout
+
+\begin_layout Standard
+Indeed,
+ 
+\begin_inset Formula $\forall a,b\in\mathbb{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall\boldsymbol{x},\boldsymbol{y}\in V$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+af(\boldsymbol{x})+bf(\boldsymbol{y})=a\boldsymbol{0}_{U}+b\boldsymbol{0}_{U}=\boldsymbol{0}_{U}=f(a\boldsymbol{x}+b\boldsymbol{y})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In the example above,
+ 
+\begin_inset Formula $\text{ker}f=V$
+\end_inset
+
+ and 
+\begin_inset Formula $\dim f(V)=0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Definition
+A linear map 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+ is:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+is a 
+\emph on
+monomorphism
+\emph default
+ (or a one-to-one linear map) if and only if 
+\begin_inset Formula $\dim\ker f=0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+is an epimorphism (or an onto 
+\begin_inset Formula $U$
+\end_inset
+
+ linear map) if and only if 
+\begin_inset Formula $f(V)=U$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+is an 
+\emph on
+isomporphism
+\emph default
+ when it is both a monomorphism and an epimorphism.
+\end_layout
+
+\end_deeper
+\begin_layout Definition
+If 
+\begin_inset Formula $U=V$
+\end_inset
+
+,
+ then 
+\begin_inset Formula $f$
+\end_inset
+
+ is:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+is an 
+\emph on
+endomorphism
+\emph default
+.
+\end_layout
+
+\begin_layout Itemize
+is an 
+\emph on
+automorphism
+\emph default
+ if and only if it is also an isomorphism.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+In general 
+\begin_inset Formula $\dim V=\dim\ker f+\dim f(V)$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Itemize
+For an isomorphism 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\dim V=\dim U$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+For an epimorphism 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\dim V\geq\dim U$
+\end_inset
+
+ and in particular 
+\begin_inset Formula $\dim V-\dim U=\dim\ker f$
+\end_inset
+
+
+\end_layout
+
 \begin_layout Standard
 Note that the set of square matrices of size 
 \begin_inset Formula $n\in\mathbb{N}$
 \end_inset
 
  is an abelian group with matrix addition and a monoid with matrix multiplication.
+ Square matrices correspond to endomorphisms 
+\begin_inset Formula $f:V\longrightarrow V$
+\end_inset
+
+ (or more generally to linear maps 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+ with 
+\begin_inset Formula $\dim V=\dim U$
+\end_inset
+
+.
 \end_layout
 
 \end_body
