@@ -1112,7 +1112,7 @@ dimension
 .
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Subsection
 Linear Maps
 \end_layout
 
@@ -1588,7 +1588,11 @@ monomorphism
 \end_layout
 
 \begin_layout Itemize
-is an epimorphism (or an onto 
+is an 
+\emph on
+epimorphism
+\emph default
+ (or an onto 
 \begin_inset Formula $U$
 \end_inset
 
@@ -1648,19 +1652,6 @@ In general
 \end_layout
 
 \begin_layout Itemize
-For an isomorphism 
-\begin_inset Formula $f:V\longrightarrow U$
-\end_inset
-
-,
- 
-\begin_inset Formula $\dim V=\dim U$
-\end_inset
-
-.
-\end_layout
-
-\begin_layout Itemize
 For an epimorphism 
 \begin_inset Formula $f:V\longrightarrow U$
 \end_inset
@@ -1677,13 +1668,93 @@ For an epimorphism
 
 \end_layout
 
-\begin_layout Standard
-Note that the set of square matrices of size 
-\begin_inset Formula $n\in\mathbb{N}$
+\begin_layout Itemize
+For an isomorphism 
+\begin_inset Formula $f:V\longrightarrow U$
 \end_inset
 
- is an abelian group with matrix addition and a monoid with matrix multiplication.
- Square matrices correspond to endomorphisms 
+,
+ 
+\begin_inset Formula $\dim V=\dim U$
+\end_inset
+
+ implying 
+\begin_inset Formula $\dim\ker f=0$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The dimension expressed above have terms:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\text{nullity}f=\dim\ker f$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\text{rank}f=\dim f(V)\leq\dim U$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Decompositions
+\end_layout
+
+\begin_layout Subsubsection
+Endomosphisms
+\end_layout
+
+\begin_layout Standard
+Every linear map 
+\begin_inset Formula $f:V\longrightarrow U$
+\end_inset
+
+ given bases on 
+\begin_inset Formula $V$
+\end_inset
+
+ and 
+\begin_inset Formula $U$
+\end_inset
+
+ respectively is represented by a 
+\begin_inset Formula $\dim U\times\dim V$
+\end_inset
+
+ matrix.
+ In matrix form we write
+\begin_inset Formula 
+\[
+f(\boldsymbol{x})=A\boldsymbol{x}
+\]
+
+\end_inset
+
+Given another linear map 
+\begin_inset Formula $g:W\longrightarrow V$
+\end_inset
+
+,
+ the composition is computed by the matrix product:
+\begin_inset Formula 
+\[
+f\circ g:W\longrightarrow U:(f\circ g)(x)=f(g(x))=f(Bx)=A(Bx)=ABx
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Square matrices are important because they are used to express endomorphisms 
 \begin_inset Formula $f:V\longrightarrow V$
 \end_inset
 
@@ -1695,7 +1766,133 @@ Note that the set of square matrices of size
 \begin_inset Formula $\dim V=\dim U$
 \end_inset
 
-.
+).
+\end_layout
+
+\begin_layout Standard
+Note that the set of square matrices (endomophisms) of size 
+\begin_inset Formula $\dim V\in\mathbb{N}$
+\end_inset
+
+ is an abelian group with matrix addition and a monoid with matrix multiplication (composition).
+ The unit square matrix corresponds to the identity map:
+\begin_inset Formula 
+\[
+\text{id}_{V}:V\longrightarrow V:\boldsymbol{x}\mapsto\text{id}_{V}(\boldsymbol{x})=\boldsymbol{x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Theorem
+If the endomorphism 
+\begin_inset Formula $f:V\longrightarrow V$
+\end_inset
+
+ is either a monomorphism or an epimorphism,
+ then it is an isomorphism (automorphism).
+\end_layout
+
+\begin_layout Definition
+Every automorphism 
+\begin_inset Formula $f:V\longrightarrow V$
+\end_inset
+
+ has an inverse 
+\begin_inset Formula $f^{-1}:V\longrightarrow V$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\[
+f\circ f^{-1}=f^{-1}\circ f=\text{id}_{V}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+That means that the set of invertible square matrices (automophisms) of size 
+\begin_inset Formula $\dim V\in\mathbb{N}$
+\end_inset
+
+ is a group with matrix multiplication (composition).
+ Note that this group is non-abelian!
+ In general the matrix product is non-commutiative,
+ 
+\begin_inset Formula $\forall A,B$
+\end_inset
+
+ matrices:
+\begin_inset Formula 
+\[
+AB\neq BA
+\]
+
+\end_inset
+
+This still holds even for square matrices (endomorphisms).
+ For square matrices,
+ the commutator is:
+\begin_inset Formula 
+\[
+[A,B]=AB-BA
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+Given an endomorphism 
+\begin_inset Formula $f:V\longrightarrow V$
+\end_inset
+
+ on a vector space 
+\begin_inset Formula $V$
+\end_inset
+
+ on a field 
+\begin_inset Formula $\mathbb{F}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\lambda\in\mathbb{F}$
+\end_inset
+
+ is an 
+\emph on
+eigenvalue
+\emph default
+ of 
+\begin_inset Formula $f$
+\end_inset
+
+,
+ if and only if 
+\begin_inset Formula $\exists\boldsymbol{x}\in V$
+\end_inset
+
+ 
+\emph on
+eigenvector
+\emph default
+,
+ such that
+\begin_inset Formula 
+\[
+f(\boldsymbol{x})=A\boldsymbol{x}=\lambda\boldsymbol{x}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \end_body
