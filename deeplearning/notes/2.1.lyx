@@ -1662,24 +1662,38 @@ For an epimorphism
 \end_inset
 
  and in particular 
-\begin_inset Formula $\dim V-\dim U=\dim\ker f$
+\begin_inset Formula $\dim V=\dim\ker f-\dim U$
 \end_inset
 
 
 \end_layout
 
 \begin_layout Itemize
-For an isomorphism 
+For a monomorphism 
 \begin_inset Formula $f:V\longrightarrow U$
 \end_inset
 
 ,
  
-\begin_inset Formula $\dim V=\dim U$
+\begin_inset Formula $\dim\ker f=0$
 \end_inset
 
  implying 
-\begin_inset Formula $\dim\ker f=0$
+\begin_inset Formula $\dim V=\dim f(V)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+For an isomporphism then,
+ where 
+\begin_inset Formula $f(V)=U$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\dim V=\dim U$
 \end_inset
 
 .
@@ -1701,6 +1715,14 @@ The dimension expressed above have terms:
 \end_inset
 
 
+\end_layout
+
+\begin_layout Standard
+Therefore 
+\begin_inset Formula $\dim V=\text{nullity}f+\text{rank}f$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Subsection
@@ -1728,7 +1750,11 @@ Every linear map
 \begin_inset Formula $\dim U\times\dim V$
 \end_inset
 
- matrix.
+ matrix 
+\begin_inset Formula $A$
+\end_inset
+
+.
  In matrix form we write
 \begin_inset Formula 
 \[
@@ -1741,11 +1767,15 @@ Given another linear map
 \begin_inset Formula $g:W\longrightarrow V$
 \end_inset
 
+ with matrix representation 
+\begin_inset Formula $B$
+\end_inset
+
 ,
  the composition is computed by the matrix product:
 \begin_inset Formula 
 \[
-f\circ g:W\longrightarrow U:(f\circ g)(x)=f(g(x))=f(Bx)=A(Bx)=ABx
+f\circ g:W\longrightarrow U:(f\circ g)(x)=f(g(x))=f(Bx)=ABx
 \]
 
 \end_inset
@@ -1795,6 +1825,72 @@ If the endomorphism
  then it is an isomorphism (automorphism).
 \end_layout
 
+\begin_layout Proof
+Indeed,
+ for endomorphisms it holds as well 
+\begin_inset Formula $\dim V=\dim\ker f+\dim f(V)$
+\end_inset
+
+.
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+If 
+\begin_inset Formula $f$
+\end_inset
+
+ is a monomorphism,
+ then 
+\begin_inset Formula $\dim\ker f=0$
+\end_inset
+
+,
+ therefore 
+\begin_inset Formula $\dim V=\dim f(V)$
+\end_inset
+
+.
+ Because 
+\begin_inset Formula $f(V)\leq V$
+\end_inset
+
+,
+ 
+\begin_inset Formula $f(V)=V$
+\end_inset
+
+ and therefore 
+\begin_inset Formula $f$
+\end_inset
+
+ is an epimorphism as well.
+\end_layout
+
+\begin_layout Itemize
+If 
+\begin_inset Formula $f$
+\end_inset
+
+ is a epimorphism,
+ 
+\begin_inset Formula $\dim V=\dim f(V)$
+\end_inset
+
+,
+ therefore 
+\begin_inset Formula $\dim\ker f=0$
+\end_inset
+
+,
+ therefore 
+\begin_inset Formula $f$
+\end_inset
+
+ is a monomorphism too.
+\end_layout
+
+\end_deeper
 \begin_layout Definition
 Every automorphism 
 \begin_inset Formula $f:V\longrightarrow V$
