@@ -32,10 +32,10 @@ from dataclasses import dataclass, field
 from statistics import StatisticsError, mean
 from typing import ClassVar, Self
 
+import pydantic
 
 
-@dataclass
-class Name:
+class Name(pydantic.BaseModel):
 
 	first: str
 	last: str
@@ -46,8 +46,7 @@ class Name:
 		return f"{self.first} {self.middle} {self.last}" if self.middle is not None else f"{self.first} {self.last}"
 
 
-@dataclass
-class Email:
+class Email(pydantic.BaseModel):
 
 	user: str
 	domain: str
@@ -58,8 +57,7 @@ class Email:
 		return f"{self.user}@{self.domain}.{self.suffix}"
 
 
-@dataclass
-class City:
+class City(pydantic.BaseModel):
 
 	name: str
 	zip: int
@@ -70,8 +68,7 @@ class City:
 		return f"{self.zip} {self.name}, {self.country.name}"
 
 
-@dataclass
-class Country:
+class Country(pydantic.BaseModel):
 
 	name: str
 	id: int
@@ -81,8 +78,7 @@ class Country:
 		return f"{self.name} ({self.id})"
 
 
-@dataclass
-class Address:
+class Address(pydantic.BaseModel):
 
 	street: str
 	number: int
@@ -93,8 +89,7 @@ class Address:
 		return f"{self.street} {self.number}, {self.city}"
 
 
-@dataclass
-class Phone:
+class Phone(pydantic.BaseModel):
 
 	number: int
 	country: Country
@@ -104,8 +99,7 @@ class Phone:
 		return f"{self.country.id:+} {self.number}"
 
 
-@dataclass
-class Person:
+class Person(pydantic.BaseModel):
 
 	count: ClassVar[int] = 1
 
@@ -135,12 +129,12 @@ class Person:
 
 	@property
 	def email(self) -> Email | None:
-		handle = f"{self.name}.{self.id}".lower().replace(" ",".")
+		return Email(
+			user = f"{self.name}.{self.id}".lower().replace(" ","."),
+			domain = self.department.domain,
+		) if self.department is not None else None
 
-		return Email(handle, self.department.domain) if self.department is not None else None
 
-
-@dataclass
 class Student(Person):
 
 	courses: dict[Course, float | None] = field(default_factory = dict)
@@ -164,7 +158,6 @@ class Student(Person):
 		course.students.setdefault(self)
 
 
-@dataclass
 class Teacher(Person):
 
 	courses: set[Course] = field(default_factory = set)
@@ -181,8 +174,7 @@ class Teacher(Person):
 		course.students[student] = grade
 
 
-@dataclass
-class Course:
+class Course(pydantic.BaseModel):
 
 	id: str
 	name: str
@@ -204,8 +196,7 @@ class Course:
 		return hash(self.id)
 
 
-@dataclass
-class Department:
+class Department(pydantic.BaseModel):
 
 	id: str
 	name: str
