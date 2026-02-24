@@ -3,26 +3,22 @@ from __future__ import annotations
 
 import argparse
 import pathlib
+from itertools import islice
 
 import datasets
 from huggingface_hub import list_repo_files  # List files inside the HF dataset repo.
 
 
 def get_categories() -> list[str]:
-	# Ask Hugging Face for every file path in the Amazon Reviews 2023 dataset repo.
-	files = list_repo_files(
-		"McAuley-Lab/Amazon-Reviews-2023",
-		repo_type = "dataset",
-	)
+	paths = [
+		pathlib.Path(path) for path in list_repo_files("McAuley-Lab/Amazon-Reviews-2023",
+			repo_type = "dataset",
+		)
+	]  # ask HuggingFace for every file path in the Amazon Reviews 2023 dataset repository
 
-	# Keep only raw_meta parquet folders, remove the "raw_meta_" prefix, deduplicate, and sort.
-	return sorted(
-		{
-			file_path.split("/")[0].removeprefix("raw_meta_")
-			for file_path in files
-			if file_path.startswith("raw_meta_") and file_path.endswith(".parquet")
-		}
-	)
+#	Keep only `raw_meta` parquet folders, remove the `raw_meta_` prefix, deduplicate, and sort:
+	return sorted({path.parts[0].removeprefix("raw_meta_")
+		for path in paths if path.suffix == ".parquet" and path.parts and path.parts[0].startswith("raw_meta_")})
 
 
 def get_category(
@@ -40,6 +36,7 @@ def get_category(
 		dataset = datasets.load_dataset("parquet",
 			data_files=f"hf://datasets/McAuley-Lab/Amazon-Reviews-2023/raw_meta_{name}/*.parquet",
 			split = "train",
+			streaming = True,
 		).remove_columns(
 			[
 				"features",
@@ -57,7 +54,8 @@ def get_category(
 		return
 
 	if trim is not None:
-		dataset = dataset.select(range(trim))
+		rows = list(islice(dataset, trim))
+		dataset = datasets.Dataset.from_list(rows)
 
 	dataset.to_csv((root / name).with_suffix(".csv"))
 
@@ -65,8 +63,9 @@ def get_category(
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--name", default = None)
-	parser.add_argument("--root", default = "data-mining/data")
+	parser.add_argument("--root", default = "./data")
 	parser.add_argument("--trim", type = int)
+
 	args = parser.parse_args()
 
 	if args.name is not None:
@@ -77,15 +76,14 @@ if __name__ == "__main__":
 		)
 
 	else:
-		# Discover all available category names automatically.
-		categories = get_categories()
-		# Loop through each discovered category.
+		categories = get_categories()  # discover all available category names automatically
+
+	#	Loop through each discovered category:
 		for category in categories:
-			# Show progress so you know which category is being fetched.
-			print(f"Fetching category: {category}")
-			# Download, process, and save this category as CSV.
-			get_category(
-				category,
+			print(f"Fetching category: {category}")  # show progress so you know which category is being fetched
+
+		#	Download, process, and save this category as CSV:
+			get_category(category,
 				args.root,
 				args.trim,
 			)
