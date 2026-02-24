@@ -51,13 +51,12 @@ def get_category(
 	except ValueError:
 		print(f"Dataset for category '{name}' not found.")
 
-		return
+		raise
 
 	if trim is not None:
-		rows = list(islice(dataset, trim))
-		dataset = datasets.Dataset.from_list(rows)
+		datasets.Dataset.from_list(list(islice(dataset, trim))).to_csv((root / name.lower()).with_suffix(".csv"))
 
-	dataset.to_csv((root / name).with_suffix(".csv"))
+	return dataset
 
 
 if __name__ == "__main__":
