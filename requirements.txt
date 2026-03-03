@@ -1,3 +1,4 @@
+dotenv
 rich
 numpy
 scipy

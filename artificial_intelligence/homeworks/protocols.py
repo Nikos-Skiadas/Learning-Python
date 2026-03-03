@@ -7,7 +7,7 @@ import typing
 @typing.runtime_checkable
 class Preprocessor[Decoded](typing.Protocol):
 
-	def __call__(self, *source: Decoded) -> Decoded:
+	def __call__(self, *sources: typing.Collection[Decoded]) -> typing.Collection[Decoded]:
 		...
 
 
@@ -15,8 +15,8 @@ class Preprocessor[Decoded](typing.Protocol):
 class Scorer[Target, Result](typing.Protocol):
 
 	def __call__(self,
-		true: Target,
-		pred: Target, /
+		true: typing.Collection[Target],
+		pred: typing.Collection[Target], /
 	) -> Result:
 		...
 
@@ -24,17 +24,17 @@ class Scorer[Target, Result](typing.Protocol):
 @typing.runtime_checkable
 class Encoder[Decoded, Encoded](typing.Protocol):
 
-	def fit(self, source: Decoded, signal: typing.Any | None = None, /) -> typing.Self:
+	def fit(self, source: typing.Collection[Decoded], signal: typing.Any | None = None, /) -> typing.Self:
 		...
 
-	def transform(self, source: Decoded, /) -> Encoded:
+	def transform(self, source: typing.Collection[Decoded], /) -> typing.Collection[Encoded]:
 		...
 
 
 @typing.runtime_checkable
 class Bicoder[Decoded, Encoded](Encoder[Decoded, Encoded], typing.Protocol):
 
-	def inverse_transform(self, target: Encoded, /) -> Decoded:
+	def inverse_transform(self, target: typing.Collection[Encoded], /) -> typing.Collection[Decoded]:
 		...
 
 
@@ -42,10 +42,10 @@ class Bicoder[Decoded, Encoded](Encoder[Decoded, Encoded], typing.Protocol):
 class Model[Source, Target](typing.Protocol):
 
 	def fit(self,
-		source: Source,
-		target: Target, /
+		source: typing.Collection[Source],
+		target: typing.Collection[Target], /
 	) -> typing.Self:
 		...
 
-	def predict(self, source: Source, /) -> Target:
+	def predict(self, source: typing.Collection[Source], /) -> typing.Collection[Target]:
 		...

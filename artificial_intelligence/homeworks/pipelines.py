@@ -13,13 +13,12 @@ class Classifier[
 	DecodedTarget,
 ]:
 
-	def __init__(self, *,
+	def __init__(self, *preprocessors: Preprocessor[DecodedSource],
 		model: Model[EncodedSource, EncodedTarget],
 		source_encoder: Encoder[DecodedSource, EncodedSource],
 		target_bicoder: Bicoder[DecodedTarget, EncodedTarget],
-		transform: Preprocessor[DecodedSource] | None = None,
 	) -> None:
-		self.transform = transform
+		self.transforms = preprocessors
 		self.model = model
 
 		self.source_encoder = source_encoder
@@ -31,12 +30,17 @@ class Classifier[
 
 		return self
 
+	def preprocess(self, source: typing.Collection[DecodedSource]) -> typing.Collection[DecodedSource]:
+		for preprocessor in self.transforms:
+			source = preprocessor(source)
+
+		return source
+
 	def fit(self,
-		source: DecodedSource,
-		target: DecodedTarget, /
+		source: typing.Collection[DecodedSource],
+		target: typing.Collection[DecodedTarget], /
 	) -> typing.Self:
-		if self.transform is not None:
-			source = self.transform(source)
+		source = self.preprocess(source)
 
 		self.source_encoder.fit(source, target)
 		self.target_bicoder.fit(        target)
@@ -48,21 +52,23 @@ class Classifier[
 
 		return self
 
-	def forward(self, source: DecodedSource) -> EncodedTarget:
-		if self.transform is not None:
-			source = self.transform(source)
+	def forward(self, source: typing.Collection[DecodedSource]) -> typing.Collection[EncodedTarget]:
+		return self.model.predict(
+			self.source_encoder.transform(
+				self.preprocess(source)
+			)
+		)
 
-		return self.model.predict(self.source_encoder.transform(source))
-
-	def predict(self, source: DecodedSource) -> DecodedTarget:
-		if self.transform is not None:
-			source = self.transform(source)
-
-		return self.target_bicoder.inverse_transform(self.forward(source))
+	def predict(self, source: typing.Collection[DecodedSource]) -> typing.Collection[DecodedTarget]:
+		return self.target_bicoder.inverse_transform(
+			self.forward(
+				self.preprocess(source)
+			)
+		)
 
 	def score(self,
-		source: DecodedSource,
-		target: DecodedTarget, /,
+		source: typing.Collection[DecodedSource],
+		target: typing.Collection[DecodedTarget], /,
 	**metrics: Scorer[EncodedTarget, float]) -> dict[str, float]:
 		true = self.target_bicoder.transform(target)
 		pred = self.forward(source)
