@@ -26,7 +26,15 @@ class Classifier[
 		self.target_bicoder = target_bicoder
 
 
-	def fit(self, source: DecodedSource, target: DecodedTarget) -> typing.Self:
+	def compile(self, **scorers: Scorer[EncodedTarget, float]) -> typing.Self:
+		self.scorers = scorers
+
+		return self
+
+	def fit(self,
+		source: DecodedSource,
+		target: DecodedTarget, /
+	) -> typing.Self:
 		if self.transform is not None:
 			source = self.transform(source)
 
@@ -40,20 +48,28 @@ class Classifier[
 
 		return self
 
+	def forward(self, source: DecodedSource) -> EncodedTarget:
+		if self.transform is not None:
+			source = self.transform(source)
+
+		return self.model.predict(self.source_encoder.transform(source))
+
 	def predict(self, source: DecodedSource) -> DecodedTarget:
 		if self.transform is not None:
 			source = self.transform(source)
 
-		return self.target_bicoder.inverse_transform(
-			self.model.predict(
-				self.source_encoder.transform(source)
-			)
-		)
+		return self.target_bicoder.inverse_transform(self.forward(source))
 
 	def score(self,
 		source: DecodedSource,
 		target: DecodedTarget, /,
-	**metrics: Scorer[DecodedTarget, float]) -> dict[str, float]:
-		prediction = self.predict(source)
+	**metrics: Scorer[EncodedTarget, float]) -> dict[str, float]:
+		true = self.target_bicoder.transform(target)
+		pred = self.forward(source)
 
-		return {name: scorer(target, prediction) for name, scorer in metrics.items()}
+		return {
+			name: scorer(
+				true,
+				pred,
+			) for name, scorer in metrics.items()
+		}

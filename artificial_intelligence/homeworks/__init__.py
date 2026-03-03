@@ -1,5 +1,5 @@
-from .protocols import Bicoder, Encoder, Model, Preprocessor, Scorer
-from .tools import Classifier
+from .protocols import Preprocessor, Encoder, Bicoder, Model, Scorer
+from .pipeplines import Classifier
 
 __all__ = [
     "Preprocessor",
