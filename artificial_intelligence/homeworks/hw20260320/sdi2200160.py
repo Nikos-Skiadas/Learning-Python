@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 
+import functools
 import typing
 
-import numpy
 import pandas
 import sklearn.feature_extraction.text
 import sklearn.linear_model
@@ -11,7 +11,7 @@ import sklearn.preprocessing
 import sklearn.model_selection
 import sklearn.metrics
 
-from ..protocols import Preprocessor, Encoder, Bicoder, Model, Scorer
+from ..protocols import Scorer
 from ..pipelines import Classifier
 from ..data import data
 
@@ -24,100 +24,32 @@ RANDOM_STATE = 42
 # Preprocessors
 # ============================================================================
 
-class CombineQA(Preprocessor[dict]):
+class CombineQA:
 	"""Combines question and answer fields into a single text input."""
 
-	def __call__(self, sources: typing.Collection[dict]) -> list[str]:
+	def __call__(self, sources: pandas.DataFrame) -> list[str]:
 		# TODO: Implement combining 'question' and 'interview_answer' fields
 		# Hint: You decided to use " | " as separator in your previous implementation
+		# Example: sources["question"].fillna("").str.strip() + " | " + sources["interview_answer"].fillna("").str.strip()
 		# Return: list of combined question+answer strings
 		raise NotImplementedError
 
 
 # ============================================================================
-# Encoders
+# Metric Helpers
 # ============================================================================
 
-class TfidfEncoder(Encoder[str, typing.Any]):
-	"""Wrapper for sklearn's TfidfVectorizer to match Encoder protocol."""
+def macro_averaged(
+	metric_fn: Scorer,
+**kwargs) -> Scorer:
+	"""Wrap sklearn metric with macro averaging and zero_division handling.
 
-	def __init__(self, **kwargs):
-		self.vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(**kwargs)
-
-	def fit(self, source: typing.Collection[str], signal: typing.Any | None = None) -> typing.Self:
-		self.vectorizer.fit(list(source))
-		return self
-
-	def transform(self, source: typing.Collection[str]) -> typing.Any:
-		# Returns scipy sparse matrix
-		return self.vectorizer.transform(list(source))
-
-
-class LabelBicoder(Bicoder[str, typing.Any]):
-	"""Wrapper for sklearn's LabelEncoder to match Bicoder protocol."""
-
-	def __init__(self):
-		self.encoder = sklearn.preprocessing.LabelEncoder()
-
-	def fit(self, source: typing.Collection[str], signal: typing.Any | None = None) -> typing.Self:
-		self.encoder.fit(list(source))
-		return self
-
-	def transform(self, source: typing.Collection[str]) -> typing.Any:
-		return self.encoder.transform(list(source))
-
-	def inverse_transform(self, target: typing.Collection[typing.Any]) -> typing.Any:
-		return self.encoder.inverse_transform(numpy.array(list(target)))
-
-
-# ============================================================================
-# Models
-# ============================================================================
-
-class LogisticModel(Model[typing.Any, typing.Any]):
-	"""Wrapper for sklearn's LogisticRegression to match Model protocol."""
-
-	def __init__(self, **kwargs):
-		self.model = sklearn.linear_model.LogisticRegression(**kwargs)
-
-	def fit(self, source: typing.Any, target: typing.Any) -> typing.Self:
-		self.model.fit(source, target)
-		return self
-
-	def predict(self, source: typing.Any) -> typing.Any:
-		return self.model.predict(source)
-
-
-# ============================================================================
-# Scorers
-# ============================================================================
-
-class AccuracyScorer(Scorer[typing.Any, float]):
-	"""Accuracy metric scorer."""
-
-	def __call__(self, true: typing.Any, pred: typing.Any) -> float:
-		return float(sklearn.metrics.accuracy_score(true, pred))
-
-
-class MacroPrecisionScorer(Scorer[typing.Any, float]):
-	"""Macro-averaged precision scorer."""
-
-	def __call__(self, true: typing.Any, pred: typing.Any) -> float:
-		return float(sklearn.metrics.precision_score(true, pred, average='macro', zero_division=0))
-
-
-class MacroRecallScorer(Scorer[typing.Any, float]):
-	"""Macro-averaged recall scorer."""
-
-	def __call__(self, true: typing.Any, pred: typing.Any) -> float:
-		return float(sklearn.metrics.recall_score(true, pred, average='macro', zero_division=0))
-
-
-class MacroF1Scorer(Scorer[typing.Any, float]):
-	"""Macro-averaged F1 scorer."""
-
-	def __call__(self, true: typing.Any, pred: typing.Any) -> float:
-		return float(sklearn.metrics.f1_score(true, pred, average='macro', zero_division=0))
+	Returns a partial function that can be used as a Scorer.
+	"""
+	return functools.partial(metric_fn,
+		average = 'macro',
+		zero_division = 0,
+	**kwargs)
 
 
 # ============================================================================
@@ -133,57 +65,57 @@ def main() -> None:
 
 	# TODO: Extract features (X) and labels (y) from dataframe
 	# Hint: Combine 'question' and 'interview_answer' fields with " | " separator
-	# Example: train_df["combined"] = train_df["question"].str.strip() + " | " + train_df["interview_answer"].str.strip()
-	X: list[str] = []  # TODO: Fill with combined text strings
-	y: list[str] = []  # TODO: Fill with clarity_label values
+	# Example: combined = train_df["question"].fillna("").str.strip() + " | " + train_df["interview_answer"].fillna("").str.strip()
+	X = pandas.Series(dtype = str)  # TODO: Fill with combined text strings
+	y = pandas.Series(dtype = str)  # TODO: Fill with clarity_label values
 
 	# Stratified train/validation split
-	X_train, X_valid, y_train, y_valid = sklearn.model_selection.train_test_split(
-		X,
-		y,
-		test_size=0.2,
-		random_state=RANDOM_STATE,
-		stratify=y,
+	X_train, X_valid, y_train, y_valid = sklearn.model_selection.train_test_split(X, y,
+		test_size = 0.2,
+		random_state = RANDOM_STATE,
+		stratify = y,
 	)
 
 	print(f"Training examples   : {len(X_train)}")
 	print(f"Validation examples : {len(X_valid)}")
 	print()
 
-	# Build the pipeline
-	# TODO: Configure TF-IDF parameters based on your previous experiments
-	tfidf_encoder = TfidfEncoder(
-		# encoding="utf-8",
-		# lowercase=True,
-		# stop_words="english",
-		# ngram_range=(1, 2),
-		# ...
+	# Build the pipeline components
+	tfidf_encoder = sklearn.feature_extraction.text.TfidfVectorizer(
+		encoding = "utf-8",
+		decode_error = "replace",
+		strip_accents = "unicode",
+		lowercase = True,
+		stop_words = "english",
+		token_pattern = r"(?u)\b\w[\w']*\b",
+		ngram_range = (1, 2),
+		max_df = 0.95,
+		sublinear_tf = True,
 	)
 
-	label_bicoder = LabelBicoder()
+	label_bicoder = sklearn.preprocessing.LabelEncoder()
 
-	# TODO: Configure LogisticRegression parameters
-	model = LogisticModel(
-		max_iter=1000,
-		class_weight="balanced",
-		random_state=RANDOM_STATE,
-		# multi_class='multinomial',  # or 'ovr'
+	model = sklearn.linear_model.LogisticRegression(
+		max_iter = 1000,
+		class_weight = "balanced",
+		random_state = RANDOM_STATE,
 	)
 
 	# Create the classifier pipeline
 	classifier = Classifier(
 		# preprocessors go here if you need any beyond CombineQA
-		model=model,
-		source_encoder=tfidf_encoder,
-		target_bicoder=label_bicoder,
+		model = model,
+		source_encoder = tfidf_encoder,
+		target_bicoder = label_bicoder,  # type: ignore[arg-type]
 	)
 
 	# Compile with metrics
+	# Note: type: ignore needed due to sklearn returning numpy.Float vs Python float
 	classifier.compile(
-		accuracy=AccuracyScorer(),
-		precision=MacroPrecisionScorer(),
-		recall=MacroRecallScorer(),
-		f1=MacroF1Scorer(),
+		accuracy = sklearn.metrics.accuracy_score,
+		precision = macro_averaged(sklearn.metrics.precision_score),
+		recall = macro_averaged(sklearn.metrics.recall_score),
+		f1 = macro_averaged(sklearn.metrics.f1_score),
 	)
 
 	# Fit the pipeline
@@ -194,11 +126,9 @@ def main() -> None:
 
 	# Evaluate on validation set
 	print("=== TF-IDF + Logistic Regression Baseline ===")
-	scores = classifier.score(X_valid, y_valid,
-		accuracy=AccuracyScorer(),
-		precision=MacroPrecisionScorer(),
-		recall=MacroRecallScorer(),
-		f1=MacroF1Scorer(),
+	scores = classifier.score(
+		X_valid,
+		y_valid,
 	)
 
 	for metric_name, score_value in scores.items():

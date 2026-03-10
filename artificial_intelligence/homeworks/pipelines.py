@@ -3,7 +3,12 @@ from __future__ import annotations
 
 import typing
 
+import numpy
+
 from .protocols import Preprocessor, Encoder, Bicoder, Model, Scorer
+
+
+Float = float | numpy.float16 | numpy.float32
 
 
 class Classifier[
@@ -25,20 +30,20 @@ class Classifier[
 		self.target_bicoder = target_bicoder
 
 
-	def compile(self, **scorers: Scorer[EncodedTarget, float]) -> typing.Self:
+	def compile(self, **scorers: Scorer[EncodedTarget, Float]) -> typing.Self:
 		self.scorers = scorers
 
 		return self
 
-	def preprocess(self, source: typing.Collection[DecodedSource]) -> typing.Collection[DecodedSource]:
+	def preprocess(self, source: DecodedSource) -> DecodedSource:
 		for preprocessor in self.transforms:
 			source = preprocessor(source)
 
 		return source
 
 	def fit(self,
-		source: typing.Collection[DecodedSource],
-		target: typing.Collection[DecodedTarget], /
+		source: DecodedSource,
+		target: DecodedTarget, /
 	) -> typing.Self:
 		source = self.preprocess(source)
 
@@ -52,14 +57,14 @@ class Classifier[
 
 		return self
 
-	def forward(self, source: typing.Collection[DecodedSource]) -> typing.Collection[EncodedTarget]:
+	def forward(self, source: DecodedSource) -> EncodedTarget:
 		return self.model.predict(
 			self.source_encoder.transform(
 				self.preprocess(source)
 			)
 		)
 
-	def predict(self, source: typing.Collection[DecodedSource]) -> typing.Collection[DecodedTarget]:
+	def predict(self, source: DecodedSource) -> DecodedTarget:
 		return self.target_bicoder.inverse_transform(
 			self.forward(
 				self.preprocess(source)
@@ -67,9 +72,9 @@ class Classifier[
 		)
 
 	def score(self,
-		source: typing.Collection[DecodedSource],
-		target: typing.Collection[DecodedTarget], /,
-	**metrics: Scorer[EncodedTarget, float]) -> dict[str, float]:
+		source: DecodedSource,
+		target: DecodedTarget, /,
+	) -> dict[str, Float]:
 		true = self.target_bicoder.transform(target)
 		pred = self.forward(source)
 
@@ -77,5 +82,5 @@ class Classifier[
 			name: scorer(
 				true,
 				pred,
-			) for name, scorer in metrics.items()
+			) for name, scorer in self.scorers.items()
 		}
