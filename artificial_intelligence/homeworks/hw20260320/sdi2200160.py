@@ -238,14 +238,12 @@ def optimize_with_grid_search():
 
 	# Define parameter grid
 	param_grid = dict(
-		source_encoder__ngram_range = [(1, 1), (1, 2), (1, 3)],
-		source_encoder__max_df = [.85, .90, .95],
-		source_encoder__min_df = [1, 2, 5],
+		source_encoder__ngram_range = [(1, 2), (1, 3), (2, 3)],
+		source_encoder__max_df = [.95, 1.],
+		source_encoder__min_df = [1, 2],
 		source_encoder__sublinear_tf = [True, False],
 		model__C = [1e-1, 1, 1e+1],
 		model__class_weight = ['balanced', None],
-		model__solver = ['lbfgs', 'liblinear'],
-		model__max_iter = [500, 1000],
 	)
 
 	# Create GridSearchCV
@@ -273,6 +271,7 @@ def optimize_with_grid_search():
 	print("="*80)
 	print(f"\nBest F1 (macro, cross-validation): {grid_search.best_score_:.4f}")
 	print("\nBest parameters:")
+
 	for param, value in grid_search.best_params_.items():
 		print(f"  {param:35s} = {value}")
 
@@ -280,13 +279,19 @@ def optimize_with_grid_search():
 	print("\n" + "="*80)
 	print("VALIDATION SET EVALUATION")
 	print("="*80)
+
 	best_classifier = grid_search.best_estimator_
 	val_scores = best_classifier.score(X_valid, y_valid)
+
 	print()
+
 	for name, score in val_scores.items():
 		print(f"{name:12s} {score:.4f}")
 
 	print()
+
+	y_pred = best_classifier.predict(X_valid)
+	y_pred.to_csv("submission.csv")  # TODO: align index with valid split and rename index to `Id` and name to `Predicted`
 
 	return grid_search
 
