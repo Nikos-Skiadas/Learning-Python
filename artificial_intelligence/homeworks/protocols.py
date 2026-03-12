@@ -7,7 +7,7 @@ import typing
 @typing.runtime_checkable
 class Preprocessor[Decoded](typing.Protocol):
 
-	def __call__(self, *sources: Decoded) -> Decoded:
+	def __call__(self, source: Decoded) -> Decoded:
 		...
 
 
