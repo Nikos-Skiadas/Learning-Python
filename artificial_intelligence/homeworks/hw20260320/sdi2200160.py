@@ -18,6 +18,7 @@ import sklearn.metrics
 
 from ..protocols import Scorer
 from ..pipelines import Classifier
+from ..preprocessing import ChainPreprocessor
 from ..data import data
 
 
@@ -139,14 +140,15 @@ def tfidf_logistic_regression(X_train, y_train, X_devel, y_devel, X_valid, y_val
 		random_state = RANDOM_STATE,
 	)
 
-	# Create preprocessors
-	text_cleaner = CleanText()
-	lemmatizer = Lemmatize()
+	# Create preprocessor chain
+	preprocessor = ChainPreprocessor(
+		CleanText(),
+		Lemmatize(),
+	)
 
 	# Create the classifier pipeline
 	classifier = Classifier(
-		text_cleaner,
-		lemmatizer,
+		preprocessor = preprocessor,
 		model = model,
 		source_encoder = X_encoder,
 		target_bicoder = y_bicoder,  # type: ignore[arg-type]

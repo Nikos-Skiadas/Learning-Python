@@ -52,11 +52,12 @@ This codebase uses a **Protocol-based generic architecture** for machine learnin
 **Pipeline Orchestration** (in `pipelines.py`):
 
 - `Classifier[DecodedSource, EncodedSource, EncodedTarget, DecodedTarget]` - Orchestrates the full pipeline:
-  1. Preprocessing (multiple preprocessors chained)
+  1. Preprocessing (single preprocessor, use `ChainPreprocessor` for multiple steps)
   2. Source encoding (features)
   3. Target encoding (labels)
   4. Model fitting/prediction
   5. Evaluation with metrics
+  - Inherits from `sklearn.base.BaseEstimator` and `ClassifierMixin` for full sklearn compatibility
 
 **Key Design Patterns**:
 
@@ -70,6 +71,11 @@ This codebase uses a **Protocol-based generic architecture** for machine learnin
 - Uses HuggingFace `datasets` library
 - Loads from `.env` configuration (via `dotenv`)
 - Example: QEvasion dataset for response clarity classification
+
+**Preprocessing Utilities** (in `preprocessing.py`):
+
+- `ChainPreprocessor[Decoded]` - Chains multiple preprocessors sequentially
+- `IdentityPreprocessor[Decoded]` - No-op preprocessor (returns input unchanged)
 
 ### Homework Structure
 
@@ -123,7 +129,73 @@ Each homework is in a dated subdirectory (e.g., `hw20260320/`):
 Must provide `fit(source, signal=None)` and `transform(source)` methods that match the `Encoder` protocol. For reversible encodings, implement `Bicoder` with `inverse_transform()`.
 
 **Extending the Classifier**:
-The `Classifier` accepts multiple preprocessors via `*preprocessors` and chains them in order. Add custom preprocessing by implementing the `Preprocessor` protocol.
+The `Classifier` accepts a single `preprocessor` argument. For multiple preprocessing steps, use `ChainPreprocessor` from `preprocessing.py`:
+
+```python
+from ..preprocessing import ChainPreprocessor
+
+preprocessor = ChainPreprocessor(CleanText(), Lemmatize())
+classifier = Classifier(preprocessor=preprocessor, ...)
+```
+
+Add custom preprocessing by implementing the `Preprocessor` protocol.
 
 **Model Evaluation**:
 Use `classifier.score(source, target, **metrics)` where metrics are `Scorer` implementations. Returns `dict[str, float]` of metric names to values.
+
+## Hyperparameter Optimization
+
+The `Classifier` class inherits from `sklearn.base.BaseEstimator` and `ClassifierMixin`, making it fully compatible with sklearn's hyperparameter optimization tools like `GridSearchCV` and `RandomizedSearchCV`.
+
+**Usage with GridSearchCV**:
+
+```python
+from sklearn.model_selection import GridSearchCV
+from ..preprocessing import ChainPreprocessor
+
+preprocessor = ChainPreprocessor(CleanText(), Lemmatize())
+
+classifier = Classifier(
+    preprocessor=preprocessor,
+    model=sklearn.linear_model.LogisticRegression(random_state=42),
+    source_encoder=sklearn.feature_extraction.text.TfidfVectorizer(),
+    target_bicoder=sklearn.preprocessing.LabelEncoder(),
+)
+
+classifier.compile(f1=macro_averaged(sklearn.metrics.f1_score))
+
+param_grid = {
+    'source_encoder__ngram_range': [(1, 1), (1, 2), (1, 3)],
+    'source_encoder__max_df': [0.85, 0.90, 0.95],
+    'model__C': [0.1, 1.0, 10.0],
+    'model__solver': ['lbfgs', 'liblinear'],
+}
+
+grid_search = GridSearchCV(
+    classifier,
+    param_grid,
+    scoring='f1_macro',
+    cv=5,
+    n_jobs=-1,
+)
+
+grid_search.fit(X_train, y_train)
+best_classifier = grid_search.best_estimator_
+```
+
+**Parameter Naming Convention**:
+
+- Use double-underscore notation: `component__parameter`
+- `source_encoder__ngram_range` tunes the TfidfVectorizer's ngram_range
+- `model__C` tunes the LogisticRegression's C parameter
+- `target_bicoder__` prefix for label encoder parameters (if any)
+- `preprocessor__` prefix for preprocessor parameters (if preprocessor has tunable params)
+
+**Key Benefits**:
+
+- Inherits from `BaseEstimator` - automatic `get_params()`/`set_params()` implementation
+- Inherits from `ClassifierMixin` - provides default `score()` method (though we override it)
+- Works seamlessly with all sklearn tools: `GridSearchCV`, `RandomizedSearchCV`, `cross_val_score`, etc.
+- Framework-agnostic: sklearn models, PyTorch models (with protocol-compliant wrappers), or custom implementations
+
+**See**: `hw20260320/sdi2200160_optimized.py` for complete GridSearchCV example.

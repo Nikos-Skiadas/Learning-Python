@@ -4,6 +4,7 @@ from __future__ import annotations
 import typing
 
 import numpy
+import sklearn.base
 
 from .protocols import Preprocessor, Encoder, Bicoder, Model, Scorer
 
@@ -16,16 +17,17 @@ class Classifier[
 	EncodedSource,
 	EncodedTarget,
 	DecodedTarget,
-]:
+](sklearn.base.BaseEstimator, sklearn.base.ClassifierMixin):
 
-	def __init__(self, *preprocessors: Preprocessor[DecodedSource],
+	def __init__(self,
+		preprocessor: Preprocessor[DecodedSource],
 		model: Model[EncodedSource, EncodedTarget],
 		source_encoder: Encoder[DecodedSource, EncodedSource],
 		target_bicoder: Bicoder[DecodedTarget, EncodedTarget],
 	) -> None:
-		self.transforms = preprocessors
+		# BaseEstimator uses __init__ params for get_params/set_params
+		self.preprocessor = preprocessor
 		self.model = model
-
 		self.source_encoder = source_encoder
 		self.target_bicoder = target_bicoder
 
@@ -36,10 +38,7 @@ class Classifier[
 		return self
 
 	def preprocess(self, source: DecodedSource) -> DecodedSource:
-		for preprocessor in self.transforms:
-			source = preprocessor(source)
-
-		return source
+		return self.preprocessor(source)
 
 	def fit(self,
 		source: DecodedSource,
