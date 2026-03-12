@@ -79,7 +79,14 @@ def macro_averaged(
 # ============================================================================
 
 
-def data_prep(frac: float = .0):
+def data_prep(frac: float = .0) -> tuple[
+	pandas.Series,
+	pandas.Series,
+	pandas.Series,
+	pandas.Series,
+	pandas.Series,
+	pandas.Series,
+]:
 	# Load training data
 	train_data = data["train"].to_pandas(); assert isinstance(train_data, pandas.DataFrame)
 	valid_data = data["test" ].to_pandas(); assert isinstance(valid_data, pandas.DataFrame)

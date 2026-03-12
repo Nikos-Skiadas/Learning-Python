@@ -19,7 +19,7 @@ def optimize_with_grid_search():
 	"""Optimize TF-IDF + Logistic Regression using GridSearchCV."""
 	# Prepare data
 	print("Preparing data...")
-	X_train, y_train, X_devel, y_devel, X_valid, y_valid = data_prep(frac=0.0)
+	X_train, y_train, X_devel, y_devel, X_valid, y_valid = data_prep(frac=.0)  # grid search does its own splitting
 
 	# Create preprocessor chain
 	preprocessor = ChainPreprocessor(
@@ -59,10 +59,10 @@ def optimize_with_grid_search():
 	# Define parameter grid
 	param_grid = {
 		'source_encoder__ngram_range': [(1, 1), (1, 2), (1, 3)],
-		'source_encoder__max_df': [0.85, 0.90, 0.95],
+		'source_encoder__max_df': [.85, .90, .95],
 		'source_encoder__min_df': [1, 2, 5],
 		'source_encoder__sublinear_tf': [True, False],
-		'model__C': [0.1, 1.0, 10.0],
+		'model__C': [1e-1, 1, 1e+1],
 		'model__class_weight': ['balanced', None],
 		'model__solver': ['lbfgs', 'liblinear'],
 		'model__max_iter': [500, 1000],
@@ -85,7 +85,7 @@ def optimize_with_grid_search():
 	print(f"Total fits: {len(sklearn.model_selection.ParameterGrid(param_grid)) * 5} (5-fold CV)")
 	print()
 
-	grid_search.fit(X_train, y_train)
+	grid_search.fit(X_train, y_train)  # type: ignore[no-untyped-call]
 
 	# Print results
 	print("\n" + "="*80)
@@ -112,4 +112,4 @@ def optimize_with_grid_search():
 
 
 if __name__ == "__main__":
-	grid_search = optimize_with_grid_search()
+	grid_search_run = optimize_with_grid_search()
