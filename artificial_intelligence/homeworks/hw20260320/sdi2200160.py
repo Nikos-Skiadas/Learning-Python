@@ -86,10 +86,18 @@ class Word2VecEncoder(
 
 		Args:
 			embeddings_path: Path to embeddings file or preset name:
-				- 'glove-wiki-gigaword-50' (50d, 400K words, ~70MB) - fast, good baseline
+				Wiki-Gigaword (Wikipedia + Gigaword):
+				- 'glove-wiki-gigaword-50' (50d, 400K words, ~70MB)
 				- 'glove-wiki-gigaword-100' (100d, 400K words, ~140MB)
 				- 'glove-wiki-gigaword-200' (200d, 400K words, ~280MB)
 				- 'glove-wiki-gigaword-300' (300d, 400K words, ~420MB)
+
+				Twitter (2B tweets, more informal):
+				- 'glove-twitter-25' (25d, 1.2M words, ~100MB)
+				- 'glove-twitter-50' (50d, 1.2M words, ~200MB)
+				- 'glove-twitter-100' (100d, 1.2M words, ~400MB)
+				- 'glove-twitter-200' (200d, 1.2M words, ~800MB)
+
 				- Or provide your own path to .txt file
 			cache_dir: Directory to cache downloaded embeddings
 		"""
@@ -98,21 +106,35 @@ class Word2VecEncoder(
 		self.word_vectors = None
 		self.vector_size = None
 
-	def download_glove(self, dim: int) -> str:
-		"""Download GloVe embeddings if not cached."""
+	def download_glove(self, embeddings_name: str, dim: int) -> str:
+		"""Download GloVe embeddings if not cached.
+
+		Args:
+			embeddings_name: 'wiki-gigaword' or 'twitter'
+			dim: Embedding dimension
+		"""
 		cache_path = Path(self.cache_dir)
 		cache_path.mkdir(exist_ok = True)
 
-		embeddings_file = cache_path / f"glove.6B.{dim}d.txt"
+		# Determine file names and URLs based on embeddings type
+		if embeddings_name == 'wiki-gigaword':
+			embeddings_file = cache_path / f"glove.6B.{dim}d.txt"
+			url = "https://nlp.stanford.edu/data/glove.6B.zip"
+			zip_name = "glove.6B.zip"
+		elif embeddings_name == 'twitter':
+			embeddings_file = cache_path / f"glove.twitter.27B.{dim}d.txt"
+			url = "https://nlp.stanford.edu/data/glove.twitter.27B.zip"
+			zip_name = "glove.twitter.27B.zip"
+		else:
+			raise ValueError(f"Unknown embeddings type: {embeddings_name}")
 
 		if embeddings_file.exists():
 			print(f"Using cached embeddings: {embeddings_file}")
 			return str(embeddings_file)
 
 		# Download GloVe embeddings
-		print(f"Downloading GloVe {dim}d embeddings (~{dim*2}MB)...")
-		url = "https://nlp.stanford.edu/data/glove.6B.zip"
-		zip_path = cache_path / "glove.6B.zip"
+		print(f"Downloading GloVe {embeddings_name} {dim}d embeddings...")
+		zip_path = cache_path / zip_name
 
 		# Download
 		urllib.request.urlretrieve(url, zip_path)
@@ -140,8 +162,10 @@ class Word2VecEncoder(
 		# Handle preset names
 		if self.embeddings_path.startswith('glove-wiki-gigaword-'):
 			dim = int(self.embeddings_path.split('-')[-1])
-			embeddings_file = self.download_glove(dim)
-
+			embeddings_file = self.download_glove('wiki-gigaword', dim)
+		elif self.embeddings_path.startswith('glove-twitter-'):
+			dim = int(self.embeddings_path.split('-')[-1])
+			embeddings_file = self.download_glove('twitter', dim)
 		else:
 			embeddings_file = self.embeddings_path
 
@@ -282,11 +306,18 @@ def word2vec_encoder_factory(embeddings_path: str = "glove-wiki-gigaword-50") ->
 
 	Args:
 		embeddings_path: Pre-trained embeddings to use.
-			Popular options:
+			Wiki-Gigaword options (Wikipedia + news):
 			- 'glove-wiki-gigaword-50' (default, 50d, 400K words, ~70MB)
 			- 'glove-wiki-gigaword-100' (100d, 400K words, ~140MB)
 			- 'glove-wiki-gigaword-200' (200d, 400K words, ~280MB)
 			- 'glove-wiki-gigaword-300' (300d, 400K words, ~420MB)
+
+			Twitter options (2B tweets, informal language):
+			- 'glove-twitter-25' (25d, 1.2M words, ~100MB)
+			- 'glove-twitter-50' (50d, 1.2M words, ~200MB)
+			- 'glove-twitter-100' (100d, 1.2M words, ~400MB)
+			- 'glove-twitter-200' (200d, 1.2M words, ~800MB)
+
 			- Or provide your own path to embeddings .txt file
 
 	Returns:
@@ -298,8 +329,13 @@ def word2vec_encoder_factory(embeddings_path: str = "glove-wiki-gigaword-50") ->
 	# This ensures the embeddings are cached before parallel jobs start
 	if embeddings_path.startswith('glove-wiki-gigaword-'):
 		dim = int(embeddings_path.split('-')[-1])
-		print(f"Pre-downloading GloVe {dim}d embeddings for caching...")
-		X_encoder.download_glove(dim)
+		print(f"Pre-downloading GloVe wiki-gigaword {dim}d embeddings for caching...")
+		X_encoder.download_glove('wiki-gigaword', dim)
+		print("Embeddings cached and ready for grid search.\n")
+	elif embeddings_path.startswith('glove-twitter-'):
+		dim = int(embeddings_path.split('-')[-1])
+		print(f"Pre-downloading GloVe twitter {dim}d embeddings for caching...")
+		X_encoder.download_glove('twitter', dim)
 		print("Embeddings cached and ready for grid search.\n")
 
 	# For pre-trained word embeddings, only tune the classifier
@@ -416,7 +452,7 @@ if __name__ == "__main__":
 	)
 	parser.add_argument("--embeddings",
 		default = "glove-wiki-gigaword-50",
-		help = "Pre-trained word embeddings (default: glove-wiki-gigaword-50). Options: glove-wiki-gigaword-{50,100,200,300}"
+		help = "Pre-trained word embeddings (default: glove-wiki-gigaword-50). Options: glove-wiki-gigaword-{50,100,200,300}, glove-twitter-{25,50,100,200}"
 	)
 
 	args = parser.parse_args()
