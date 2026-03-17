@@ -101,7 +101,7 @@ class Word2VecEncoder(
 	def download_glove(self, dim: int) -> str:
 		"""Download GloVe embeddings if not cached."""
 		cache_path = Path(self.cache_dir)
-		cache_path.mkdir(exist_ok=True)
+		cache_path.mkdir(exist_ok = True)
 
 		embeddings_file = cache_path / f"glove.6B.{dim}d.txt"
 
@@ -294,6 +294,14 @@ def word2vec_encoder_factory(embeddings_path: str = "glove-wiki-gigaword-50") ->
 	"""
 	X_encoder = Word2VecEncoder(embeddings_path = embeddings_path)
 
+	# Pre-download embeddings to avoid parallel download conflicts in GridSearchCV
+	# This ensures the embeddings are cached before parallel jobs start
+	if embeddings_path.startswith('glove-wiki-gigaword-'):
+		dim = int(embeddings_path.split('-')[-1])
+		print(f"Pre-downloading GloVe {dim}d embeddings for caching...")
+		X_encoder.download_glove(dim)
+		print("Embeddings cached and ready for grid search.\n")
+
 	# For pre-trained word embeddings, only tune the classifier
 	# (the encoder itself has no hyperparameters to tune)
 	param_grid = dict(
@@ -338,11 +346,12 @@ def optimize_with_grid_search(source_encoder, param_grid: dict,
 	classifier = Classifier(preprocessor, model, source_encoder, y_bicoder)  # type: ignore[arg-type]
 
 	# Create GridSearchCV
+	cv = 3  # 3-fold cross-validation
 	grid_search = sklearn.model_selection.GridSearchCV(
 		estimator = classifier,
 		param_grid = param_grid,
 		scoring = 'f1_macro',
-		cv = 3,  # 3-fold cross-validation
+		cv = cv,
 		n_jobs = -1,  # Use all CPU cores
 		verbose = 2,
 		return_train_score = True,
@@ -351,7 +360,7 @@ def optimize_with_grid_search(source_encoder, param_grid: dict,
 	# Run optimization
 	print("\nStarting hyperparameter optimization...")
 	print(f"Total combinations: {len(sklearn.model_selection.ParameterGrid(param_grid))}")
-	print(f"Total fits: {len(sklearn.model_selection.ParameterGrid(param_grid)) * 5} (5-fold CV)")
+	print(f"Total fits: {len(sklearn.model_selection.ParameterGrid(param_grid)) * cv} ({cv}-fold CV)")
 	print()
 
 	grid_search.fit(X_train, y_train)  # type: ignore[no-untyped-call]
