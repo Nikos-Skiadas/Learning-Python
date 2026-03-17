@@ -17,7 +17,10 @@ class Classifier[
 	EncodedSource,
 	EncodedTarget,
 	DecodedTarget,
-](sklearn.base.BaseEstimator, sklearn.base.ClassifierMixin):
+](
+	sklearn.base.BaseEstimator,
+	sklearn.base.ClassifierMixin,
+):
 
 	def __init__(self,
 		preprocessor: Preprocessor[DecodedSource],

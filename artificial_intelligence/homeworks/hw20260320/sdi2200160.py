@@ -5,9 +5,13 @@ from __future__ import annotations
 
 
 import functools
-import re
+import zipfile
+import urllib.request
+
+from pathlib import Path
 
 import pandas
+import numpy as np
 import nltk
 import nltk.stem
 import sklearn.feature_extraction.text
@@ -15,6 +19,7 @@ import sklearn.linear_model
 import sklearn.preprocessing
 import sklearn.model_selection
 import sklearn.metrics
+import sklearn.base
 
 from ..protocols import Scorer
 from ..pipelines import Classifier
@@ -56,6 +61,135 @@ class Lemmatize:
 				self.lemmatizer.lemmatize(word) for word in text.split()
 			)
 		)
+
+
+# ============================================================================
+# Encoders
+# ============================================================================
+
+class Word2VecEncoder(
+	sklearn.base.BaseEstimator,
+	sklearn.base.TransformerMixin,
+):
+	"""Average Word2Vec embeddings for document representation.
+
+	Loads pre-trained Word2Vec vectors and represents documents as
+	the average of their word vectors.
+
+	Inherits from BaseEstimator and TransformerMixin for sklearn compatibility:
+	- Automatic get_params() and set_params() from BaseEstimator
+	- Automatic fit_transform() from TransformerMixin
+	"""
+
+	def __init__(self, embeddings_path: str = "glove-wiki-gigaword-50", cache_dir: str = ".cache"):
+		"""Initialize Word2Vec encoder.
+
+		Args:
+			embeddings_path: Path to embeddings file or preset name:
+				- 'glove-wiki-gigaword-50' (50d, 400K words, ~70MB) - fast, good baseline
+				- 'glove-wiki-gigaword-100' (100d, 400K words, ~140MB)
+				- 'glove-wiki-gigaword-200' (200d, 400K words, ~280MB)
+				- 'glove-wiki-gigaword-300' (300d, 400K words, ~420MB)
+				- Or provide your own path to .txt file
+			cache_dir: Directory to cache downloaded embeddings
+		"""
+		self.embeddings_path = embeddings_path
+		self.cache_dir = cache_dir
+		self.word_vectors = None
+		self.vector_size = None
+
+	def download_glove(self, dim: int) -> str:
+		"""Download GloVe embeddings if not cached."""
+		cache_path = Path(self.cache_dir)
+		cache_path.mkdir(exist_ok=True)
+
+		embeddings_file = cache_path / f"glove.6B.{dim}d.txt"
+
+		if embeddings_file.exists():
+			print(f"Using cached embeddings: {embeddings_file}")
+			return str(embeddings_file)
+
+		# Download GloVe embeddings
+		print(f"Downloading GloVe {dim}d embeddings (~{dim*2}MB)...")
+		url = "https://nlp.stanford.edu/data/glove.6B.zip"
+		zip_path = cache_path / "glove.6B.zip"
+
+		# Download
+		urllib.request.urlretrieve(url, zip_path)
+		print(f"Downloaded to {zip_path}")
+
+		# Extract the specific dimension file
+		print(f"Extracting {embeddings_file.name}...")
+
+		with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+			zip_ref.extract(embeddings_file.name, cache_path)
+
+		# Clean up zip
+		zip_path.unlink()
+		print(f"Embeddings ready at {embeddings_file}")
+
+		return str(embeddings_file)
+
+	def fit(self, source: pandas.Series, signal = None):
+		"""Load pre-trained Word2Vec embeddings.
+
+		Args:
+			source: Series of text documents (not used, kept for API compatibility)
+			signal: Optional target signal (unused)
+		"""
+		# Handle preset names
+		if self.embeddings_path.startswith('glove-wiki-gigaword-'):
+			dim = int(self.embeddings_path.split('-')[-1])
+			embeddings_file = self.download_glove(dim)
+
+		else:
+			embeddings_file = self.embeddings_path
+
+		# Load embeddings from text file
+		print(f"Loading word vectors from {embeddings_file}...")
+		self.word_vectors = {}
+
+		with open(embeddings_file, 'r', encoding='utf-8') as f:
+			for line_num, line in enumerate(f, 1):
+				if line_num % 10000 == 0:
+					print(f"  Loaded {line_num} word vectors...")
+
+				parts = line.rstrip().split(' ')
+				word = parts[0]
+				vector = np.array([float(x) for x in parts[1:]], dtype = np.float32)
+
+				if self.vector_size is None:
+					self.vector_size = len(vector)
+
+				self.word_vectors[word] = vector
+
+		print(f"Loaded {len(self.word_vectors)} word vectors of dimension {self.vector_size}")
+
+		return self
+
+	def transform(self, source: pandas.Series):
+		"""Convert documents to averaged word vectors.
+
+		Args:
+			source: Series of text documents
+
+		Returns:
+			numpy array of shape (n_documents, vector_size)
+		"""
+		if self.word_vectors is None or self.vector_size is None:
+			raise ValueError("Model must be fitted before transform")
+
+		embeddings = []
+
+		# Tokenize and get vectors for words in vocabulary:
+		for doc in source:
+			words = doc.lower().split()
+			word_vectors = [self.word_vectors[word] for word in words if word in self.word_vectors]
+
+			if word_vectors: embeddings.append(np.mean(word_vectors, axis = 0))  # Average word vectors
+			else: embeddings.append(np.zeros(self.vector_size, dtype = np.float32))  # Zero vector for documents with no known words
+
+		return np.array(embeddings)
 
 
 # ============================================================================
@@ -120,21 +254,8 @@ def data_prep(frac: float = .0) -> tuple[
 	return X_train, y_train, X_devel, y_devel, X_valid, y_valid
 
 
-def optimize_with_grid_search():
-	"""Optimize TF-IDF + Logistic Regression using GridSearchCV."""
-	# Prepare data
-	print("Preparing data...")
-
-	# For grid search, we will use the entire training set and let it handle the splitting internally for cross-validation.
-	# The development set is not needed for this process, but we will prepare it anyway for potential future use.
-	X_train, y_train, X_devel, y_devel, X_valid, y_valid = data_prep(frac=.0)  # grid search does its own splitting
-
-	# Create preprocessor chain
-	preprocessor = ChainPreprocessor(
-		CleanText(),
-		Lemmatize(),
-	)
-
+def tfidf_encoder_factory() -> tuple[sklearn.feature_extraction.text.TfidfVectorizer, dict]:
+	"""Create TF-IDF encoder with default params and search grid."""
 	X_encoder = sklearn.feature_extraction.text.TfidfVectorizer(
 		encoding = "utf-8",
 		decode_error = "replace",
@@ -145,6 +266,67 @@ def optimize_with_grid_search():
 		sublinear_tf = True,
 	)
 
+	param_grid = dict(
+		source_encoder__ngram_range = [(1, 2), (1, 3), (2, 3)],  # explore all possible ngram combinations from 1 to 3
+		source_encoder__max_df = [.95, 1.],  # allow up to 95% document frequency to filter out very common terms or not
+		source_encoder__min_df = [1, 2],  # minimum document frequency to include a term or not
+	#	source_encoder__sublinear_tf = [True, False],  # whether to apply sublinear scaling to term frequencies or not
+		model__C = [1e-1, 1, 1e+1],  # inverse of regularization strength (smaller values specify stronger regularization)
+	)
+
+	return X_encoder, param_grid
+
+
+def word2vec_encoder_factory(embeddings_path: str = "glove-wiki-gigaword-50") -> tuple[Word2VecEncoder, dict]:
+	"""Create Word2Vec encoder with default params and search grid.
+
+	Args:
+		embeddings_path: Pre-trained embeddings to use.
+			Popular options:
+			- 'glove-wiki-gigaword-50' (default, 50d, 400K words, ~70MB)
+			- 'glove-wiki-gigaword-100' (100d, 400K words, ~140MB)
+			- 'glove-wiki-gigaword-200' (200d, 400K words, ~280MB)
+			- 'glove-wiki-gigaword-300' (300d, 400K words, ~420MB)
+			- Or provide your own path to embeddings .txt file
+
+	Returns:
+		Tuple of (encoder, param_grid)
+	"""
+	X_encoder = Word2VecEncoder(embeddings_path = embeddings_path)
+
+	# For pre-trained word embeddings, only tune the classifier
+	# (the encoder itself has no hyperparameters to tune)
+	param_grid = dict(
+		model__C = [1e-2, 1e-1, 1, 1e+1],  # inverse of regularization strength
+	)
+
+	return X_encoder, param_grid
+
+
+def optimize_with_grid_search(source_encoder, param_grid: dict,
+	preprocessor = None,
+):
+	"""Optimize encoder + Logistic Regression using GridSearchCV.
+
+	Args:
+		source_encoder: Feature encoder (e.g., TfidfVectorizer, Word2VecEncoder)
+		param_grid: Hyperparameter search space
+		preprocessor: Optional preprocessor (defaults to CleanText + Lemmatize)
+	"""
+	# Prepare data
+	print("Preparing data...")
+
+	# For grid search, we will use the entire training set and let it handle the splitting internally for cross-validation.
+	# The development set is not needed for this process, but we will prepare it anyway for potential future use.
+	X_train, y_train, X_devel, y_devel, X_valid, y_valid = data_prep(frac=.0)  # grid search does its own splitting
+
+	# Create preprocessor chain
+	if preprocessor is None:
+		preprocessor = ChainPreprocessor(
+			CleanText(),
+			Lemmatize(),
+		)
+
 	y_bicoder = sklearn.preprocessing.LabelEncoder()
 
 	model = sklearn.linear_model.LogisticRegression(
@@ -153,16 +335,7 @@ def optimize_with_grid_search():
 		class_weight = "balanced",  # infer class weights from data to handle imbalance
 	)
 
-	classifier = Classifier(preprocessor, model, X_encoder, y_bicoder)  # type: ignore[arg-type]
-
-	# Define parameter grid
-	param_grid = dict(
-		source_encoder__ngram_range = [(1, 2), (1, 3), (2, 3)],  # explore all possible ngram combinations from 1 to 3
-		source_encoder__max_df = [.95, 1.],  # allow up to 95% document frequency to filter out very common terms or not
-		source_encoder__min_df = [1, 2],  # minimum document frequency to include a term or not
-	#	source_encoder__sublinear_tf = [True, False],  # whether to apply sublinear scaling to term frequencies or not
-		model__C = [1e-1, 1, 1e+1],  # inverse of regularization strength (smaller values specify stronger regularization)
-	)
+	classifier = Classifier(preprocessor, model, source_encoder, y_bicoder)  # type: ignore[arg-type]
 
 	# Create GridSearchCV
 	grid_search = sklearn.model_selection.GridSearchCV(
@@ -226,4 +399,33 @@ def optimize_with_grid_search():
 
 
 if __name__ == "__main__":
-	optimize_with_grid_search()
+	import argparse
+
+	parser = argparse.ArgumentParser(description = "Run TF-IDF or Word2Vec encoder with Logistic Regression baseline.")
+	parser.add_argument("--encoders", nargs = "+", required = True,
+		help = "Encoder type to run, for example: tfidf word2vec"
+	)
+	parser.add_argument("--embeddings",
+		default = "glove-wiki-gigaword-50",
+		help = "Pre-trained word embeddings (default: glove-wiki-gigaword-50). Options: glove-wiki-gigaword-{50,100,200,300}"
+	)
+
+	args = parser.parse_args()
+
+	for encoder_type in args.encoders:
+		print("=" * 80)
+		print(f"{encoder_type.upper()} BASELINE")
+		print("=" * 80)
+		print()
+
+		if encoder_type == "tfidf":
+			encoder, search = tfidf_encoder_factory()
+		elif encoder_type == "word2vec":
+			encoder, search = word2vec_encoder_factory(embeddings_path = args.embeddings)
+		else:
+			print(f"Unknown encoder type: {encoder_type}")
+			print("Valid options: tfidf, word2vec")
+
+			continue
+
+		optimize_with_grid_search(encoder, search)
