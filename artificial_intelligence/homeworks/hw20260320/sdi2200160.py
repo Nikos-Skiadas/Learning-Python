@@ -175,9 +175,6 @@ class Word2VecEncoder(
 
 		with open(embeddings_file, 'r', encoding='utf-8') as f:
 			for line_num, line in enumerate(f, 1):
-				if line_num % 10000 == 0:
-					print(f"  Loaded {line_num} word vectors...")
-
 				parts = line.rstrip().split(' ')
 				word = parts[0]
 				vector = np.array([float(x) for x in parts[1:]], dtype = np.float32)
@@ -452,7 +449,8 @@ if __name__ == "__main__":
 	)
 	parser.add_argument("--embeddings",
 		default = "glove-wiki-gigaword-50",
-		help = "Pre-trained word embeddings (default: glove-wiki-gigaword-50). Options: glove-wiki-gigaword-{50,100,200,300}, glove-twitter-{25,50,100,200}"
+		help = """Pre-trained word embeddings (default: glove-wiki-gigaword-50).
+		Options: glove-wiki-gigaword-{50,100,200,300}, glove-twitter-{25,50,100,200}."""
 	)
 
 	args = parser.parse_args()
