@@ -119,86 +119,14 @@ def data_prep(frac: float = .0) -> tuple[
 
 	return X_train, y_train, X_devel, y_devel, X_valid, y_valid
 
-def tfidf_logistic_regression(X_train, y_train, X_devel, y_devel, X_valid, y_valid):
-	# Build the pipeline components
-	X_encoder = sklearn.feature_extraction.text.TfidfVectorizer(
-		encoding = "utf-8",
-		decode_error = "replace",
-		strip_accents = "unicode",
-		lowercase = True,
-	#	preprocessor = None,
-	#	tokenizer = None,
-	#	analyzer = "word",
-		stop_words = "english",
-		token_pattern = r"(?u)\b\w[\w']*\b",  # include contractions  # r"(?u)\b\w\w+\b"
-		ngram_range = (1, 3),
-		max_df = .95,
-	#	min_df = .01,
-	#	max_features = None,
-	#	norm = "l2",
-	#	use_idf = True,
-	#	smooth_idf = True,
-		sublinear_tf = True,
-	)
-	y_bicoder = sklearn.preprocessing.LabelEncoder()
-
-	model = sklearn.linear_model.LogisticRegression(
-		max_iter = 1000,
-		class_weight = "balanced",
-		random_state = RANDOM_STATE,
-	)
-
-	# Create preprocessor chain
-	preprocessor = ChainPreprocessor(
-		CleanText(),
-		Lemmatize(),
-	)
-
-	# Create the classifier pipeline
-	classifier = Classifier(
-		preprocessor = preprocessor,
-		model = model,
-		source_encoder = X_encoder,
-		target_bicoder = y_bicoder,  # type: ignore[arg-type]
-	)
-
-	# Compile with metrics
-	# Note: type: ignore needed due to sklearn returning numpy.Float vs Python float
-	classifier.compile(
-		accuracy = sklearn.metrics.accuracy_score,
-		precision = macro_averaged(sklearn.metrics.precision_score),
-		recall = macro_averaged(sklearn.metrics.recall_score),
-		f1 = macro_averaged(sklearn.metrics.f1_score),
-	)
-
-	# Fit the pipeline~
-	print("Training pipeline...")
-	classifier.fit(
-		X_train,
-		y_train,
-	)
-	print("Training complete.")
-	print()
-
-	# Evaluate on validation set
-	print("TF-IDF + Logistic Regression Baseline:")
-	scores = classifier.score(
-		X_valid,
-		y_valid,
-	)
-
-	for metric_name, score_value in scores.items():
-		print(f"{metric_name:12s} {score_value:.4f}")
-
-	print()
-
-#	y_pred = classifier.predict(X_valid)
-
 
 def optimize_with_grid_search():
 	"""Optimize TF-IDF + Logistic Regression using GridSearchCV."""
 	# Prepare data
 	print("Preparing data...")
+
+	# For grid search, we will use the entire training set and let it handle the splitting internally for cross-validation.
+	# The development set is not needed for this process, but we will prepare it anyway for potential future use.
 	X_train, y_train, X_devel, y_devel, X_valid, y_valid = data_prep(frac=.0)  # grid search does its own splitting
 
 	# Create preprocessor chain
@@ -214,36 +142,26 @@ def optimize_with_grid_search():
 		lowercase = True,
 		stop_words = "english",
 		token_pattern = r"(?u)\b\w[\w']*\b",
+		sublinear_tf = True,
 	)
 
 	y_bicoder = sklearn.preprocessing.LabelEncoder()
 
 	model = sklearn.linear_model.LogisticRegression(
 		random_state = RANDOM_STATE,
+		max_iter = 1000,  # allow room for convergence
+		class_weight = "balanced",  # infer class weights from data to handle imbalance
 	)
 
-	classifier = Classifier(
-		preprocessor = preprocessor,
-		model = model,
-		source_encoder = X_encoder,
-		target_bicoder = y_bicoder,  # type: ignore[arg-type]
-	)
-
-	classifier.compile(
-		accuracy = sklearn.metrics.accuracy_score,
-		precision = macro_averaged(sklearn.metrics.precision_score),
-		recall = macro_averaged(sklearn.metrics.recall_score),
-		f1 = macro_averaged(sklearn.metrics.f1_score),
-	)
+	classifier = Classifier(preprocessor, model, X_encoder, y_bicoder)  # type: ignore[arg-type]
 
 	# Define parameter grid
 	param_grid = dict(
-		source_encoder__ngram_range = [(1, 2), (1, 3), (2, 3)],
-		source_encoder__max_df = [.95, 1.],
-		source_encoder__min_df = [1, 2],
-		source_encoder__sublinear_tf = [True, False],
-		model__C = [1e-1, 1, 1e+1],
-		model__class_weight = ['balanced', None],
+		source_encoder__ngram_range = [(1, 2), (1, 3), (2, 3)],  # explore all possible ngram combinations from 1 to 3
+		source_encoder__max_df = [.95, 1.],  # allow up to 95% document frequency to filter out very common terms or not
+		source_encoder__min_df = [1, 2],  # minimum document frequency to include a term or not
+	#	source_encoder__sublinear_tf = [True, False],  # whether to apply sublinear scaling to term frequencies or not
+		model__C = [1e-1, 1, 1e+1],  # inverse of regularization strength (smaller values specify stronger regularization)
 	)
 
 	# Create GridSearchCV
@@ -251,7 +169,7 @@ def optimize_with_grid_search():
 		estimator = classifier,
 		param_grid = param_grid,
 		scoring = 'f1_macro',
-		cv = 5,  # 5-fold cross-validation
+		cv = 3,  # 3-fold cross-validation
 		n_jobs = -1,  # Use all CPU cores
 		verbose = 2,
 		return_train_score = True,
@@ -281,6 +199,12 @@ def optimize_with_grid_search():
 	print("="*80)
 
 	best_classifier = grid_search.best_estimator_
+	best_classifier.compile(
+		accuracy = sklearn.metrics.accuracy_score,
+		precision = macro_averaged(sklearn.metrics.precision_score),
+		recall = macro_averaged(sklearn.metrics.recall_score),
+		f1 = macro_averaged(sklearn.metrics.f1_score),
+	)
 	val_scores = best_classifier.score(X_valid, y_valid)
 
 	print()
@@ -290,13 +214,16 @@ def optimize_with_grid_search():
 
 	print()
 
-	y_pred = best_classifier.predict(X_valid)
-	y_pred.to_csv("submission.csv")  # TODO: align index with valid split and rename index to `Id` and name to `Predicted`
+	y_pred = pandas.Series(best_classifier.predict(X_valid), name = "Predicted")
+	y_pred.index.name = "Id"
 
-	return grid_search
+	print(y_pred.sample(10))
+	print()
+
+	y_pred.to_csv("submission.csv")
+
+#	return grid_search
 
 
 if __name__ == "__main__":
-	splits = data_prep()
-#	tfidf_logistic_regression(*splits)
-	_ = optimize_with_grid_search()
+	optimize_with_grid_search()
