@@ -329,6 +329,7 @@ def word2vec_encoder_factory(embeddings_path: str = "glove-wiki-gigaword-50") ->
 		print(f"Pre-downloading GloVe wiki-gigaword {dim}d embeddings for caching...")
 		X_encoder.download_glove('wiki-gigaword', dim)
 		print("Embeddings cached and ready for grid search.\n")
+
 	elif embeddings_path.startswith('glove-twitter-'):
 		dim = int(embeddings_path.split('-')[-1])
 		print(f"Pre-downloading GloVe twitter {dim}d embeddings for caching...")
@@ -338,7 +339,25 @@ def word2vec_encoder_factory(embeddings_path: str = "glove-wiki-gigaword-50") ->
 	# For pre-trained word embeddings, only tune the classifier
 	# (the encoder itself has no hyperparameters to tune)
 	param_grid = dict(
-		model__C = [1e-2, 1e-1, 1, 1e+1],  # inverse of regularization strength
+		model__C = [
+			1e-1,
+			1e+0,
+			1e+1,
+		],  # inverse of regularization strength
+		model__solver = ["saga"],  # saga solver supports L1 and L2 regularization and is efficient for large datasets
+		model__l1_ratio = [
+			0,
+		#	.1,
+			.2,
+		#	.3,
+			.4,
+		#	.5,
+			.6,
+		#	.7,
+			.8,
+		#	.9,
+			1.,
+		],  # explore L2 (0), elastic net (0.5), and L1 (1) regularization
 	)
 
 	return X_encoder, param_grid
@@ -461,10 +480,8 @@ if __name__ == "__main__":
 		print("=" * 80)
 		print()
 
-		if encoder_type == "tfidf":
-			encoder, search = tfidf_encoder_factory()
-		elif encoder_type == "word2vec":
-			encoder, search = word2vec_encoder_factory(embeddings_path = args.embeddings)
+		if encoder_type == "tfidf": encoder, search = tfidf_encoder_factory()
+		elif encoder_type == "word2vec": encoder, search = word2vec_encoder_factory(embeddings_path = args.embeddings)
 		else:
 			print(f"Unknown encoder type: {encoder_type}")
 			print("Valid options: tfidf, word2vec")
