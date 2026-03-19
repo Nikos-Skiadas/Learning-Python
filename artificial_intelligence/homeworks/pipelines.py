@@ -27,12 +27,14 @@ class Classifier[
 		model: Model[EncodedSource, EncodedTarget],
 		source_encoder: Encoder[DecodedSource, EncodedSource],
 		target_bicoder: Bicoder[DecodedTarget, EncodedTarget],
+		scorers: dict[str, Scorer[EncodedTarget, Float]] | None = None,
 	) -> None:
 		# BaseEstimator uses __init__ params for get_params/set_params
 		self.preprocessor = preprocessor
 		self.model = model
 		self.source_encoder = source_encoder
 		self.target_bicoder = target_bicoder
+		self.scorers = scorers or {}
 
 
 	def compile(self, **scorers: Scorer[EncodedTarget, Float]) -> typing.Self:
