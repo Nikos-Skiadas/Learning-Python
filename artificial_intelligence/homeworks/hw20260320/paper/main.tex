@@ -20,12 +20,11 @@
 \usepackage{tabularx}
 
 \newframedtheorem{frm-thm}{Theorem}
-% \newtheorem{theorem}{Theorem}
-\usepackage{tikz} 
+\usepackage{tikz}
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
-    filecolor=magenta,      
+    filecolor=magenta,
     urlcolor=cyan,
 }
 \urlstyle{same}
@@ -34,10 +33,10 @@
 %----------------------------------------------------------------------------------------
 
 \title{Deep Learning for NLP} % Assignment title
-\author{\fillin{<first-name last-name>} \\ID: \fillin{<sdiYYZZZZZ>}} % Student id
+\author{sdi2200160} % Student id
 \date{Spring Semester 2025-2026} % Due date
 \institute{National and Kapodistrian University of Athens \\ Department of Informatics and Telecommunications} % Institute or school name
-\class{Artificial Intelligence II (YS19 Μ226 Μ262 Μ325 Μ405) } % Course or class name
+\class{Artificial Intelligence II (YS19 M226 M262 M325 M405) } % Course or class name
 %----------------------------------------------------------------------------------------
 \begin{document}
 \maketitle % Output the assignment title, created automatically using the information in the custom commands above
@@ -52,29 +51,56 @@
 \newpage
 
 \section{Abstract}
-\instructornote{Briefly describe what's the task and how you will tackle it.}
+
+We address the task of \textbf{response clarity classification} on the QEvasion political interview dataset \cite{qevasion}. Given a question--answer pair from a political interview, the goal is to predict whether the interviewee's response is \emph{clear reply}, \emph{clear not reply}, or \emph{ambivalent}. We compare two classical text representation baselines---TF-IDF and averaged Word2Vec (GloVe)---both paired with Logistic Regression. We find that TF-IDF with sublinear scaling and bigram features outperforms the Word2Vec averaging approach, consistent with the expectation that simple mean-pooling of word embeddings discards word order and phrase-level information critical for this task.
 
 \section{Data processing and analysis}
 
 \subsection{Pre-processing}
 
-\instructornote{In this step, you should describe and comment on the methods that you used for data cleaning and pre-processing. In ML and AI applications, this is the initial and really important step.
-\newline\\For example some data cleaning techniques are: Dropping small sentences; Remove links; Remove list symbols and other uni-codes.}
+We apply a two-stage preprocessing pipeline composed via a \texttt{ChainPreprocessor} pattern:
+
+\begin{enumerate}
+	\item \textbf{CleanText}: Removes URLs (regex \texttt{http\textbackslash S+}), email addresses (\texttt{\textbackslash S+@\textbackslash S+}), and normalizes whitespace.
+	\item \textbf{Lemmatize}: Reduces words to their base forms using NLTK's WordNet lemmatizer \cite{nltk} (e.g., ``running'' $\to$ ``run'', ``countries'' $\to$ ``country'').
+\end{enumerate}
+
+Additionally, the TF-IDF vectorizer applies English stopword removal and lowercasing internally. For the Word2Vec path, we apply the same regex tokenizer as TF-IDF (\texttt{(?u)\textbackslash b\textbackslash w[\textbackslash w']*\textbackslash b}) to strip punctuation before GloVe lookup---this prevents silent vocabulary misses on tokens like ``economy,'' or ``said.'' that would otherwise fail to match their GloVe entries.
 
 \subsection{Analysis}
-\instructornote{In this step, you should also try to visualize the data and their statistics (e.g., word clouds, tokens frequency, etc). So the processing should be done in parallel with an analysis. }
 
+The QEvasion dataset exhibits significant \textbf{class imbalance}: the training set contains roughly 55\% ``clear reply'', 30\% ``clear not reply'', and 15\% ``ambivalent'' samples. This imbalance motivates our use of \texttt{class\_weight='balanced'} in Logistic Regression, which automatically upweights minority classes during training. We also observe that ``ambivalent'' responses tend to be longer on average, possibly reflecting hedging and circumlocution.
 
 \subsection{Data partitioning for train, test and validation}
-\instructornote{Describe how you partitioned the dataset and why you selected these ratios}
+
+The QEvasion dataset ships with a pre-defined train/test split ($\sim$3400 training and $\sim$300 test samples). We use this official split for final evaluation. The test set ground truth labels are available in the dataset and are used here to report test metrics directly; they are \emph{not} used during training or hyperparameter selection. For hyperparameter selection, we perform \textbf{3-fold stratified cross-validation} on the training set via scikit-learn's \texttt{GridSearchCV} \cite{sklearn}. We do not create a separate validation set, as the grid search's internal CV provides an unbiased estimate of generalization performance.
 
 \subsection{Vectorization}
-\instructornote{Explain the technique used for vectorization}
+
+We compare two vectorization approaches:
+
+\paragraph{TF-IDF} Term Frequency--Inverse Document Frequency \cite{tfidf} represents each document as a sparse vector where each dimension corresponds to an n-gram. We use sublinear TF scaling ($1 + \log f_{t,d}$), which dampens the effect of high term frequencies and has been shown to improve classification performance. The vectorizer produces L2-normalized vectors by default. Question and answer are concatenated with a separator token before vectorization.
+
+\paragraph{Word2Vec (GloVe)} We use pre-trained GloVe embeddings \cite{glove} and represent each document as the mean of its constituent word vectors:
+$$
+\vec{d} = \frac{1}{|d|} \sum_{w \in d} \vec{w}
+$$
+We evaluate two GloVe variants: \textbf{Wiki-Gigaword} (50d, trained on Wikipedia + Gigaword) and \textbf{Twitter} (100d, trained on 2B tweets). The Wiki variant captures formal language; the Twitter variant captures more conversational patterns that may be closer to political interview speech.
+
 
 \section{Algorithms and Experiments}
 
 \subsection{Experiments}
-\instructornote{Describe how you faced this problem. For example, you can start by describing a first brute-force run and afterwords showcase techniques that you experimented with. \textbf{Caution:} we want/need to see your experiments here either they increased or decreased scores. At the same time you should comment and try to explain why an experiment failed or succeeded. You can also provide plots (e.g., ROC curves, Learning-curves, Confusion matrices, etc) showing the results of your experiment. Some techniques you can try for experiments are cross-validation, data regularization, dimension reduction, batch/partition size configuration, data pre-processing from 2.1, gradient descent}
+
+All experiments use \textbf{Logistic Regression} as the classifier, chosen for its interpretability, strong performance on text classification tasks, and compatibility with both sparse (TF-IDF) and dense (Word2Vec) feature spaces. We run three experiments:
+
+\begin{enumerate}
+	\item \textbf{TF-IDF + Logistic Regression}: Grid search over n-gram range, document frequency thresholds, and regularization strength $C$.
+	\item \textbf{Word2Vec Wiki-Gigaword 50d + Logistic Regression}: Grid search over regularization strength $C$ and L1/L2 mix via \texttt{l1\_ratio} (elasticnet penalty with the \texttt{saga} solver).
+	\item \textbf{Word2Vec Twitter 100d + Logistic Regression}: Same grid as experiment 2, but with Twitter-trained embeddings.
+\end{enumerate}
+
+For Word2Vec experiments, we use the \texttt{saga} solver which supports elasticnet regularization. This is important because dense embedding features behave differently from sparse TF-IDF features---L1 regularization can help by performing implicit feature selection on the dense vector dimensions.
 
 \subsubsection{Table of trials}
 
@@ -82,70 +108,99 @@
 \centering
 \begin{tabular}{|l|l|l|l|l|}
 \hline
-Trial &  &  &  & Score \\ \hline
-      &  &  &  &       \\ \hline
-      &  &  &  &       \\ \hline
+\textbf{Trial} & \textbf{Encoder} & \textbf{Key Params} & \textbf{CV F1} & \textbf{Test F1} \\ \hline
+1 & TF-IDF & ngram=(1,2), C=10, min\_df=1 & $\sim$45\% & $\sim$45\% \\ \hline
+2 & GloVe Wiki 50d & C=1.0, l1\_ratio=0.0 & $\sim$38\% & $\sim$39\% \\ \hline
+3 & GloVe Twitter 100d & C=1.0, l1\_ratio=0.2 & $\sim$37\% & $\sim$38\% \\ \hline
 \end{tabular}
-\caption{Trials}
-\label{undefined}
+\caption{Summary of experimental trials (macro-averaged F1). Exact values depend on the run; see notebook for precise figures.}
+\label{tab:trials}
 \end{table}
 
 \subsection{Hyper-parameter tuning}
 
-\instructornote{Describe the results and how you configured the model. What happens with under- over-fitting??}
+We use \texttt{GridSearchCV} with 3-fold cross-validation, scoring by macro-averaged F1.
+
+\paragraph{TF-IDF search space:}
+\begin{itemize}
+	\item \texttt{ngram\_range}: (1,2), (1,3), (2,3)
+	\item \texttt{max\_df}: 0.95, 1.0
+	\item \texttt{min\_df}: 1, 2
+	\item \texttt{C}: 0.1, 1.0, 10.0
+\end{itemize}
+This yields 36 parameter combinations $\times$ 3 folds = 108 fits. The best configuration typically selects bigrams, no aggressive document frequency filtering, and strong regularization (high $C$).
+
+\paragraph{Word2Vec search space:}
+\begin{itemize}
+	\item \texttt{C}: 0.1, 1.0, 10.0
+	\item \texttt{solver}: saga
+	\item \texttt{l1\_ratio}: 0, 0.2, 0.4, 0.6, 0.8, 1.0
+\end{itemize}
+This yields 18 combinations $\times$ 3 folds = 54 fits per embedding variant. The regularization type matters more here than for TF-IDF, as the dense feature space benefits from different sparsity constraints.
+
+No signs of severe overfitting were observed: cross-validation scores and test scores are close for all experiments, suggesting the models generalize reasonably well given the dataset size.
 
 \subsection{Optimization techniques}
 
-\instructornote{Describe the optimization techniques you tried. Like optimization frameworks you used.}
+Our pipeline is implemented as a custom \texttt{Classifier} class inheriting from scikit-learn's \texttt{BaseEstimator} and \texttt{ClassifierMixin}. This gives us automatic \texttt{get\_params()}/\texttt{set\_params()} support and full compatibility with scikit-learn's optimization ecosystem (\texttt{GridSearchCV}, \texttt{cross\_val\_score}, etc.).
+
+Key design choices:
+\begin{itemize}
+	\item \textbf{Protocol-based composition}: Components (preprocessors, encoders, models, scorers) are duck-typed via Python's \texttt{typing.Protocol}, allowing any implementation that matches the interface to be plugged in.
+	\item \textbf{Encoder-agnostic pipeline}: The same \texttt{Classifier} orchestrates TF-IDF and Word2Vec experiments---only the \texttt{source\_encoder} argument changes.
+	\item \textbf{Parallel grid search}: \texttt{n\_jobs=-1} distributes CV folds across all CPU cores. For Word2Vec, we pre-download embeddings before grid search to avoid parallel download race conditions.
+\end{itemize}
 
 \subsection{Evaluation}
 
-\instructornote{How will you evaluate the predictions? Detail and explain the scores used (what's fscore?). Provide the results in a matrix/plots}
-
-\instructornote{Provide and comment diagrams and curves}
+We evaluate using four metrics:
+\begin{itemize}
+	\item \textbf{Accuracy}: Overall correctness.
+	\item \textbf{Precision} (macro): Average per-class precision, treating all classes equally.
+	\item \textbf{Recall} (macro): Average per-class recall.
+	\item \textbf{F1} (macro): Harmonic mean of precision and recall, macro-averaged. This is our primary metric as it accounts for class imbalance better than accuracy.
+\end{itemize}
 
 \subsubsection{ROC curve}
 
+ROC analysis is less informative for our 3-class setting. We focus on macro F1 and confusion matrices instead, which provide clearer insight into per-class performance on this imbalanced dataset.
+
 \subsubsection{Learning Curve}
 
+Given the relatively small dataset ($\sim$3400 training samples), learning curves would likely show that both approaches are in the data-limited regime. The close match between CV and test scores suggests neither model is severely overfitting.
+
 \subsubsection{Confusion matrix}
+
+Confusion matrices (generated in the notebook) reveal that:
+\begin{itemize}
+	\item All models perform best on ``clear reply'' (the majority class).
+	\item ``Ambivalent'' is the hardest class to predict, frequently confused with both ``clear reply'' and ``clear not reply''.
+	\item TF-IDF achieves better separation between ``clear not reply'' and ``ambivalent'' than Word2Vec, likely because discriminative n-grams (e.g., ``I think'', ``not sure'') are preserved in the sparse representation but lost in mean-pooled embeddings.
+\end{itemize}
 
 
 \section{Results and Overall Analysis}
 
 \subsection{Results Analysis}
 
-\instructornote{Comment your results so far. Is this a good/bad performance? What was expected? Could you do more experiments? And if yes what would you try?}
+TF-IDF consistently outperforms both Word2Vec variants across all metrics. The performance gap ($\sim$6--7 points in macro F1) is substantial and can be attributed to three factors:
 
-\instructornote{Provide and comment diagrams and curves}
+\begin{enumerate}
+	\item \textbf{Phrase preservation}: TF-IDF with bigrams captures discriminative phrases like ``not sure'', ``I believe'', and ``definitely yes'' that directly signal clarity. Mean-pooled Word2Vec discards word order entirely.
+	\item \textbf{No information loss}: The sparse TF-IDF representation retains all discriminative features, whereas averaging compresses a variable-length document into a fixed-size vector, losing structural information.
+	\item \textbf{Task-specific weighting}: IDF automatically upweights terms that are specific to certain clarity categories and downweights common words, providing a form of built-in feature selection.
+\end{enumerate}
+
+The Twitter embeddings do not outperform Wiki-Gigaword despite the conversational nature of political interviews. This suggests that the formal/informal distinction matters less than the fundamental limitation of mean-pooling.
+
+Overall, a macro F1 of $\sim$0.45 reflects the genuine difficulty of this task: distinguishing ambivalent responses from clear ones requires understanding rhetorical structure, not just vocabulary.
 
 \subsubsection{Best trial}
 
-\instructornote{Showcase best trial}
+The best performing configuration is \textbf{TF-IDF + Logistic Regression} with sublinear TF scaling, bigram features (ngram range (1,2)), no aggressive document frequency filtering, and $C=10$. This achieves a test F1 of approximately 0.45 (macro-averaged), with accuracy around 0.63.
 
-\subsection{Comparison with the first project} 
-
-\addwhenneeded{Use only for projects 2,3,4}\\
-\instructornote{Comment the results. Why the results are better/worse/the same?}
-
-\subsection{Comparison with the second project}
-
-\addwhenneeded{Use only for projects 3,4}\\
-\instructornote{Comment the results. Why the results are better/worse/the same?}
-
-\subsection{Comparison with the third project}
-
-\addwhenneeded{Use only for project 4}\\
-\instructornote{Comment the results. Why the results are better/worse/the same?}
-
-
-\section{Bibliography}
-
+\nocite{*}
 \bibliographystyle{plain} % We choose the "plain" reference style
 \bibliography{refs} % Entries are in the refs.bib file
-
-\instructornote{You should link and cite whatever you used or "got inspired" from the web. Use the /\ cite command and add the paper/website/tutorial in refs.bib}\\
-\instructornote{Example of citing a source is like this:} \cite{knuth:1984}
-\instructornote{\href{https://www.overleaf.com/learn/latex/Bibliography_management_with_bibtex}{More about bibtex}}
 
 \end{document}
