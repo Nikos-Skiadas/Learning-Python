@@ -5,6 +5,7 @@ from __future__ import annotations
 
 
 import functools
+import re
 import zipfile
 import urllib.request
 
@@ -163,9 +164,11 @@ class Word2VecEncoder(
 		if self.embeddings_path.startswith('glove-wiki-gigaword-'):
 			dim = int(self.embeddings_path.split('-')[-1])
 			embeddings_file = self.download_glove('wiki-gigaword', dim)
+
 		elif self.embeddings_path.startswith('glove-twitter-'):
 			dim = int(self.embeddings_path.split('-')[-1])
 			embeddings_file = self.download_glove('twitter', dim)
+
 		else:
 			embeddings_file = self.embeddings_path
 
@@ -202,9 +205,9 @@ class Word2VecEncoder(
 
 		embeddings = []
 
-		# Tokenize and get vectors for words in vocabulary:
+		# Tokenize (matching TF-IDF's token_pattern to strip punctuation):
 		for doc in source:
-			words = doc.lower().split()
+			words = re.findall(r"(?u)\b\w[\w']*\b", doc.lower())
 			word_vectors = [self.word_vectors[word] for word in words if word in self.word_vectors]
 
 			if word_vectors: embeddings.append(np.mean(word_vectors, axis = 0))  # Average word vectors
