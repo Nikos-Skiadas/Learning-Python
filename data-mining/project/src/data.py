@@ -60,3 +60,22 @@ class MusicDataFrame(pandas.DataFrame):
 				low_memory = False,
 			)
 		)
+
+
+def intersection(
+	audio_stats: MusicDataFrame,
+	lyrics: MusicSeries,
+	genres: MusicSeries,
+) -> MusicDataFrame:
+	ids = audio_stats.index \
+		.intersection(lyrics.index, sort = False) \
+		.intersection(genres.index, sort = False)
+
+	return MusicDataFrame(
+		{
+			"id": ids,
+			"genre": genres.loc[ids].to_numpy(),
+			"lyrics": lyrics.loc[ids].to_numpy(),
+			"mfcc_stats": audio_stats.loc[ids].to_numpy().tolist(),
+		}
+	)
