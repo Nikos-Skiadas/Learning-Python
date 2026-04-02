@@ -71,11 +71,26 @@ def intersection(
 		.intersection(lyrics.index, sort = False) \
 		.intersection(genres.index, sort = False)
 
+	audio_stats = audio_stats.loc[ids]
+	lyrics = lyrics.loc[ids]
+	genres = genres.loc[ids]
+
+	mask = (
+		genres.notna()
+		& lyrics.notna()
+		& lyrics.astype(str).str.strip().ne("")
+		& ~audio_stats.isna().any(axis = "columns")
+	)
+
+	audio_stats = audio_stats.loc[mask]
+	lyrics = lyrics.loc[mask]
+	genres = genres.loc[mask]
+
 	return MusicDataFrame(
 		{
-			"id": ids,
-			"genre": genres.loc[ids].to_numpy(),
-			"lyrics": lyrics.loc[ids].to_numpy(),
-			"mfcc_stats": audio_stats.loc[ids].to_numpy().tolist(),
+			"id": audio_stats.index,
+			"genre": genres.to_numpy(),
+			"lyrics": lyrics.to_numpy(),
+			"mfcc_stats": audio_stats.to_numpy().tolist(),
 		}
-	)
+	).drop_duplicates(subset = "id").reset_index(drop = True)
