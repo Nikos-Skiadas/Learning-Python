@@ -100,7 +100,8 @@ class MusicDataFrame(pandas.DataFrame):
 	def intersection(self, *attributes: MusicSeries) -> MusicDataFrame:
 		indices = self.index.intersection(pandas.Index(set.intersection(*(set(attribute.index) for attribute in attributes))))
 		combined = pandas.concat([attribute.loc[indices] for attribute in attributes], axis = "columns")
-		mask = combined.notna().all(axis = "columns")
+		mask = combined.notna().all(axis = "columns") \
+			& combined.astype(str).apply(lambda column: column.str.strip().ne("")).all(axis = "columns")
 
 		return MusicDataFrame(
 			pandas.concat([combined.loc[mask], self.loc[indices].loc[mask]], axis = "columns")
