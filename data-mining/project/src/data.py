@@ -97,34 +97,11 @@ class MusicDataFrame(pandas.DataFrame):
 			)
 		)
 
+	def intersection(self, *attributes: MusicSeries) -> MusicDataFrame:
+		indices = self.index.intersection(pandas.Index(set.intersection(*(set(attribute.index) for attribute in attributes))))
+		combined = pandas.concat([attribute.loc[indices] for attribute in attributes], axis = "columns")
+		mask = combined.notna().all(axis = "columns")
 
-def intersection(
-	audio_stats: MusicDataFrame,
-
-	lyrics: MusicSeries,
-	genres: MusicSeries,
-) -> MusicDataFrame:
-	ids = audio_stats.index.intersection(lyrics.index).intersection(genres.index)
-
-	audio_stats = audio_stats.loc[ids]
-
-	lyrics = lyrics.loc[ids]  # type: ignore
-	genres = genres.loc[ids]  # type: ignore
-
-	mask = genres.notna() & lyrics.notna() & lyrics.astype(str).str.strip().ne("")
-
-	audio_stats = audio_stats.loc[mask]
-
-	lyrics = lyrics.loc[mask]  # type: ignore
-	genres = genres.loc[mask]  # type: ignore
-
-	return MusicDataFrame(
-		pandas.concat(
-			[
-				genres.rename("genre"),
-				lyrics.rename("lyrics"),
-				audio_stats
-			],
-			axis = "columns",
+		return MusicDataFrame(
+			pandas.concat([combined.loc[mask], self.loc[indices].loc[mask]], axis = "columns")
 		)
-	)
