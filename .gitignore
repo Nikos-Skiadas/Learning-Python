@@ -174,3 +174,4 @@ cython_debug/
 
 # Ignore data folders:
 **/data
+**/figures

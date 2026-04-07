@@ -11,6 +11,7 @@ from . encoding import encode_genres, embed_audio, embed_lyrics
 
 
 def load_dataset(path: str | pathlib.Path, k: int, epochs: int,
+	model: str = "all-MiniLM-L6-v2",
 	force: bool = False,
 ) -> pandas.DataFrame:
 	path = pathlib.Path(path)
@@ -36,7 +37,7 @@ def load_dataset(path: str | pathlib.Path, k: int, epochs: int,
 
 	genre_embeddings = encode_genres(dataset["genres"])
 	audio_embeddings = embed_audio(dataset[[column for column in dataset.columns if column.startswith(("MFCC", "cov_"))]], epochs)
-	lyric_embeddings = embed_lyrics(dataset["lyrics"])
+	lyric_embeddings = embed_lyrics(dataset["lyrics"], model)
 	tags_embeddings = encode_genres(dataset["tags"])
 
 	dataset.to_csv(dataset_path)
@@ -55,7 +56,8 @@ if __name__ == "__main__":
 	parser.add_argument("-k", type = int, help = "Number of top genres to consider.", default = 5)
 	parser.add_argument("--epochs", type = int, help = "Number of epochs to train the audio autoencoder for.", default = 1)
 	parser.add_argument("--force", action = "store_true", help = "Whether to ignore cached datasets and embeddings.")
+	parser.add_argument("--model", type = str, help = "Which model to use for lyric embeddings.", default = "all-MiniLM-L6-v2")
 
 	args = parser.parse_args()
 
-	print(load_dataset(args.data, args.k, args.epochs, args.force))
+	print(load_dataset(args.data, args.k, args.epochs, args.model, args.force))
