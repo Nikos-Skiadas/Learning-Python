@@ -4,6 +4,7 @@ from __future__ import annotations
 import math
 
 import pandas
+import rich.progress
 import sentence_transformers
 import torch
 
@@ -56,17 +57,38 @@ class AudioAutoencoder(torch.nn.Module):
 
 		self.train()
 
-		for epoch in range(epochs):
-			total_loss = 0.0
+		with rich.progress.Progress(
+			rich.progress.TextColumn("[bold blue]{task.description}"),
+			rich.progress.BarColumn(),
+			rich.progress.MofNCompleteColumn(),
+			rich.progress.TextColumn("loss: {task.fields[loss]:.4f}"),
+			rich.progress.TimeRemainingColumn(),
+		) as progress:
+			epoch_task = progress.add_task("epoch", total = epochs, loss = 0.)
+			batch_task = progress.add_task("batch", total = len(loader), loss = 0.)
 
-			for batch, in loader:
-				loss = self.loss_fn(self(batch), batch)
-				self.optimizer.zero_grad()
-				loss.backward()
-				self.optimizer.step()
-				total_loss += loss.item() * batch.size(0)
+			cumulative_loss = 0.
 
-			print(f"  Autoencoder epoch {epoch + 1}/{epochs} — loss: {total_loss / len(data):.6f}")
+			for epoch in range(epochs):
+				total_loss = 0.
+				samples = 0
+
+				progress.reset(batch_task, total = len(loader))
+
+				for batch, in loader:
+					loss = self.loss_fn(self(batch), batch); self.optimizer.zero_grad()
+					loss.backward(); self.optimizer.step()
+
+					total_loss += loss.item() * batch.size(0)
+					samples += batch.size(0)
+
+					progress.update(batch_task, advance = 1, loss = total_loss / samples)
+
+				progress.remove_task(batch_task)
+
+				cumulative_loss += total_loss / len(data)
+
+				progress.update(epoch_task, advance = 1, loss = cumulative_loss / (epoch + 1))
 
 		self.eval()
 
