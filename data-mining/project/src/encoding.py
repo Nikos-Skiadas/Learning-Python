@@ -66,6 +66,7 @@ class AudioAutoencoder(torch.nn.Module):
 			rich.progress.MofNCompleteColumn(),
 			rich.progress.TextColumn("loss: {task.fields[loss]:.4f}"),
 			rich.progress.TimeRemainingColumn(),
+			rich.progress.TimeElapsedColumn(),
 		) as progress:
 			epoch_task = progress.add_task("epoch", total = epochs, loss = 0.)
 			batch_task = progress.add_task("batch", total = len(loader), loss = 0.)
