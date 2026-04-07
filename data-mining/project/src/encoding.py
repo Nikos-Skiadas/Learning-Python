@@ -46,13 +46,16 @@ class AudioAutoencoder(torch.nn.Module):
 		self.loss_fn = loss_fn or torch.nn.MSELoss()
 
 	def fit(self, data: torch.Tensor,
-		epochs: int = 200,
+		epochs: int = 8,
 		batch_size: int = 1,
 	) -> None:
 		dataset = torch.utils.data.TensorDataset(self.normalize(data))
 		loader = torch.utils.data.DataLoader(dataset,
 			batch_size = batch_size,
 			shuffle = True,
+			generator = torch.Generator(
+				device = data.device,
+			),
 		)
 
 		self.train()
@@ -79,16 +82,13 @@ class AudioAutoencoder(torch.nn.Module):
 					loss = self.loss_fn(self(batch), batch); self.optimizer.zero_grad()
 					loss.backward(); self.optimizer.step()
 
-					total_loss += loss.item() * batch.size(0)
-					samples += batch.size(0)
-
+					total_loss += loss.item() * batch.size(0); samples += batch.size(0)
 					progress.update(batch_task, advance = 1, loss = total_loss / samples)
 
-				progress.remove_task(batch_task)
-
 				cumulative_loss += total_loss / len(data)
-
 				progress.update(epoch_task, advance = 1, loss = cumulative_loss / (epoch + 1))
+
+			progress.remove_task(batch_task)
 
 		self.eval()
 
@@ -109,17 +109,12 @@ def encode_genres(genres: pandas.Series) -> pandas.DataFrame:
 	return genres.str.get_dummies(sep = ",")
 
 
-def embed_audio(features: pandas.DataFrame,
-	bottleneck: int | None = None,
-	epochs: int = 10,
-	lr: float = 1e-3,
-	batch_size: int = 256,
-) -> pandas.DataFrame:
-	tensor = torch.tensor(features.values)
+def embed_audio(features: pandas.DataFrame) -> pandas.DataFrame:
+	tensor = torch.tensor(features.values, dtype = torch.float32)
 
-	model = AudioAutoencoder(features.shape[1], bottleneck)
-	model.compile(lr = lr)
-	model.fit(tensor, epochs, batch_size)
+	model = AudioAutoencoder(len(features.columns))
+	model.compile()
+	model.fit(tensor)
 	embeddings = model.encode(tensor).numpy(force = True)
 
 	return pandas.DataFrame(embeddings,
@@ -128,17 +123,11 @@ def embed_audio(features: pandas.DataFrame,
 	)
 
 
-def embed_lyrics(
-	lyrics: pandas.Series,
+def embed_lyrics(lyrics: pandas.Series,
 	model_name: str = "all-MiniLM-L6-v2",
-	batch_size: int = 256,
 ) -> pandas.DataFrame:
 	model = sentence_transformers.SentenceTransformer(model_name)
-	embeddings = model.encode(
-		lyrics.tolist(),
-		batch_size = batch_size,
-		show_progress_bar = True,
-	)
+	embeddings = model.encode(lyrics.tolist())
 
 	return pandas.DataFrame(
 		embeddings,

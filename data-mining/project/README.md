@@ -9,7 +9,7 @@ cd data-mining
 Run scripts from here like:
 
 ```sh
-python -m project.src.data --data data
+python -m project.src.main -- project/data
 ```
 
 ## Creating datasets
@@ -23,11 +23,11 @@ Running the following command will create the datasets in the `data` directory. 
 - `id_tags.csv`: A CSV file containing the tags of the songs.
 
 ```sh
-python -m src.data --data data
+python -m project.src.main -- project/data
 ```
 
 To generate different datasets, for different top $k$ genres, run the following command:
 
 ```sh
-for i in {1..5}; do python project/src/data.py project/data -k $i; done
+for i in {1..5}; do python -m project.src.main -k $i -- project/data; done
 ```
