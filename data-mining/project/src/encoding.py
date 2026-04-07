@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 
+import logging
 import math
 
 import pandas
@@ -67,6 +68,8 @@ class AudioAutoencoder(torch.nn.Module):
 			rich.progress.TextColumn("loss: {task.fields[loss]:.4f}"),
 			rich.progress.TimeRemainingColumn(),
 			rich.progress.TimeElapsedColumn(),
+
+			refresh_per_second = 60,
 		) as progress:
 			epoch_task = progress.add_task("epoch", total = epochs, loss = 0.)
 			batch_task = progress.add_task("batch", total = len(loader), loss = 0.)
@@ -89,7 +92,7 @@ class AudioAutoencoder(torch.nn.Module):
 				cumulative_loss += total_loss / len(data)
 				progress.update(epoch_task, advance = 1, loss = cumulative_loss / (epoch + 1))
 
-			progress.remove_task(batch_task)
+			progress.remove_task(batch_task); print()
 
 		self.eval()
 
