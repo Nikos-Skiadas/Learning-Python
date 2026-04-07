@@ -19,28 +19,32 @@ def load_dataset(path: str | pathlib.Path, k: int, epochs: int,
 	genres_path = path / f"dataset.{k}.genres.parquet"
 	audio_path = path / f"dataset.{k}.audio.parquet"
 	lyrics_path = path / f"dataset.{k}.lyrics.parquet"
+	tags_path = path / f"dataset.{k}.tags.parquet"
+
 
 	if dataset_path.exists() and all(path.exists() for path in (genres_path, audio_path, lyrics_path)) and not force:
 		return pandas.read_csv(dataset_path, index_col = 0)
 
 	lyrics = MusicSeries.from_tar(path / "processed_lyrics.tar.gz")
 	genres = MusicSeries.from_csv(path / "id_genres.csv")
+	tags = MusicSeries.from_csv(path / "id_tags.csv")
+	info = MusicDataFrame.from_csv(path / "id_information.csv")
 
 	audio_stats = MusicDataFrame.from_csv(path / "id_mfcc_stats.tsv.bz2")
 
-	dataset = audio_stats.intersection(genres.top(k), lyrics)
-
-	mfcc_columns = [c for c in dataset.columns if c.startswith(("MFCC", "cov_"))]
+	dataset = audio_stats.intersection(genres.top(k), tags, *[info[column] for column in info.columns], lyrics)
 
 	genre_embeddings = encode_genres(dataset["genres"])
-	audio_embeddings = embed_audio(dataset[mfcc_columns], epochs)
+	audio_embeddings = embed_audio(dataset[[column for column in dataset.columns if column.startswith(("MFCC", "cov_"))]], epochs)
 	lyric_embeddings = embed_lyrics(dataset["lyrics"])
+	tags_embeddings = encode_genres(dataset["tags"])
 
 	dataset.to_csv(dataset_path)
 
 	genre_embeddings.to_parquet(genres_path)
 	audio_embeddings.to_parquet(audio_path)
 	lyric_embeddings.to_parquet(lyrics_path)
+	tags_embeddings.to_parquet(tags_path)
 
 	return dataset
 
