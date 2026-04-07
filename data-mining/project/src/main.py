@@ -10,7 +10,9 @@ from . data import MusicSeries, MusicDataFrame
 from . encoding import encode_genres, embed_audio, embed_lyrics
 
 
-def load_dataset(path: str | pathlib.Path, k: int) -> pandas.DataFrame:
+def load_dataset(path: str | pathlib.Path, k: int, epochs: int,
+	force: bool = False,
+) -> pandas.DataFrame:
 	path = pathlib.Path(path)
 
 	dataset_path = path / f"dataset.{k}.csv"
@@ -18,7 +20,7 @@ def load_dataset(path: str | pathlib.Path, k: int) -> pandas.DataFrame:
 	audio_path = path / f"dataset.{k}.audio.parquet"
 	lyrics_path = path / f"dataset.{k}.lyrics.parquet"
 
-	if dataset_path.exists() and all(p.exists() for p in (genres_path, audio_path, lyrics_path)):
+	if dataset_path.exists() and all(path.exists() for path in (genres_path, audio_path, lyrics_path)) and not force:
 		return pandas.read_csv(dataset_path, index_col = 0)
 
 	lyrics = MusicSeries.from_tar(path / "processed_lyrics.tar.gz")
@@ -31,7 +33,7 @@ def load_dataset(path: str | pathlib.Path, k: int) -> pandas.DataFrame:
 	mfcc_columns = [c for c in dataset.columns if c.startswith(("MFCC", "cov_"))]
 
 	genre_embeddings = encode_genres(dataset["genres"])
-	audio_embeddings = embed_audio(dataset[mfcc_columns])
+	audio_embeddings = embed_audio(dataset[mfcc_columns], epochs)
 	lyric_embeddings = embed_lyrics(dataset["lyrics"])
 
 	dataset.to_csv(dataset_path)
@@ -47,7 +49,9 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("data", type = str, help = "Path to the data archive.")
 	parser.add_argument("-k", type = int, help = "Number of top genres to consider.", default = 5)
+	parser.add_argument("--epochs", type = int, help = "Number of epochs to train the audio autoencoder for.", default = 1)
+	parser.add_argument("--force", action = "store_true", help = "Whether to ignore cached datasets and embeddings.")
 
 	args = parser.parse_args()
 
-	print(load_dataset(args.data, args.k))
+	print(load_dataset(args.data, args.k, args.epochs, args.force))

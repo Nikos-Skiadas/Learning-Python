@@ -46,12 +46,12 @@ class AudioAutoencoder(torch.nn.Module):
 		self.loss_fn = loss_fn or torch.nn.MSELoss()
 
 	def fit(self, data: torch.Tensor,
-		epochs: int = 8,
-		batch_size: int = 1,
+		epochs: int = 1,
+		batch_size: int | None = None,
 	) -> None:
 		dataset = torch.utils.data.TensorDataset(self.normalize(data))
 		loader = torch.utils.data.DataLoader(dataset,
-			batch_size = batch_size,
+			batch_size = batch_size or math.isqrt(len(data)) + 1,
 			shuffle = True,
 			generator = torch.Generator(
 				device = data.device,
@@ -110,12 +110,14 @@ def encode_genres(genres: pandas.Series) -> pandas.DataFrame:
 	return genres.str.get_dummies(sep = ",")
 
 
-def embed_audio(features: pandas.DataFrame) -> pandas.DataFrame:
+def embed_audio(features: pandas.DataFrame,
+	epochs: int = 1,
+) -> pandas.DataFrame:
 	tensor = torch.tensor(features.values, dtype = torch.float32)
 
 	model = AudioAutoencoder(len(features.columns))
 	model.compile()
-	model.fit(tensor)
+	model.fit(tensor, epochs)
 	embeddings = model.encode(tensor).numpy(force = True)
 
 	return pandas.DataFrame(embeddings,
