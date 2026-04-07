@@ -20,7 +20,7 @@ class MusicSeries(pandas.Series):
 
 
 	@classmethod
-	def from_csv(cls, path: str) -> typing.Self:
+	def from_csv(cls, path: str | pathlib.Path) -> typing.Self:
 		return cls(
 			pandas.read_csv(path,
 				sep = "\t",
@@ -31,7 +31,7 @@ class MusicSeries(pandas.Series):
 
 
 	@classmethod
-	def from_tar(cls, path: str) -> typing.Self:
+	def from_tar(cls, path: str | pathlib.Path) -> typing.Self:
 		records: dict[str, str] = {}
 
 		with tarfile.open(path, "r:gz") as archive:
@@ -85,7 +85,7 @@ class MusicDataFrame(pandas.DataFrame):
 
 
 	@classmethod
-	def from_csv(cls, path: str) -> typing.Self:
+	def from_csv(cls, path: str | pathlib.Path) -> typing.Self:
 		return cls(
 			pandas.read_csv(path,
 				sep = "\t",
@@ -94,12 +94,40 @@ class MusicDataFrame(pandas.DataFrame):
 			)
 		)
 
-	def intersection(self, *attributes: MusicSeries) -> MusicDataFrame:
+	def intersection(self, *attributes: pandas.Series) -> pandas.DataFrame:
 		indices = self.index.intersection(pandas.Index(set.intersection(*(set(attribute.index) for attribute in attributes))))
 		combined = pandas.concat([attribute.loc[indices] for attribute in attributes], axis = "columns")
 		mask = combined.notna().all(axis = "columns") \
 			& combined.astype(str).apply(lambda column: column.str.strip().ne("")).all(axis = "columns")
 
-		return MusicDataFrame(
-			pandas.concat([combined.loc[mask], self.loc[indices].loc[mask]], axis = "columns")
-		)
+		return pandas.concat([combined.loc[mask], self.loc[indices].loc[mask]], axis = "columns")
+
+
+def load_dataset(path: str | pathlib.Path, k: int) -> pandas.DataFrame:
+	path = pathlib.Path(path)
+
+	if (path / f"dataset.{k}.csv").exists():
+		return pandas.read_csv(path / f"dataset.{k}.csv", index_col = 0)
+
+	else:
+		lyrics = MusicSeries.from_tar(path / "processed_lyrics.tar.gz")
+		genres = MusicSeries.from_csv(path / "id_genres.csv")
+
+		audio_stats = MusicDataFrame.from_csv(path / "id_mfcc_stats.tsv.bz2")
+
+		dataset = audio_stats.intersection(genres.top(k), lyrics)
+		dataset.to_csv(path / f"dataset.{k}.csv")
+
+		return dataset
+
+
+if __name__ == "__main__":
+	import argparse
+
+	parser = argparse.ArgumentParser()
+	parser.add_argument("data", type = str, help = "Path to the data archive.")
+	parser.add_argument("-k", type = int, help = "Number of top genres to consider.", default = 5)
+
+	args = parser.parse_args()
+
+	print(load_dataset(args.data, args.k))
