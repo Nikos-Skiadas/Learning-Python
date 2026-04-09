@@ -172,4 +172,6 @@ cython_debug/
 *plots
 *logs
 
-submission.csv
+# Ignore data folders:
+**/data
+**/figures
