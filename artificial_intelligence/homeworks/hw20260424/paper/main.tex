@@ -1,26 +1,22 @@
 \documentclass[12pt]{fphw}
 
-% Template-specific packages
-\usepackage[utf8]{inputenc} % Required for inputting international characters
-\usepackage[T1]{fontenc} % Output font encoding for international characters
-\usepackage{mathpazo} % Use the Palatino font
-\usepackage{alphabeta} % Use the Palatino font
-\usepackage{graphicx} % Required for including images
-\usepackage{booktabs} % Required for better horizontal rules in tables
-\usepackage{listings} % Required for insertion of code
-\usepackage{enumerate} % To modify the enumerate environment
-\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{alphabeta}
 \usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{enumerate}
+\usepackage{hyperref}
 \usepackage{amsmath}
-\graphicspath{{./images/}}
-\usepackage{framed} % or, "mdframed"
+\usepackage{framed}
 \usepackage[framed]{ntheorem}
 \usepackage{amssymb}
 \usepackage{xcolor}
 \usepackage{tabularx}
 
 \newframedtheorem{frm-thm}{Theorem}
-\usepackage{tikz}
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
@@ -28,21 +24,20 @@
     urlcolor=cyan,
 }
 \urlstyle{same}
-%----------------------------------------------------------------------------------------
-%	ASSIGNMENT INFORMATION
-%----------------------------------------------------------------------------------------
 
-\title{Deep Learning for NLP} % Assignment title
-\author{sdi2200160} % Student id
-\date{Spring Semester 2025-2026} % Due date
-\institute{National and Kapodistrian University of Athens \\ Department of Informatics and Telecommunications} % Institute or school name
-\class{Artificial Intelligence II (YS19 M226 M262 M325 M405) } % Course or class name
-%----------------------------------------------------------------------------------------
+\title{Deep Learning for NLP}
+\author{sdi2200160}
+\date{Spring Semester 2025-2026}
+\institute{National and Kapodistrian University of Athens \\ Department of Informatics and Telecommunications}
+\class{Artificial Intelligence II (YS19 M226 M262 M325 M405)}
+
+\newcommand{\pending}{\textit{[fill after GPU run]}}
+\newcommand{\hwonebestf}{0.45}
+\newcommand{\hwonewikitwo}{0.39}
+\newcommand{\hwonetwitter}{0.38}
+
 \begin{document}
-\maketitle % Output the assignment title, created automatically using the information in the custom commands above
-%----------------------------------------------------------------------------------------
-%	ASSIGNMENT CONTENT
-%----------------------------------------------------------------------------------------
+\maketitle
 
 {
   \hypersetup{linkcolor=black}
@@ -52,155 +47,287 @@
 
 \section{Abstract}
 
-We address the task of \textbf{response clarity classification} on the QEvasion political interview dataset \cite{qevasion}. Given a question--answer pair from a political interview, the goal is to predict whether the interviewee's response is \emph{clear reply}, \emph{clear not reply}, or \emph{ambivalent}. We compare two classical text representation baselines---TF-IDF and averaged Word2Vec (GloVe)---both paired with Logistic Regression. We find that TF-IDF with sublinear scaling and bigram features outperforms the Word2Vec averaging approach, consistent with the expectation that simple mean-pooling of word embeddings discards word order and phrase-level information critical for this task.
+We study \textbf{response clarity classification} on the QEvasion political interview dataset \cite{qevasion}. Each example is a question--answer pair, and the target label is one of \emph{Clear Reply}, \emph{Ambivalent}, or \emph{Clear Non-Reply}. Homework 1 used non-contextual text representations (TF--IDF and averaged GloVe embeddings) with Logistic Regression. In Homework 2, we keep the same high-level classifier pipeline but replace the source encoder with a pretrained transformer tokenizer and replace the linear classifier with a transformer sequence classifier fine-tuned through an explicit PyTorch training loop.
 
-\section{Data processing and analysis}
+Our goal in this homework is not aggressive leaderboard optimization. Instead, we adopt a \textbf{simple and principled} training recipe that is easy to justify: paired question--answer encoding, one fixed stratified validation split, AdamW optimization, class-weighted loss for imbalance, gradient clipping, and model selection by validation macro F1. We compare the three required pretrained checkpoints---BERT-base \cite{bert}, DistilBERT \cite{distilbert}, and DeBERTa-v3-base \cite{deberta}. The exact run-specific scores are inserted after executing the GPU notebooks, while the methodological comparison and the HW1 baseline reference are documented here.
 
-\subsection{Pre-processing}
+\section{Data Processing and Analysis}
 
-We apply a two-stage preprocessing pipeline composed via a \texttt{ChainPreprocessor} pattern:
+\subsection{Dataset}
 
+We use the QEvasion dataset from Hugging Face \cite{qevasion}. Each supervised instance contains:
+\begin{itemize}
+	\item a single segmented journalist \texttt{question},
+	\item the corresponding \texttt{interview\_answer},
+	\item the three-class target \texttt{clarity\_label}.
+\end{itemize}
+
+As in Homework 1, we use the official train/test split provided by the dataset. The training split is used for fitting and internal validation; the official test split is reserved for final reporting and Kaggle submission generation.
+
+\subsection{Preprocessing}
+
+Preprocessing in Homework 2 is intentionally lighter than in Homework 1. We do \emph{not} apply manual lemmatization, stopword removal, or handcrafted punctuation normalization. Instead, we keep the raw question and answer text, strip only missing values and outer whitespace, and rely on the pretrained tokenizer to perform subword segmentation and insert the appropriate special tokens.
+
+This design is principled for transformer fine-tuning: the checkpoints were pretrained on raw text, so aggressive manual normalization is less clearly beneficial than it was for sparse bag-of-words models. The notebook explicitly contrasts this decision with the heavier preprocessing used in Homework 1.
+
+\subsection{Exploratory Analysis}
+
+The exploratory analysis remains intentionally compact. We examine:
+\begin{itemize}
+	\item class imbalance in the train and test splits,
+	\item question length, answer length, and combined length distributions,
+	\item subgroup behavior for short, medium, and long question/answer buckets.
+\end{itemize}
+
+As already observed in Homework 1, the dataset is imbalanced: \emph{Clear Reply} is the majority class, while \emph{Ambivalent} is the smallest and most difficult class. This motivates class-weighted training and macro-averaged evaluation.
+
+\subsection{Input Construction}
+
+Unlike Homework 1, where we concatenated the question and answer into one string before feature extraction, Homework 2 preserves them as a \textbf{sentence pair}. The tokenizer receives two sequences:
+\[
+(\text{question}, \text{answer})
+\]
+and converts them into the checkpoint-specific sequence classification format. Conceptually, the model input is:
+\[
+[\text{CLS}]~\text{question}~[\text{SEP}]~\text{answer}~[\text{SEP}]
+\]
+for BERT-like architectures, although the exact special tokens are handled internally by each tokenizer.
+
+\section{Models and Training Setup}
+
+\subsection{Shared Pipeline}
+
+The abstract pipeline is unchanged from Homework 1:
 \begin{enumerate}
-	\item \textbf{CleanText}: Removes URLs (regex \texttt{http\textbackslash S+}), email addresses (\texttt{\textbackslash S+@\textbackslash S+}), and normalizes whitespace.
-	\item \textbf{Lemmatize}: Reduces words to their base forms using NLTK's WordNet lemmatizer \cite{nltk} (e.g., ``running'' $\to$ ``run'', ``countries'' $\to$ ``country'').
+	\item preprocess the decoded input,
+	\item encode the source text,
+	\item encode the target labels,
+	\item fit the model,
+	\item decode predictions and evaluate with macro-averaged metrics.
 \end{enumerate}
 
-Additionally, the TF-IDF vectorizer applies English stopword removal and lowercasing internally. For the Word2Vec path, we apply the same regex tokenizer as TF-IDF (\texttt{(?u)\textbackslash b\textbackslash w[\textbackslash w']*\textbackslash b}) to strip punctuation before GloVe lookup---this prevents silent vocabulary misses on tokens like ``economy,'' or ``said.'' that would otherwise fail to match their GloVe entries.
+We keep the same lightweight \texttt{Classifier} wrapper. This is pedagogically useful because Homework 2 becomes a direct extension of Homework 1 rather than a completely different codebase.
 
-\subsection{Analysis}
+\subsection{Transformer Models}
 
-The QEvasion dataset exhibits significant \textbf{class imbalance}: the training set contains roughly 55\% ``clear reply'', 30\% ``clear not reply'', and 15\% ``ambivalent'' samples. This imbalance motivates our use of \texttt{class\_weight='balanced'} in Logistic Regression, which automatically upweights minority classes during training. We also observe that ``ambivalent'' responses tend to be longer on average, possibly reflecting hedging and circumlocution.
+We compare the three required checkpoints:
+\begin{itemize}
+	\item \texttt{bert-base-uncased} \cite{bert},
+	\item \texttt{distilbert-base-uncased} \cite{distilbert},
+	\item \texttt{microsoft/deberta-v3-base} \cite{deberta}.
+\end{itemize}
 
-\subsection{Data partitioning for train, test and validation}
+All models are fine-tuned as three-way sequence classifiers using PyTorch and Hugging Face Transformers \cite{huggingface}. We do \emph{not} use the Hugging Face Trainer API, in accordance with the assignment specification; the training loop is implemented explicitly.
 
-The QEvasion dataset ships with a pre-defined train/test split ($\sim$3400 training and $\sim$300 test samples). We use this official split for final evaluation. The test set ground truth labels are available in the dataset and are used here to report test metrics directly; they are \emph{not} used during training or hyperparameter selection. For hyperparameter selection, we perform \textbf{3-fold stratified cross-validation} on the training set via scikit-learn's \texttt{GridSearchCV} \cite{sklearn}. We do not create a separate validation set, as the grid search's internal CV provides an unbiased estimate of generalization performance.
+\subsection{Validation Strategy}
 
-\subsection{Vectorization}
+Homework 1 used grid search with 3-fold cross-validation because the models were classical and cheap to train. Homework 2 uses transformer fine-tuning, so repeating full training three times per hyperparameter setting would be unnecessarily expensive. We therefore adopt a single \textbf{15\% stratified validation split} drawn from the official training split:
+\begin{itemize}
+	\item 85\% of the training split is used for gradient updates,
+	\item 15\% is used for validation during training,
+	\item the official test split is never used for model selection.
+\end{itemize}
 
-We compare two vectorization approaches:
+This choice keeps the procedure computationally reasonable while still giving us a stable validation signal for checkpoint selection.
 
-\paragraph{TF-IDF} Term Frequency--Inverse Document Frequency \cite{tfidf} represents each document as a sparse vector where each dimension corresponds to an n-gram. We use sublinear TF scaling ($1 + \log f_{t,d}$), which dampens the effect of high term frequencies and has been shown to improve classification performance. The vectorizer produces L2-normalized vectors by default. Question and answer are concatenated with a separator token before vectorization.
+\subsection{Training Recipe}
 
-\paragraph{Word2Vec (GloVe)} We use pre-trained GloVe embeddings \cite{glove} and represent each document as the mean of its constituent word vectors:
-$$
-\vec{d} = \frac{1}{|d|} \sum_{w \in d} \vec{w}
-$$
-We evaluate two GloVe variants: \textbf{Wiki-Gigaword} (50d, trained on Wikipedia + Gigaword) and \textbf{Twitter} (100d, trained on 2B tweets). The Wiki variant captures formal language; the Twitter variant captures more conversational patterns that may be closer to political interview speech.
+Our shared default recipe is intentionally small and consistent across models:
+\begin{itemize}
+	\item optimizer: AdamW \cite{adamw},
+	\item learning rate: $2 \times 10^{-5}$,
+	\item batch size: 16,
+	\item weight decay: 0.01,
+	\item epochs: 4,
+	\item maximum sequence length: 256,
+	\item gradient clipping: 1.0,
+	\item class weighting: enabled,
+	\item random seed: 42.
+\end{itemize}
 
+The only sanctioned tuning is a \textbf{small uniform sanity sweep} applied separately to each required model:
+\begin{itemize}
+	\item epochs $\in \{3, 4\}$,
+	\item maximum length $\in \{128, 256, 384\}$.
+\end{itemize}
 
-\section{Algorithms and Experiments}
-
-\subsection{Experiments}
-
-All experiments use \textbf{Logistic Regression} as the classifier, chosen for its interpretability, strong performance on text classification tasks, and compatibility with both sparse (TF-IDF) and dense (Word2Vec) feature spaces. We run three experiments:
-
-\begin{enumerate}
-	\item \textbf{TF-IDF + Logistic Regression}: Grid search over n-gram range, document frequency thresholds, and regularization strength $C$.
-	\item \textbf{Word2Vec Wiki-Gigaword 50d + Logistic Regression}: Grid search over regularization strength $C$ and L1/L2 mix via \texttt{l1\_ratio} (elasticnet penalty with the \texttt{saga} solver).
-	\item \textbf{Word2Vec Twitter 100d + Logistic Regression}: Same grid as experiment 2, but with Twitter-trained embeddings.
-\end{enumerate}
-
-For Word2Vec experiments, we use the \texttt{saga} solver which supports elasticnet regularization. This is important because dense embedding features behave differently from sparse TF-IDF features---L1 regularization can help by performing implicit feature selection on the dense vector dimensions.
-
-\subsubsection{Table of trials}
+This produces 6 runs per model, or 18 runs in total across BERT, DistilBERT, and DeBERTa. The same search space is used for all three checkpoints. This keeps the tuning budget uniform while still remaining small enough to fit the pedagogical scope of the assignment.
 
 \begin{table}[h]
 \centering
-\begin{tabular}{|l|l|l|l|l|}
-\hline
-\textbf{Trial} & \textbf{Encoder} & \textbf{Key Params} & \textbf{CV F1} & \textbf{Test F1} \\ \hline
-1 & TF-IDF & ngram=(1,2), C=10, min\_df=1 & $\sim$45\% & $\sim$45\% \\ \hline
-2 & GloVe Wiki 50d & C=1.0, l1\_ratio=0.0 & $\sim$38\% & $\sim$39\% \\ \hline
-3 & GloVe Twitter 100d & C=1.0, l1\_ratio=0.2 & $\sim$37\% & $\sim$38\% \\ \hline
-\end{tabular}
-\caption{Summary of experimental trials (macro-averaged F1). Exact values depend on the run; see notebook for precise figures.}
-\label{tab:trials}
+\small
+\begin{tabularx}{\textwidth}{Xlll}
+\toprule
+Model & Validation Strategy & Tuning & Final Recipe \\
+\midrule
+BERT & 15\% stratified split & same 2 x 3 sweep & \pending \\
+DistilBERT & 15\% stratified split & same 2 x 3 sweep & \pending \\
+DeBERTa-v3 & 15\% stratified split & same 2 x 3 sweep & \pending \\
+\bottomrule
+\end{tabularx}
+\caption{Training protocol for the three required transformer models.}
+\label{tab:training-protocol}
 \end{table}
 
-\subsection{Hyper-parameter tuning}
+\section{Evaluation Protocol}
 
-We use \texttt{GridSearchCV} with 3-fold cross-validation, scoring by macro-averaged F1.
-
-\paragraph{TF-IDF search space:}
+We report the same metrics as in Homework 1:
 \begin{itemize}
-	\item \texttt{ngram\_range}: (1,2), (1,3), (2,3)
-	\item \texttt{max\_df}: 0.95, 1.0
-	\item \texttt{min\_df}: 1, 2
-	\item \texttt{C}: 0.1, 1.0, 10.0
-\end{itemize}
-This yields 36 parameter combinations $\times$ 3 folds = 108 fits. The best configuration typically selects bigrams, no aggressive document frequency filtering, and strong regularization (high $C$).
-
-\paragraph{Word2Vec search space:}
-\begin{itemize}
-	\item \texttt{C}: 0.1, 1.0, 10.0
-	\item \texttt{solver}: saga
-	\item \texttt{l1\_ratio}: 0, 0.2, 0.4, 0.6, 0.8, 1.0
-\end{itemize}
-This yields 18 combinations $\times$ 3 folds = 54 fits per embedding variant. The regularization type matters more here than for TF-IDF, as the dense feature space benefits from different sparsity constraints.
-
-No signs of severe overfitting were observed: cross-validation scores and test scores are close for all experiments, suggesting the models generalize reasonably well given the dataset size.
-
-\subsection{Optimization techniques}
-
-Our pipeline is implemented as a custom \texttt{Classifier} class inheriting from scikit-learn's \texttt{BaseEstimator} and \texttt{ClassifierMixin}. This gives us automatic \texttt{get\_params()}/\texttt{set\_params()} support and full compatibility with scikit-learn's optimization ecosystem (\texttt{GridSearchCV}, \texttt{cross\_val\_score}, etc.).
-
-Key design choices:
-\begin{itemize}
-	\item \textbf{Protocol-based composition}: Components (preprocessors, encoders, models, scorers) are duck-typed via Python's \texttt{typing.Protocol}, allowing any implementation that matches the interface to be plugged in.
-	\item \textbf{Encoder-agnostic pipeline}: The same \texttt{Classifier} orchestrates TF-IDF and Word2Vec experiments---only the \texttt{source\_encoder} argument changes.
-	\item \textbf{Parallel grid search}: \texttt{n\_jobs=-1} distributes CV folds across all CPU cores. For Word2Vec, we pre-download embeddings before grid search to avoid parallel download race conditions.
+	\item Accuracy,
+	\item Macro Precision,
+	\item Macro Recall,
+	\item Macro F1.
 \end{itemize}
 
-\subsection{Evaluation}
+Macro F1 remains the primary metric because it weights all classes equally and therefore reflects performance on the minority \emph{Ambivalent} class more fairly than accuracy alone.
 
-We evaluate using four metrics:
+In addition to overall scores, the notebook also produces:
 \begin{itemize}
-	\item \textbf{Accuracy}: Overall correctness.
-	\item \textbf{Precision} (macro): Average per-class precision, treating all classes equally.
-	\item \textbf{Recall} (macro): Average per-class recall.
-	\item \textbf{F1} (macro): Harmonic mean of precision and recall, macro-averaged. This is our primary metric as it accounts for class imbalance better than accuracy.
+	\item confusion matrices,
+	\item learning curves (train loss, validation loss, validation macro F1),
+	\item subgroup tables by question length and answer length,
+	\item concrete misclassified examples for error analysis.
 \end{itemize}
 
-\subsubsection{ROC curve}
+\section{Results and Comparison}
 
-ROC analysis is less informative for our 3-class setting. We focus on macro F1 and confusion matrices instead, which provide clearer insight into per-class performance on this imbalanced dataset.
+\subsection{Reference Point from Homework 1}
 
-\subsubsection{Learning Curve}
+We do not rerun the classical baselines inside Homework 2. Instead, we reference the best values already obtained in Homework 1:
 
-Given the relatively small dataset ($\sim$3400 training samples), learning curves would likely show that both approaches are in the data-limited regime. The close match between CV and test scores suggests neither model is severely overfitting.
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+Homework 1 Model & Macro F1 (reference) \\
+\midrule
+TF--IDF + Logistic Regression & \hwonebestf \\
+GloVe Wiki + Logistic Regression & \hwonewikitwo \\
+GloVe Twitter + Logistic Regression & \hwonetwitter \\
+\bottomrule
+\end{tabular}
+\caption{Homework 1 reference results, taken from the previous report.}
+\label{tab:hw1-reference}
+\end{table}
 
-\subsubsection{Confusion matrix}
+These values are important because they provide the exact comparison point that motivates Homework 2: if contextual transformers are working as intended, they should improve on averaged word embeddings and ideally also exceed the strong TF--IDF baseline.
 
-Confusion matrices (generated in the notebook) reveal that:
+\subsection{Homework 2 Model Comparison}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xcccc}
+\toprule
+Model & Accuracy & Macro Precision & Macro Recall & Macro F1 \\
+\midrule
+BERT & \pending & \pending & \pending & \pending \\
+DistilBERT & \pending & \pending & \pending & \pending \\
+DeBERTa-v3 & \pending & \pending & \pending & \pending \\
+\bottomrule
+\end{tabularx}
+\caption{Homework 2 transformer results on the official test split.}
+\label{tab:hw2-results}
+\end{table}
+
+\subsection{Interpretation}
+
+The main hypothesis is that transformer models improve on Homework 1 because they encode:
 \begin{itemize}
-	\item All models perform best on ``clear reply'' (the majority class).
-	\item ``Ambivalent'' is the hardest class to predict, frequently confused with both ``clear reply'' and ``clear not reply''.
-	\item TF-IDF achieves better separation between ``clear not reply'' and ``ambivalent'' than Word2Vec, likely because discriminative n-grams (e.g., ``I think'', ``not sure'') are preserved in the sparse representation but lost in mean-pooled embeddings.
+	\item word order,
+	\item contextual meaning,
+	\item the interaction between the journalist's question and the interviewee's answer.
 \end{itemize}
 
+These are exactly the aspects that TF--IDF and mean-pooled GloVe struggle to represent well. In particular, the clarity task depends not only on what words appear in the answer, but also on whether the answer is responsive to the specific question asked. Sentence-pair transformers are a natural fit for this interaction.
 
-\section{Results and Overall Analysis}
-
-\subsection{Results Analysis}
-
-TF-IDF consistently outperforms both Word2Vec variants across all metrics. The performance gap ($\sim$6--7 points in macro F1) is substantial and can be attributed to three factors:
-
+After notebook execution, Table \ref{tab:hw2-results} should be read together with Table \ref{tab:hw1-reference}. The comparison should answer two questions:
 \begin{enumerate}
-	\item \textbf{Phrase preservation}: TF-IDF with bigrams captures discriminative phrases like ``not sure'', ``I believe'', and ``definitely yes'' that directly signal clarity. Mean-pooled Word2Vec discards word order entirely.
-	\item \textbf{No information loss}: The sparse TF-IDF representation retains all discriminative features, whereas averaging compresses a variable-length document into a fixed-size vector, losing structural information.
-	\item \textbf{Task-specific weighting}: IDF automatically upweights terms that are specific to certain clarity categories and downweights common words, providing a form of built-in feature selection.
+	\item Does contextual fine-tuning clearly outperform the Homework 1 GloVe baselines?
+	\item Does it also beat the stronger TF--IDF baseline?
 \end{enumerate}
 
-The Twitter embeddings do not outperform Wiki-Gigaword despite the conversational nature of political interviews. This suggests that the formal/informal distinction matters less than the fundamental limitation of mean-pooling.
+\section{Subgroup Analysis}
 
-Overall, a macro F1 of $\sim$0.45 reflects the genuine difficulty of this task: distinguishing ambivalent responses from clear ones requires understanding rhetorical structure, not just vocabulary.
+The assignment explicitly requests analysis across data subgroups. We therefore evaluate the final predictions on buckets formed by question length and answer length:
+\begin{itemize}
+	\item short,
+	\item medium,
+	\item long.
+\end{itemize}
 
-\subsubsection{Best trial}
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & \pending & \pending & \pending \\
+Medium & \pending & \pending & \pending \\
+Long & \pending & \pending & \pending \\
+\bottomrule
+\end{tabularx}
+\caption{Performance across question-length buckets.}
+\label{tab:question-subgroups}
+\end{table}
 
-The best performing configuration is \textbf{TF-IDF + Logistic Regression} with sublinear TF scaling, bigram features (ngram range (1,2)), no aggressive document frequency filtering, and $C=10$. This achieves a test F1 of approximately 0.45 (macro-averaged), with accuracy around 0.63.
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & \pending & \pending & \pending \\
+Medium & \pending & \pending & \pending \\
+Long & \pending & \pending & \pending \\
+\bottomrule
+\end{tabularx}
+\caption{Performance across answer-length buckets.}
+\label{tab:answer-subgroups}
+\end{table}
+
+These subgroup tables are useful for testing whether the models struggle more with long, potentially more evasive answers, or with short answers that lack lexical evidence.
+
+\section{Error Analysis}
+
+Error analysis is a central part of this assignment. The notebook extracts the most common confusion pairs and several representative mistakes. The report should summarize the patterns that emerge after execution. The following hypotheses are especially relevant:
+\begin{enumerate}
+	\item \textbf{Ambivalent} is likely to remain the hardest class.
+	\item Clear Non-Reply and Ambivalent may still be confused when the answer is topically related but not directly responsive.
+	\item Longer answers may hurt performance when they contain partial responsiveness mixed with rhetorical evasion.
+\end{enumerate}
+
+Concrete examples should be inserted here after running the notebooks. A useful structure is:
+\begin{itemize}
+	\item one example where the model predicts Clear Reply instead of Ambivalent,
+	\item one example where it predicts Ambivalent instead of Clear Non-Reply,
+\item one example where contextual modeling helps relative to the Homework 1 baselines.
+\end{itemize}
+
+\section{Discussion}
+
+This simplified Homework 2 design deliberately avoids heavy optimization. That is a feature, not a limitation: it makes the core conceptual improvement over Homework 1 easier to understand. The important difference is not a large hyperparameter search, but the move from non-contextual features to a contextual sentence-pair encoder.
+
+The design choices can be summarized as follows:
+\begin{itemize}
+	\item use raw question--answer pairs rather than handcrafted text normalization,
+	\item fine-tune standard pretrained checkpoints instead of building custom architectures,
+	\item use one fixed validation split rather than expensive cross-validation,
+	\item keep the same pipeline abstraction as Homework 1 for clarity of comparison.
+\end{itemize}
+
+This setup makes it easy to argue why the transformer approach should improve: the model sees the full question--answer interaction and can condition the meaning of each token on the surrounding context.
+
+\section{Conclusion}
+
+Homework 2 extends Homework 1 in the most direct possible way: we preserve the pipeline abstraction and replace only the representation and classifier components. This makes the comparison between the two homeworks clean and interpretable. Homework 1 established that TF--IDF was much stronger than averaged GloVe on this task. Homework 2 tests whether contextual fine-tuning can move beyond both of those non-contextual baselines.
+
+After the GPU notebooks are executed, the remaining task is to populate the result tables, insert the subgroup values, and summarize the concrete failure cases found in the error-analysis cells. The underlying methodology is already fixed: a minimal transformer training loop, a single stratified validation split, the same small 2 x 3 sweep for each required model, and a direct comparison to the Homework 1 reference results.
 
 \nocite{*}
-\bibliographystyle{plain} % We choose the "plain" reference style
-\bibliography{refs} % Entries are in the refs.bib file
+\bibliographystyle{plain}
+\bibliography{refs}
 
 \end{document}

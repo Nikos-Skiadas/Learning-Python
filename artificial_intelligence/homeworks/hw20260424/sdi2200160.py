@@ -4,65 +4,80 @@
 from __future__ import annotations
 
 
+import argparse
 import functools
+import itertools
 import os
 import random
 import typing
 
-# Required for DeBERTa v3 tokenizer (SentencePiece → protobuf)
+# Required for DeBERTa v3 tokenizer (SentencePiece -> protobuf)
 os.environ.setdefault("PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION", "python")
 
 import numpy as np
 import pandas
-import torch
-import torch.nn
-import torch.utils.data
-import transformers
 import sklearn.base
 import sklearn.metrics
 import sklearn.model_selection
 import sklearn.preprocessing
+import torch
+import torch.utils.data
+import transformers
 
-from ..protocols import Scorer
 from ..pipelines import Classifier
 from ..preprocessing import IdentityPreprocessor
-from ..data import data
+from ..protocols import Scorer
 
 
-# Reproducibility seed required by the assignment
 RANDOM_STATE = 42
+DEVICE = torch.device("cuda")
 
-# Device selection (CUDA if available, else CPU)
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Model registry: short name -> HuggingFace model ID
 MODELS: dict[str, str] = {
 	"bert": "bert-base-uncased",
 	"distilbert": "distilbert-base-uncased",
 	"deberta": "microsoft/deberta-v3-base",
 }
 
+DEFAULT_CONFIG: dict[str, int | float] = {
+	"batch_size": 16,
+	"learning_rate": 2e-5,
+	"weight_decay": 0.01,
+	"num_epochs": 4,
+	"max_length": 256,
+	"max_grad_norm": 1.0,
+	"val_frac": 0.15,
+}
 
-# ============================================================================
-# Reproducibility
-# ============================================================================
+SWEEP_GRID: dict[str, tuple[int, ...]] = {
+	"num_epochs": (3, 4),
+	"max_length": (128, 256, 384),
+}
+
+
+def require_cuda() -> torch.device:
+	"""Return the CUDA device or fail fast with a clear message."""
+	if not torch.cuda.is_available():
+		raise RuntimeError(
+			"HW2 training requires a CUDA GPU. "
+			"Run this script in your local GPU environment or on Kaggle with GPU enabled."
+		)
+
+	return DEVICE
+
 
 def seed_everything(seed: int = RANDOM_STATE) -> None:
-	"""Set all random seeds for full reproducibility."""
+	"""Set all random seeds for reproducibility."""
 	random.seed(seed)
 	np.random.seed(seed)
 	torch.manual_seed(seed)
-	torch.cuda.manual_seed_all(seed)
-	torch.backends.cudnn.deterministic = True
-	torch.backends.cudnn.benchmark = False
+	if torch.cuda.is_available():
+		torch.cuda.manual_seed_all(seed)
+		torch.backends.cudnn.deterministic = True
+		torch.backends.cudnn.benchmark = False
 
-
-# ============================================================================
-# Dataset (internal, used by TransformerModel)
-# ============================================================================
 
 class ClarityDataset(torch.utils.data.Dataset):
-	"""PyTorch Dataset wrapping tokenized text with optional labels."""
+	"""PyTorch dataset wrapping tokenized question-answer pairs."""
 
 	def __init__(self,
 		encodings: dict[str, torch.Tensor],
@@ -75,36 +90,18 @@ class ClarityDataset(torch.utils.data.Dataset):
 		return len(self.encodings["input_ids"])
 
 	def __getitem__(self, idx: int) -> dict[str, torch.Tensor]:
-		item = {key: val[idx] for key, val in self.encodings.items()}
-
+		item = {key: value[idx] for key, value in self.encodings.items()}
 		if self.labels is not None:
 			item["labels"] = self.labels[idx]
 
 		return item
 
 
-# ============================================================================
-# Encoder: TokenizerEncoder (Encoder protocol)
-# ============================================================================
-
 class TokenizerEncoder(
 	sklearn.base.BaseEstimator,
 	sklearn.base.TransformerMixin,
 ):
-	"""Wraps AutoTokenizer as a source Encoder.
-
-	Satisfies the Encoder[pandas.DataFrame, BatchEncoding] protocol:
-	- fit() is a no-op (pretrained tokenizer needs no fitting)
-	- transform() tokenizes question-answer pairs into sentence pair format:
-	    [CLS] question [SEP] answer [SEP]
-
-	The tokenizer automatically includes/excludes token_type_ids
-	based on the model architecture (BERT/DeBERTa use them,
-	DistilBERT does not).
-
-	Inherits from BaseEstimator/TransformerMixin for sklearn compatibility
-	(automatic get_params/set_params and fit_transform).
-	"""
+	"""Wrap AutoTokenizer as an Encoder[pandas.DataFrame, BatchEncoding]."""
 
 	def __init__(self,
 		model_name: str = "bert-base-uncased",
@@ -113,22 +110,10 @@ class TokenizerEncoder(
 		self.model_name = model_name
 		self.max_length = max_length
 
-	def fit(self, source: pandas.DataFrame, signal = None):
-		"""No-op: pretrained tokenizer needs no fitting."""
+	def fit(self, source: pandas.DataFrame, signal = None) -> typing.Self:
 		return self
 
 	def transform(self, source: pandas.DataFrame) -> dict[str, torch.Tensor]:
-		"""Tokenize question-answer pairs into model inputs.
-
-		Args:
-			source: DataFrame with 'question' and 'answer' columns.
-
-		Returns:
-			Dict with input_ids, attention_mask, and
-			(for BERT/DeBERTa) token_type_ids as PyTorch tensors.
-		"""
-		# Lazy-load tokenizer (avoids downloading at construction time,
-		# critical for sklearn's clone() which re-constructs objects)
 		if not hasattr(self, "_tokenizer"):
 			self._tokenizer = transformers.AutoTokenizer.from_pretrained(self.model_name)
 
@@ -144,27 +129,8 @@ class TokenizerEncoder(
 		return typing.cast(dict[str, torch.Tensor], dict(encoding))
 
 
-# ============================================================================
-# Model: TransformerModel (Model protocol)
-# ============================================================================
-
 class TransformerModel(sklearn.base.BaseEstimator):
-	"""Wraps transformer fine-tuning as a Model.
-
-	Satisfies the Model[BatchEncoding, np.ndarray] protocol:
-	- fit() runs a custom training loop (no HF Trainer API)
-	- predict() runs batch inference
-
-	Training loop features:
-	- AdamW optimizer with decoupled weight decay
-	- Linear warmup + linear decay LR schedule
-	- Gradient clipping
-	- Optional class-weighted cross-entropy loss
-	- Internal train/val split with best-model checkpointing
-
-	Inherits from BaseEstimator so Classifier's get_params(deep=True)
-	can expose model__learning_rate, model__num_epochs, etc.
-	"""
+	"""Wrap transformer fine-tuning in the shared Classifier pipeline."""
 
 	def __init__(self,
 		model_name: str = "bert-base-uncased",
@@ -173,7 +139,6 @@ class TransformerModel(sklearn.base.BaseEstimator):
 		learning_rate: float = 2e-5,
 		weight_decay: float = 0.01,
 		num_epochs: int = 4,
-		warmup_ratio: float = 0.1,
 		max_grad_norm: float = 1.0,
 		class_weights: torch.Tensor | None = None,
 		val_frac: float = 0.15,
@@ -185,162 +150,129 @@ class TransformerModel(sklearn.base.BaseEstimator):
 		self.learning_rate = learning_rate
 		self.weight_decay = weight_decay
 		self.num_epochs = num_epochs
-		self.warmup_ratio = warmup_ratio
 		self.max_grad_norm = max_grad_norm
 		self.class_weights = class_weights
 		self.val_frac = val_frac
 		self.device = device
 
-		# Initialized lazily in _build()
 		self._model: transformers.PreTrainedModel | None = None
 		self.history: dict[str, list[float]] = {}
+		self.best_val_f1_: float = 0.0
+		self.best_epoch_: int = 0
 
 	def _build(self) -> None:
-		"""Load pretrained model from checkpoint."""
+		require_cuda()
+
 		model = transformers.AutoModelForSequenceClassification.from_pretrained(
 			self.model_name,
 			num_labels = self.num_labels,
 		)
 		assert isinstance(model, transformers.PreTrainedModel)
-		self._model = model.to(self.device)  # type: ignore[arg-type]
+		self._model = model.to(self.device)  # type: ignore
+
+	def _make_loss_fn(self) -> torch.nn.CrossEntropyLoss:
+		weights = None
+		if self.class_weights is not None:
+			weights = self.class_weights.to(self.device)
+
+		return torch.nn.CrossEntropyLoss(weight = weights)
+
+	def _split_train_validation(self,
+		source: dict[str, torch.Tensor],
+		labels: torch.Tensor,
+	) -> tuple[dict[str, torch.Tensor], torch.Tensor, dict[str, torch.Tensor], torch.Tensor]:
+		indices = np.arange(len(labels))
+		train_idx, val_idx = sklearn.model_selection.train_test_split(
+			indices,
+			test_size = self.val_frac,
+			random_state = RANDOM_STATE,
+			stratify = labels.cpu().numpy(),
+		)
+
+		train_enc = {key: value[train_idx] for key, value in source.items()}
+		val_enc = {key: value[val_idx] for key, value in source.items()}
+		train_labels = labels[train_idx]
+		val_labels = labels[val_idx]
+
+		return train_enc, train_labels, val_enc, val_labels
 
 	def fit(self,
 		source: dict[str, torch.Tensor],
-		target: np.ndarray, /,
-	) -> TransformerModel:
-		"""Fine-tune the transformer model.
-
-		Args:
-			source: Tokenized dict from TokenizerEncoder.transform()
-			target: Encoded integer labels from LabelEncoder.transform()
-		"""
+		target: np.ndarray | torch.Tensor, /,
+	) -> typing.Self:
 		if self._model is None:
 			self._build()
 
 		assert self._model is not None
 
-		labels: torch.Tensor = target if isinstance(target, torch.Tensor) else torch.tensor(target, dtype = torch.long)
+		labels = target if isinstance(target, torch.Tensor) else torch.tensor(target, dtype = torch.long)
+		train_enc, train_labels, val_enc, val_labels = self._split_train_validation(source, labels)
 
-		# Internal train/val split (Classifier.fit doesn't pass validation data,
-		# so the model handles it internally -- same idea as GridSearchCV's cv)
-		train_enc: dict[str, torch.Tensor]
-		val_enc: dict[str, torch.Tensor] | None
-		val_labels: torch.Tensor | None
-
-		if self.val_frac > 0:
-			idx = np.arange(len(labels))
-			train_idx, val_idx = sklearn.model_selection.train_test_split(
-				idx,
-				test_size = self.val_frac,
-				random_state = RANDOM_STATE,
-				stratify = target,
-			)
-			train_enc  = {k: v[train_idx] for k, v in source.items()}
-			val_enc    = {k: v[val_idx]   for k, v in source.items()}
-			train_labels = typing.cast(torch.Tensor, labels[train_idx])
-			val_labels = typing.cast(torch.Tensor, labels[val_idx])
-		else:
-			train_enc    = dict(source)
-			train_labels = labels
-			val_enc      = None
-			val_labels   = None
-
-		# DataLoader
-		train_ds = ClarityDataset(train_enc, train_labels)
 		train_loader = torch.utils.data.DataLoader(
-			train_ds,
+			ClarityDataset(train_enc, train_labels),
 			batch_size = self.batch_size,
 			shuffle = True,
+			pin_memory = True,
 		)
 
-		# Optimizer with separate weight decay groups
-		# (no decay on bias and LayerNorm -- standard practice)
-		no_decay = {"bias", "LayerNorm.weight", "LayerNorm.bias"}
-		param_groups = [
-			{
-				"params": [p for n, p in self._model.named_parameters()
-					if not any(nd in n for nd in no_decay)],
-				"weight_decay": self.weight_decay,
-			},
-			{
-				"params": [p for n, p in self._model.named_parameters()
-					if any(nd in n for nd in no_decay)],
-				"weight_decay": 0.0,
-			},
-		]
-
-		optimizer = torch.optim.AdamW(param_groups, lr = self.learning_rate)
-
-		# Linear warmup then linear decay
-		total_steps = len(train_loader) * self.num_epochs
-		warmup_steps = int(total_steps * self.warmup_ratio)
-
-		scheduler = transformers.get_linear_schedule_with_warmup(
-			optimizer,
-			num_warmup_steps = warmup_steps,
-			num_training_steps = total_steps,
+		optimizer = torch.optim.AdamW(
+			self._model.parameters(),
+			lr = self.learning_rate,
+			weight_decay = self.weight_decay,
 		)
+		loss_fn = self._make_loss_fn()
 
-		# Loss with optional class weights for imbalance handling
-		loss_fn = torch.nn.CrossEntropyLoss(
-			weight = self.class_weights.to(self.device) if self.class_weights is not None else None,
-		)
-
-		# Training
 		self.history = {"train_loss": [], "val_loss": [], "val_f1": []}
-		best_val_f1 = 0.0
+		self.best_val_f1_ = 0.0
+		self.best_epoch_ = 0
 		best_state: dict[str, torch.Tensor] | None = None
 
 		for epoch in range(self.num_epochs):
-			# --- Train ---
 			self._model.train()
 			total_loss = 0.0
 
 			for batch in train_loader:
 				optimizer.zero_grad()
+				model_inputs = {
+					key: value.to(self.device, non_blocking = True)
+					for key, value in batch.items()
+					if key != "labels"
+				}
+				labels_batch = batch["labels"].to(self.device, non_blocking = True)
 
-				model_inputs = {k: v.to(self.device) for k, v in batch.items() if k != "labels"}
 				outputs = self._model(**model_inputs)
-
-				loss = loss_fn(outputs.logits, batch["labels"].to(self.device))
-
+				loss = loss_fn(outputs.logits, labels_batch)
 				loss.backward()
 				torch.nn.utils.clip_grad_norm_(self._model.parameters(), self.max_grad_norm)
 				optimizer.step()
-				scheduler.step()
 
-				total_loss += loss.item()
+				total_loss += float(loss.item())
 
-			avg_loss = total_loss / len(train_loader)
-			self.history["train_loss"].append(avg_loss)
+			avg_train_loss = total_loss / len(train_loader)
+			val_metrics = self._evaluate(val_enc, val_labels)
 
-			# --- Validate ---
-			if val_enc is not None and val_labels is not None:
-				val_metrics = self._evaluate(val_enc, val_labels)
-				self.history["val_loss"].append(val_metrics["loss"])
-				self.history["val_f1"].append(val_metrics["f1"])
+			self.history["train_loss"].append(avg_train_loss)
+			self.history["val_loss"].append(val_metrics["loss"])
+			self.history["val_f1"].append(val_metrics["f1"])
 
-				improved = val_metrics["f1"] > best_val_f1
+			improved = val_metrics["f1"] > self.best_val_f1_
+			if improved:
+				self.best_val_f1_ = val_metrics["f1"]
+				self.best_epoch_ = epoch + 1
+				best_state = {key: value.detach().cpu().clone() for key, value in self._model.state_dict().items()}
 
-				if improved:
-					best_val_f1 = val_metrics["f1"]
-					best_state = {k: v.cpu().clone() for k, v in self._model.state_dict().items()}
+			print(
+				f"Epoch {epoch + 1}/{self.num_epochs} | "
+				f"Train Loss: {avg_train_loss:.4f} | "
+				f"Val Loss: {val_metrics['loss']:.4f} | "
+				f"Val F1: {val_metrics['f1']:.4f}"
+				f"{'  *' if improved else ''}"
+			)
 
-				print(
-					f"Epoch {epoch + 1}/{self.num_epochs} | "
-					f"Train Loss: {avg_loss:.4f} | "
-					f"Val Loss: {val_metrics['loss']:.4f} | "
-					f"Val F1: {val_metrics['f1']:.4f}"
-					f"{'  *' if improved else ''}"
-				)
-			else:
-				print(f"Epoch {epoch + 1}/{self.num_epochs} | Train Loss: {avg_loss:.4f}")
-
-		# Restore best model checkpoint
 		if best_state is not None:
 			self._model.load_state_dict(best_state)
-			self._model.to(self.device)  # type: ignore[arg-type]
-			print(f"\nRestored best model (Val F1: {best_val_f1:.4f})")
+			self._model.to(self.device)  # type: ignore
+			print(f"\nRestored best checkpoint from epoch {self.best_epoch_} (Val F1: {self.best_val_f1_:.4f})")
 
 		return self
 
@@ -349,81 +281,77 @@ class TransformerModel(sklearn.base.BaseEstimator):
 		encodings: dict[str, torch.Tensor],
 		labels: torch.Tensor,
 	) -> dict[str, float]:
-		"""Internal evaluation on pre-tokenized data."""
 		assert self._model is not None
-
 		self._model.eval()
 
-		ds = ClarityDataset(encodings, labels)
-		loader = torch.utils.data.DataLoader(ds, batch_size = self.batch_size)
-
-		all_preds: list[int] = []
+		loader = torch.utils.data.DataLoader(
+			ClarityDataset(encodings, labels),
+			batch_size = self.batch_size,
+			shuffle = False,
+			pin_memory = True,
+		)
+		loss_fn = self._make_loss_fn()
 		total_loss = 0.0
-		loss_fn = torch.nn.CrossEntropyLoss()
+		predictions: list[int] = []
 
 		for batch in loader:
-			model_inputs = {k: v.to(self.device) for k, v in batch.items() if k != "labels"}
+			model_inputs = {
+				key: value.to(self.device, non_blocking = True)
+				for key, value in batch.items()
+				if key != "labels"
+			}
+			labels_batch = batch["labels"].to(self.device, non_blocking = True)
+
 			outputs = self._model(**model_inputs)
+			total_loss += float(loss_fn(outputs.logits, labels_batch).item())
+			predictions.extend(outputs.logits.argmax(dim = -1).cpu().tolist())
 
-			total_loss += loss_fn(outputs.logits, batch["labels"].to(self.device)).item()
-			all_preds.extend(outputs.logits.argmax(dim = -1).cpu().tolist())
-
-		preds = np.array(all_preds)
-		true = labels.numpy() if isinstance(labels, torch.Tensor) else np.array(labels)
+		true = labels.cpu().numpy()
+		pred = np.array(predictions)
 
 		return {
 			"loss": total_loss / len(loader),
-			"f1": float(sklearn.metrics.f1_score(true, preds, average = "macro", zero_division = 0)),  # type: ignore[call-overload]
+			"f1": float(sklearn.metrics.f1_score(true, pred, average = "macro", zero_division = 0)),
 		}
 
 	@torch.no_grad()
 	def predict(self,
 		source: dict[str, torch.Tensor], /,
 	) -> np.ndarray:
-		"""Predict encoded labels from tokenized inputs.
-
-		Args:
-			source: BatchEncoding from TokenizerEncoder.transform()
-
-		Returns:
-			numpy array of integer predictions.
-		"""
 		assert self._model is not None
-
 		self._model.eval()
 
-		ds = ClarityDataset(source)
-		loader = torch.utils.data.DataLoader(ds, batch_size = self.batch_size)
-
-		all_preds: list[int] = []
+		loader = torch.utils.data.DataLoader(
+			ClarityDataset(source),
+			batch_size = self.batch_size,
+			shuffle = False,
+			pin_memory = True,
+		)
+		predictions: list[int] = []
 
 		for batch in loader:
-			model_inputs = {k: v.to(self.device) for k, v in batch.items()}
+			model_inputs = {
+				key: value.to(self.device, non_blocking = True)
+				for key, value in batch.items()
+			}
 			outputs = self._model(**model_inputs)
-			all_preds.extend(outputs.logits.argmax(dim = -1).cpu().tolist())
+			predictions.extend(outputs.logits.argmax(dim = -1).cpu().tolist())
 
-		return np.array(all_preds)
+		return np.array(predictions)
 
 
-# ============================================================================
-# Metric Helpers
-# ============================================================================
-
-def macro_averaged(metric_fn: typing.Any, **kwargs: typing.Any) -> typing.Any:
-	"""Wrap sklearn metric with macro averaging and zero_division handling.
-
-	Returns a partial function that can be used as a Scorer.
-	"""
-	return functools.partial(metric_fn,
+def macro_averaged(
+	metric_fn: Scorer,
+	**kwargs,
+) -> Scorer:
+	"""Wrap an sklearn metric with macro averaging and zero_division=0."""
+	return functools.partial(
+		metric_fn,
 		average = "macro",
 		zero_division = 0,
 		**kwargs,
 	)
 
-
-# ============================================================================
-# Data Preparation
-# ============================================================================
 
 def data_prep() -> tuple[
 	pandas.DataFrame,
@@ -431,233 +359,254 @@ def data_prep() -> tuple[
 	pandas.DataFrame,
 	pandas.Series,
 ]:
-	"""Prepare data as DataFrames for transformer sentence pair encoding.
+	"""Prepare question-answer pairs for transformer sentence-pair encoding."""
+	from ..data import data
 
-	Unlike HW1 which concatenated question + " | " + answer into a single
-	Series for TF-IDF / Word2Vec, here we keep questions and answers as
-	separate DataFrame columns. The TokenizerEncoder then produces proper
-	sentence pair encoding: [CLS] question [SEP] answer [SEP]
-
-	Returns:
-		(X_train, y_train, X_test, y_test)
-		where X is a DataFrame with 'question' and 'answer' columns,
-		and y is a Series of string labels.
-	"""
 	train_df = data["train"].to_pandas(); assert isinstance(train_df, pandas.DataFrame)
-	test_df  = data["test" ].to_pandas(); assert isinstance(test_df,  pandas.DataFrame)
+	test_df = data["test"].to_pandas(); assert isinstance(test_df, pandas.DataFrame)
 
 	X_train = pandas.DataFrame({
 		"question": train_df.question.fillna("").str.strip(),
-		"answer":   train_df.interview_answer.fillna("").str.strip(),
+		"answer": train_df.interview_answer.fillna("").str.strip(),
 	})
 	y_train = train_df.clarity_label.fillna("").str.strip()
 
 	X_test = pandas.DataFrame({
 		"question": test_df.question.fillna("").str.strip(),
-		"answer":   test_df.interview_answer.fillna("").str.strip(),
+		"answer": test_df.interview_answer.fillna("").str.strip(),
 	})
 	y_test = test_df.clarity_label.fillna("").str.strip()
-
-	print(f"Training examples: {len(X_train)}")
-	print(f"Test     examples: {len(X_test)}")
-	print()
 
 	return X_train, y_train, X_test, y_test
 
 
-def compute_class_weights(labels: torch.Tensor, num_classes: int = 3) -> torch.Tensor:
-	"""Compute balanced class weights (same formula as sklearn's 'balanced').
-
-	w_c = n_samples / (n_classes * count_c)
-	"""
+def compute_class_weights(
+	labels: torch.Tensor,
+	num_classes: int = 3,
+) -> torch.Tensor:
+	"""Compute balanced class weights using sklearn's formula."""
 	counts = torch.bincount(labels, minlength = num_classes).float()
 
 	return len(labels) / (num_classes * counts)
 
 
-# ============================================================================
-# Model Factory
-# ============================================================================
-
-def model_factory(
-	model_key: str,
-	class_weights: torch.Tensor | None = None,
-	**overrides,
-) -> tuple[TokenizerEncoder, TransformerModel]:
-	"""Create encoder + model pair for a given transformer.
-
-	Mirrors tfidf_encoder_factory / word2vec_encoder_factory from HW1.
-
-	Args:
-		model_key: One of 'bert', 'distilbert', 'deberta'
-		class_weights: Optional class weight tensor for loss function
-		**overrides: Override any TransformerModel parameter
-
-	Returns:
-		(source_encoder, model) ready to plug into Classifier.
-	"""
-	model_name = MODELS[model_key]
-
-	source_encoder = TokenizerEncoder(
-		model_name = model_name,
-		max_length = overrides.pop("max_length", 256),
-	)
-
-	defaults: dict[str, typing.Any] = dict(
-		model_name = model_name,
-		num_labels = 3,
-		batch_size = 16,
-		learning_rate = 2e-5,
-		weight_decay = 0.01,
-		num_epochs = 4,
-		warmup_ratio = 0.1,
-		max_grad_norm = 1.0,
-		class_weights = class_weights,
-		val_frac = 0.15,
-	)
-	defaults.update(overrides)
-
-	model = TransformerModel(**defaults)
-
-	return source_encoder, model
-
-
-# ============================================================================
-# Training Orchestration
-# ============================================================================
-
-def train_and_evaluate(
-	model_key: str,
-	**model_overrides: typing.Any,
-) -> tuple[typing.Any, dict[str, float], pandas.Series]:
-	"""Full training pipeline for a single transformer model.
-
-	Mirrors optimize_with_grid_search from HW1 but adapted for
-	transformer fine-tuning. Uses the same Classifier pipeline --
-	only the source_encoder (TokenizerEncoder) and model
-	(TransformerModel) are swapped in.
-
-	Args:
-		model_key: One of 'bert', 'distilbert', 'deberta'
-		**model_overrides: Override default hyperparameters
-
-	Returns:
-		(classifier, test_scores, decoded_predictions)
-	"""
-	seed_everything(RANDOM_STATE)
-
-	model_name = MODELS[model_key]
-
-	print("=" * 80)
-	print(f"{model_name.upper()} FINE-TUNING")
-	print("=" * 80)
-	print()
-
-	# Prepare data
-	print("Preparing data...")
-	X_train, y_train, X_test, y_test = data_prep()
-
-	# Compute class weights from training labels
+def make_label_encoder(y_train: pandas.Series) -> tuple[sklearn.preprocessing.LabelEncoder, torch.Tensor]:
+	"""Fit the label encoder and compute training class weights."""
 	label_encoder = sklearn.preprocessing.LabelEncoder()
 	label_encoder.fit(y_train)
-	class_weights = compute_class_weights(
-		torch.tensor(label_encoder.transform(y_train), dtype = torch.long),
-	)
-	classes: list[str] = list(typing.cast(np.ndarray, label_encoder.classes_))
-	print(f"Class weights: {dict(zip(classes, class_weights.tolist()))}")
-	print()
 
-	# Build components using the same Classifier pipeline as HW1
-	source_encoder, model = model_factory(model_key,
-		class_weights = class_weights,
-		**model_overrides,
-	)
+	encoded = torch.tensor(label_encoder.transform(y_train), dtype = torch.long)
+	class_weights = compute_class_weights(encoded, num_classes = len(label_encoder.classes_))
+
+	return label_encoder, class_weights
+
+
+def make_classifier(
+	model_key: str,
+	label_encoder: sklearn.preprocessing.LabelEncoder,
+	class_weights: torch.Tensor,
+	**config: int | float,
+) -> Classifier:
+	"""Create the shared pipeline with transformer-specific components."""
+	model_name = MODELS[model_key]
+	max_length = typing.cast(int, config["max_length"])
 
 	classifier = Classifier(
 		preprocessor = IdentityPreprocessor(),
-		model = model,
-		source_encoder = source_encoder,
-		target_bicoder = label_encoder,  # type: ignore[arg-type]  # LabelEncoder.fit takes 1 positional arg, protocol expects 2
+		model = TransformerModel(
+			model_name = model_name,
+			num_labels = 3,
+			batch_size = typing.cast(int, config["batch_size"]),
+			learning_rate = typing.cast(float, config["learning_rate"]),
+			weight_decay = typing.cast(float, config["weight_decay"]),
+			num_epochs = typing.cast(int, config["num_epochs"]),
+			max_grad_norm = typing.cast(float, config["max_grad_norm"]),
+			class_weights = class_weights,
+			val_frac = typing.cast(float, config["val_frac"]),
+			device = require_cuda(),
+		),
+		source_encoder = TokenizerEncoder(
+			model_name = model_name,
+			max_length = max_length,
+		),
+		target_bicoder = label_encoder,  # type: ignore[arg-type]
 	)
 
 	classifier.compile(
-		accuracy  = sklearn.metrics.accuracy_score,
+		accuracy = sklearn.metrics.accuracy_score,
 		precision = macro_averaged(sklearn.metrics.precision_score),
-		recall    = macro_averaged(sklearn.metrics.recall_score),
-		f1        = macro_averaged(sklearn.metrics.f1_score),
+		recall = macro_averaged(sklearn.metrics.recall_score),
+		f1 = macro_averaged(sklearn.metrics.f1_score),
 	)
 
-	# Print configuration
-	print(f"Training {model_name}...")
-	print(f"  Max length:    {source_encoder.max_length}")
-	print(f"  Batch size:    {model.batch_size}")
-	print(f"  Learning rate: {model.learning_rate}")
-	print(f"  Weight decay:  {model.weight_decay}")
-	print(f"  Epochs:        {model.num_epochs}")
-	print(f"  Warmup ratio:  {model.warmup_ratio}")
-	print(f"  Val fraction:  {model.val_frac}")
-	print(f"  Device:        {model.device}")
+	return classifier
+
+
+def submission_filename(model_name: str) -> str:
+	"""Return the Kaggle submission filename required by HW2."""
+	return f"submission {model_name.replace('/', '-')}.csv"
+
+
+def config_with_overrides(**overrides: int | float) -> dict[str, int | float]:
+	"""Merge runtime overrides into the shared default configuration."""
+	config = dict(DEFAULT_CONFIG)
+	config.update(overrides)
+
+	return config
+
+
+def describe_run(
+	model_name: str,
+	config: dict[str, int | float],
+	class_weights: torch.Tensor,
+	label_encoder: sklearn.preprocessing.LabelEncoder,
+) -> None:
+	"""Print the fixed training recipe before running a model."""
+	print("=" * 80)
+	print(f"{model_name.upper()} FINE-TUNING")
+	print("=" * 80)
+	print(f"Device:        {require_cuda()}")
+	print(f"Max length:    {config['max_length']}")
+	print(f"Batch size:    {config['batch_size']}")
+	print(f"Learning rate: {config['learning_rate']}")
+	print(f"Weight decay:  {config['weight_decay']}")
+	print(f"Epochs:        {config['num_epochs']}")
+	print(f"Val fraction:  {config['val_frac']}")
+	print(f"Labels:        {list(label_encoder.classes_)}")
+	print(f"Class weights: {dict(zip(label_encoder.classes_, class_weights.tolist()))}")
 	print()
 
-	# Train (Classifier.fit handles the full pipeline:
-	#   IdentityPreprocessor → TokenizerEncoder → LabelEncoder → TransformerModel)
+
+def train_and_evaluate(
+	model_key: str,
+	**overrides: int | float,
+) -> tuple[Classifier, dict[str, float], pandas.Series, dict[str, int | float]]:
+	"""Train one required transformer model and evaluate it on the official test split."""
+	seed_everything(RANDOM_STATE)
+
+	model_name = MODELS[model_key]
+	config = config_with_overrides(**overrides)
+	X_train, y_train, X_test, y_test = data_prep()
+	label_encoder, class_weights = make_label_encoder(y_train)
+
+	describe_run(model_name, config, class_weights, label_encoder)
+
+	classifier = make_classifier(model_key, label_encoder, class_weights, **config)
 	classifier.fit(X_train, y_train)
 
-	# Evaluate
 	print("\n" + "=" * 80)
 	print("TEST SET EVALUATION")
 	print("=" * 80)
 
-	test_scores: dict[str, float] = {
-		k: float(v) for k, v in classifier.score(X_test, y_test).items()
+	test_scores = {
+		name: float(score)
+		for name, score in classifier.score(X_test, y_test).items()
 	}
-
-	print()
 	for name, score in test_scores.items():
 		print(f"{name:12s} {score:.4f}")
-	print()
 
-	# Generate submission (predict returns decoded string labels via LabelEncoder)
 	predictions = pandas.Series(classifier.predict(X_test), name = "Predicted")
 	predictions.index.name = "Id"
+	output_path = submission_filename(model_name)
+	predictions.to_csv(output_path)
 
-	model_slug = model_name.replace("/", "-")
-	submission_path = f"submission_{model_slug}.csv"
-	predictions.to_csv(submission_path)
-
-	print(f"Submission saved to {submission_path}")
+	print()
+	print(f"Saved submission to {output_path}")
 	print(predictions.value_counts())
 	print()
 
-	return classifier, test_scores, predictions
+	return classifier, test_scores, predictions, config
 
 
-# ============================================================================
-# CLI Entry Point
-# ============================================================================
+def run_tiny_sweep(model_key: str) -> tuple[pandas.DataFrame, dict[str, int | float]]:
+	"""Run the 2 x 3 fixed validation sweep for one selected model."""
+	seed_everything(RANDOM_STATE)
+
+	X_train, y_train, _, _ = data_prep()
+	label_encoder, class_weights = make_label_encoder(y_train)
+	results: list[dict[str, int | float | str]] = []
+	model_name = MODELS[model_key]
+
+	print("=" * 80)
+	print(f"{model_name.upper()} SANITY SWEEP")
+	print("=" * 80)
+
+	for num_epochs, max_length in itertools.product(
+		SWEEP_GRID["num_epochs"],
+		SWEEP_GRID["max_length"],
+	):
+		config = config_with_overrides(
+			num_epochs = num_epochs,
+			max_length = max_length,
+		)
+		print(f"\nTrying epochs={num_epochs}, max_length={max_length}")
+
+		classifier = make_classifier(model_key, label_encoder, class_weights, **config)
+		classifier.fit(X_train, y_train)
+
+		model = typing.cast(TransformerModel, classifier.model)
+		results.append({
+			"model": model_name,
+			"num_epochs": num_epochs,
+			"max_length": max_length,
+			"best_epoch": model.best_epoch_,
+			"val_f1": model.best_val_f1_,
+		})
+
+	results_df = pandas.DataFrame(results).sort_values(
+		by = ["val_f1", "max_length", "num_epochs"],
+		ascending = [False, False, False],
+	).reset_index(drop = True)
+	best_row = results_df.iloc[0]
+	best_config = config_with_overrides(
+		num_epochs = int(best_row["num_epochs"]),
+		max_length = int(best_row["max_length"]),
+	)
+
+	sweep_path = f"{model_key}_sanity_sweep.csv"
+	results_df.to_csv(sweep_path, index = False)
+	print("\nSweep summary:")
+	print(results_df.to_string(index = False))
+	print(f"\nSaved sweep summary to {sweep_path}")
+	print(
+		f"Selected {model_name} recipe: epochs={best_config['num_epochs']}, "
+		f"max_length={best_config['max_length']}"
+	)
+	print()
+
+	return results_df, best_config
+
+
+def parse_args() -> argparse.Namespace:
+	"""Parse CLI arguments."""
+	parser = argparse.ArgumentParser(
+		description = "Fine-tune one required transformer model for response clarity classification.",
+	)
+	parser.add_argument(
+		"--model",
+		required = True,
+		choices = list(MODELS.keys()),
+		help = "Which required transformer to train.",
+	)
+	parser.add_argument(
+		"--run-sweep",
+		action = "store_true",
+		help = "Run the 2 x 3 sanity sweep for the selected model before its final training run.",
+	)
+
+	return parser.parse_args()
+
+
+def main() -> None:
+	"""CLI entry point."""
+	args = parse_args()
+
+	config: dict[str, int | float] = {}
+	if args.run_sweep:
+		_, config = run_tiny_sweep(args.model)
+
+	train_and_evaluate(args.model, **config)
+
 
 if __name__ == "__main__":
-	import argparse
-
-	parser = argparse.ArgumentParser(
-		description = "Fine-tune transformer models for response clarity classification.",
-	)
-	parser.add_argument("--models", nargs = "+", required = True,
-		choices = list(MODELS.keys()),
-		help = "Model(s) to train: bert, distilbert, deberta",
-	)
-	parser.add_argument("--epochs", type = int, default = 4)
-	parser.add_argument("--batch-size", type = int, default = 16)
-	parser.add_argument("--learning-rate", type = float, default = 2e-5)
-	parser.add_argument("--max-length", type = int, default = 256)
-
-	args = parser.parse_args()
-
-	for model_name_key in args.models:
-		train_and_evaluate(
-			model_name_key,
-			num_epochs = args.epochs,
-			batch_size = args.batch_size,
-			learning_rate = args.learning_rate,
-			max_length = args.max_length,
-		)
+	main()
