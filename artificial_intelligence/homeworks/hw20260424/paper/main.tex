@@ -6,17 +6,11 @@
 \usepackage{alphabeta}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{listings}
-\usepackage{enumerate}
 \usepackage{hyperref}
 \usepackage{amsmath}
-\usepackage{framed}
-\usepackage[framed]{ntheorem}
-\usepackage{amssymb}
 \usepackage{xcolor}
 \usepackage{tabularx}
 
-\newframedtheorem{frm-thm}{Theorem}
 \hypersetup{
     colorlinks=true,
     linkcolor=blue,
@@ -31,7 +25,7 @@
 \institute{National and Kapodistrian University of Athens \\ Department of Informatics and Telecommunications}
 \class{Artificial Intelligence II (YS19 M226 M262 M325 M405)}
 
-\newcommand{\pending}{\textit{[fill after GPU run]}}
+\newcommand{\placeholder}[1]{\textit{[fill: #1]}}
 \newcommand{\hwonebestf}{0.45}
 \newcommand{\hwonewikitwo}{0.39}
 \newcommand{\hwonetwitter}{0.38}
@@ -47,126 +41,215 @@
 
 \section{Abstract}
 
-We study \textbf{response clarity classification} on the QEvasion political interview dataset \cite{qevasion}. Each example is a question--answer pair, and the target label is one of \emph{Clear Reply}, \emph{Ambivalent}, or \emph{Clear Non-Reply}. Homework 1 used non-contextual text representations (TF--IDF and averaged GloVe embeddings) with Logistic Regression. In Homework 2, we keep the same high-level classifier pipeline but replace the source encoder with a pretrained transformer tokenizer and replace the linear classifier with a transformer sequence classifier fine-tuned through an explicit PyTorch training loop.
+We study \textbf{response clarity classification} on the QEvasion political interview dataset \cite{qevasion}. Each example is a question--answer pair, and the target label is one of \emph{Clear Reply}, \emph{Ambivalent}, or \emph{Clear Non-Reply}. Homework 1 approached this task with non-contextual representations such as TF--IDF and averaged GloVe embeddings combined with Logistic Regression. Homework 2 keeps the same high-level pipeline abstraction, but replaces the source encoder with a pretrained transformer tokenizer and replaces the linear model with a fine-tuned transformer sequence classifier.
 
-Our goal in this homework is not aggressive leaderboard optimization. Instead, we adopt a \textbf{simple and principled} training recipe that is easy to justify: paired question--answer encoding, one fixed stratified validation split, AdamW optimization, class-weighted loss for imbalance, gradient clipping, and model selection by validation macro F1. We compare the three required pretrained checkpoints---BERT-base \cite{bert}, DistilBERT \cite{distilbert}, and DeBERTa-v3-base \cite{deberta}. The exact run-specific scores are inserted after executing the GPU notebooks, while the methodological comparison and the HW1 baseline reference are documented here.
+The goal of this report is not to present an aggressively optimized system. Instead, we document a \textbf{simple and principled transformer baseline}: raw question--answer pairs, sentence-pair tokenization, one fixed stratified validation split, AdamW optimization, class-weighted loss, gradient clipping, and checkpoint selection by validation macro F1. We compare the three required pretrained checkpoints---BERT-base \cite{bert}, DistilBERT \cite{distilbert}, and DeBERTa-v3-base \cite{deberta}. The methodology is finalized below, while the run-specific values are left as explicit placeholders to be filled after the GPU notebooks finish executing.
 
-\section{Data Processing and Analysis}
+\section{Task and Data}
 
-\subsection{Dataset}
+\subsection{Dataset and Labels}
 
-We use the QEvasion dataset from Hugging Face \cite{qevasion}. Each supervised instance contains:
+We use the QEvasion dataset from Hugging Face \cite{qevasion}. Each supervised example contains:
 \begin{itemize}
-	\item a single segmented journalist \texttt{question},
+	\item a segmented journalist \texttt{question},
 	\item the corresponding \texttt{interview\_answer},
-	\item the three-class target \texttt{clarity\_label}.
+	\item the target label \texttt{clarity\_label}.
 \end{itemize}
 
-As in Homework 1, we use the official train/test split provided by the dataset. The training split is used for fitting and internal validation; the official test split is reserved for final reporting and Kaggle submission generation.
-
-\subsection{Preprocessing}
-
-Preprocessing in Homework 2 is intentionally lighter than in Homework 1. We do \emph{not} apply manual lemmatization, stopword removal, or handcrafted punctuation normalization. Instead, we keep the raw question and answer text, strip only missing values and outer whitespace, and rely on the pretrained tokenizer to perform subword segmentation and insert the appropriate special tokens.
-
-This design is principled for transformer fine-tuning: the checkpoints were pretrained on raw text, so aggressive manual normalization is less clearly beneficial than it was for sparse bag-of-words models. The notebook explicitly contrasts this decision with the heavier preprocessing used in Homework 1.
-
-\subsection{Exploratory Analysis}
-
-The exploratory analysis remains intentionally compact. We examine:
+The task is three-way classification:
 \begin{itemize}
-	\item class imbalance in the train and test splits,
-	\item question length, answer length, and combined length distributions,
-	\item subgroup behavior for short, medium, and long question/answer buckets.
+	\item \textbf{Clear Reply},
+	\item \textbf{Ambivalent},
+	\item \textbf{Clear Non-Reply}.
 \end{itemize}
 
-As already observed in Homework 1, the dataset is imbalanced: \emph{Clear Reply} is the majority class, while \emph{Ambivalent} is the smallest and most difficult class. This motivates class-weighted training and macro-averaged evaluation.
+As in Homework 1, we use the official train/test split provided by the dataset. The training split is used for fitting and internal validation, while the official test split is used only for final evaluation and Kaggle submission export.
 
-\subsection{Input Construction}
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+Split & Instances & Usage \\
+\midrule
+Train & \placeholder{official train count} & fitting + internal validation \\
+Test & \placeholder{official test count} & final reporting only \\
+\bottomrule
+\end{tabular}
+\caption{Dataset split summary. Fill the exact instance counts from the notebook output.}
+\label{tab:dataset-sizes}
+\end{table}
 
-Unlike Homework 1, where we concatenated the question and answer into one string before feature extraction, Homework 2 preserves them as a \textbf{sentence pair}. The tokenizer receives two sequences:
+\subsection{From Homework 1 to Homework 2}
+
+The conceptual pipeline remains the same across the two assignments:
+\begin{enumerate}
+	\item preprocess the raw input,
+	\item encode the source text,
+	\item encode the target labels,
+	\item fit a classifier,
+	\item decode predictions and evaluate.
+\end{enumerate}
+
+This continuity is deliberate. Homework 2 should read as a clean extension of Homework 1 rather than a completely different implementation. The important change is therefore the \emph{representation}: Homework 1 used concatenated text plus non-contextual encoders, while Homework 2 keeps the question and answer as a pair and lets the transformer model learn contextual interactions between them.
+
+\subsection{Preprocessing and Input Construction}
+
+Preprocessing is intentionally lighter than in Homework 1. We do \emph{not} apply lemmatization, stopword removal, or handcrafted punctuation normalization. Instead, we keep the raw question and answer text, replace missing values with empty strings, and strip only outer whitespace.
+
+This design is natural for transformer fine-tuning because the pretrained checkpoints were trained on raw text and expect model-specific special tokens and subword segmentation. Each example is passed to the tokenizer as a sentence pair:
 \[
 (\text{question}, \text{answer})
 \]
-and converts them into the checkpoint-specific sequence classification format. Conceptually, the model input is:
+which is internally converted to the checkpoint-specific format. For BERT-like models, this is conceptually similar to:
 \[
-[\text{CLS}]~\text{question}~[\text{SEP}]~\text{answer}~[\text{SEP}]
+[\text{CLS}]~\text{question}~[\text{SEP}]~\text{answer}~[\text{SEP}].
 \]
-for BERT-like architectures, although the exact special tokens are handled internally by each tokenizer.
 
-\section{Models and Training Setup}
+Relative to Homework 1, this is a principled simplification: instead of manually engineering lexical features, we rely on the pretrained tokenizer and contextual encoder to model the interaction between the question and the response.
 
-\subsection{Shared Pipeline}
+\subsection{Compact Exploratory Analysis}
 
-The abstract pipeline is unchanged from Homework 1:
-\begin{enumerate}
-	\item preprocess the decoded input,
-	\item encode the source text,
-	\item encode the target labels,
-	\item fit the model,
-	\item decode predictions and evaluate with macro-averaged metrics.
-\end{enumerate}
+The notebook keeps the exploratory analysis compact and focused on factors that matter for model behavior:
+\begin{itemize}
+	\item class imbalance,
+	\item question length distribution,
+	\item answer length distribution,
+	\item combined text-length variation across splits.
+\end{itemize}
 
-We keep the same lightweight \texttt{Classifier} wrapper. This is pedagogically useful because Homework 2 becomes a direct extension of Homework 1 rather than a completely different codebase.
+As in Homework 1, class imbalance remains important. \emph{Clear Reply} is the majority class, while \emph{Ambivalent} is the smallest and typically hardest class. This motivates both macro-averaged evaluation and class-weighted training.
 
-\subsection{Transformer Models}
+\section{Method}
 
-We compare the three required checkpoints:
+\subsection{Shared Pipeline Structure}
+
+We reuse the same thin \texttt{Classifier} wrapper idea from Homework 1. The wrapper coordinates:
+\begin{itemize}
+	\item preprocessing,
+	\item source encoding,
+	\item target encoding,
+	\item model fitting,
+	\item prediction and scoring.
+\end{itemize}
+
+This matters pedagogically. The new report can then argue that the conceptual pipeline is stable while only the encoder and model components change.
+
+\subsection{Transformer Components}
+
+Homework 2 introduces two new central components:
+\begin{itemize}
+	\item \texttt{TokenizerEncoder}, which wraps a Hugging Face \texttt{AutoTokenizer} and converts each $(\text{question}, \text{answer})$ pair into transformer inputs;
+	\item \texttt{TransformerModel}, which wraps the Hugging Face sequence-classification auto-model and fine-tunes it using an explicit PyTorch loop.
+\end{itemize}
+
+We do \emph{not} use the Hugging Face Trainer API. The training loop is written manually, which keeps the mechanics visible and stays aligned with the assignment's spirit.
+
+\subsection{Training Loop}
+
+The training loop is intentionally minimal:
+\begin{itemize}
+	\item optimizer: AdamW \cite{adamw},
+	\item loss: weighted cross-entropy,
+	\item model selection: best validation macro F1,
+	\item regularization: weight decay and gradient clipping,
+	\item device: CUDA only.
+\end{itemize}
+
+Class weights are computed from the training labels using the standard balanced-class formula:
+\[
+w_c = \frac{N}{K \cdot n_c},
+\]
+where $N$ is the number of training examples, $K$ is the number of classes, and $n_c$ is the number of training examples belonging to class $c$.
+
+After each epoch, we evaluate on the fixed validation split and keep the best checkpoint by validation macro F1. This means the reported final model is not merely the last epoch, but the best epoch observed during training.
+
+\section{Experimental Protocol}
+
+\subsection{Compared Models}
+
+We compare the three required pretrained checkpoints:
 \begin{itemize}
 	\item \texttt{bert-base-uncased} \cite{bert},
 	\item \texttt{distilbert-base-uncased} \cite{distilbert},
 	\item \texttt{microsoft/deberta-v3-base} \cite{deberta}.
 \end{itemize}
 
-All models are fine-tuned as three-way sequence classifiers using PyTorch and Hugging Face Transformers \cite{huggingface}. We do \emph{not} use the Hugging Face Trainer API, in accordance with the assignment specification; the training loop is implemented explicitly.
+All three are fine-tuned as three-class sequence classifiers under the same overall recipe.
 
 \subsection{Validation Strategy}
 
-Homework 1 used grid search with 3-fold cross-validation because the models were classical and cheap to train. Homework 2 uses transformer fine-tuning, so repeating full training three times per hyperparameter setting would be unnecessarily expensive. We therefore adopt a single \textbf{15\% stratified validation split} drawn from the official training split:
+Homework 1 used 3-fold cross-validation because the classical models were relatively cheap to train. Homework 2 uses transformer fine-tuning, so repeating full training several times per hyperparameter setting would make the workflow much heavier. We therefore replace cross-validation with a single \textbf{15\% stratified validation split} taken from the official training split.
+
+This yields a simple and defensible procedure:
 \begin{itemize}
-	\item 85\% of the training split is used for gradient updates,
-	\item 15\% is used for validation during training,
+	\item 85\% of the official training split is used for gradient updates,
+	\item 15\% is used for validation,
 	\item the official test split is never used for model selection.
 \end{itemize}
 
-This choice keeps the procedure computationally reasonable while still giving us a stable validation signal for checkpoint selection.
+\subsection{Default Training Recipe}
 
-\subsection{Training Recipe}
-
-Our shared default recipe is intentionally small and consistent across models:
+The shared default recipe is:
 \begin{itemize}
-	\item optimizer: AdamW \cite{adamw},
 	\item learning rate: $2 \times 10^{-5}$,
 	\item batch size: 16,
 	\item weight decay: 0.01,
-	\item epochs: 4,
-	\item maximum sequence length: 256,
-	\item gradient clipping: 1.0,
-	\item class weighting: enabled,
-	\item random seed: 42.
+	\item maximum gradient norm: 1.0,
+	\item validation fraction: 0.15,
+	\item random seed: 42,
+	\item class weighting: enabled.
 \end{itemize}
-
-The only sanctioned tuning is a \textbf{small uniform sanity sweep} applied separately to each required model:
-\begin{itemize}
-	\item epochs $\in \{3, 4\}$,
-	\item maximum length $\in \{128, 256, 384\}$.
-\end{itemize}
-
-This produces 6 runs per model, or 18 runs in total across BERT, DistilBERT, and DeBERTa. The same search space is used for all three checkpoints. This keeps the tuning budget uniform while still remaining small enough to fit the pedagogical scope of the assignment.
 
 \begin{table}[h]
 \centering
 \small
-\begin{tabularx}{\textwidth}{Xlll}
+\begin{tabularx}{\textwidth}{Xll}
 \toprule
-Model & Validation Strategy & Tuning & Final Recipe \\
+Parameter & Value & Role \\
 \midrule
-BERT & 15\% stratified split & same 2 x 3 sweep & \pending \\
-DistilBERT & 15\% stratified split & same 2 x 3 sweep & \pending \\
-DeBERTa-v3 & 15\% stratified split & same 2 x 3 sweep & \pending \\
+Learning rate & $2 \times 10^{-5}$ & conservative fine-tuning step size \\
+Batch size & 16 & fits standard Kaggle GPU memory budgets \\
+Weight decay & 0.01 & mild regularization \\
+Max gradient norm & 1.0 & stabilizes training \\
+Validation split & 15\% stratified & checkpoint selection \\
+Class weights & enabled & partially offsets imbalance \\
+Random seed & 42 & reproducibility \\
 \bottomrule
 \end{tabularx}
-\caption{Training protocol for the three required transformer models.}
-\label{tab:training-protocol}
+\caption{Shared default training recipe.}
+\label{tab:default-recipe}
+\end{table}
+
+\subsection{Tiny Uniform Sanity Sweep}
+
+The only tuning we allow is the same small sweep for each required model:
+\begin{itemize}
+	\item epochs $\in \{3, 4\}$,
+	\item maximum sequence length $\in \{128, 256, 384\}$.
+\end{itemize}
+
+This produces 6 runs per model, or 18 runs in total across BERT, DistilBERT, and DeBERTa. The sweep is intentionally small. Its role is not exhaustive optimization, but a sanity check over two fundamental choices:
+\begin{itemize}
+	\item \textbf{training duration}, via the number of epochs;
+	\item \textbf{visible context}, via the maximum input length.
+\end{itemize}
+
+Because the same 2 x 3 search space is used for all three models, the tuning budget remains uniform across architectures.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{XcccX}
+\toprule
+Model & Best Epochs & Best Max Length & Best Validation Macro F1 & Notes \\
+\midrule
+BERT & \placeholder{3 or 4} & \placeholder{128 / 256 / 384} & \placeholder{value} & \placeholder{brief note} \\
+DistilBERT & \placeholder{3 or 4} & \placeholder{128 / 256 / 384} & \placeholder{value} & \placeholder{brief note} \\
+DeBERTa-v3 & \placeholder{3 or 4} & \placeholder{128 / 256 / 384} & \placeholder{value} & \placeholder{brief note} \\
+\bottomrule
+\end{tabularx}
+\caption{Best configuration selected by the tiny sweep for each model. Fill from the notebook sweep summary.}
+\label{tab:sweep-results}
 \end{table}
 
 \section{Evaluation Protocol}
@@ -179,40 +262,40 @@ We report the same metrics as in Homework 1:
 	\item Macro F1.
 \end{itemize}
 
-Macro F1 remains the primary metric because it weights all classes equally and therefore reflects performance on the minority \emph{Ambivalent} class more fairly than accuracy alone.
+Macro F1 remains the primary metric because it treats all classes equally and is therefore more informative than plain accuracy on an imbalanced three-class task.
 
 In addition to overall scores, the notebook also produces:
 \begin{itemize}
 	\item confusion matrices,
-	\item learning curves (train loss, validation loss, validation macro F1),
-	\item subgroup tables by question length and answer length,
-	\item concrete misclassified examples for error analysis.
+	\item learning curves for train loss, validation loss, and validation macro F1,
+	\item subgroup results by question length and answer length,
+	\item representative misclassifications for qualitative error analysis.
 \end{itemize}
 
-\section{Results and Comparison}
+\section{Results}
 
-\subsection{Reference Point from Homework 1}
+\subsection{Homework 1 Reference Point}
 
-We do not rerun the classical baselines inside Homework 2. Instead, we reference the best values already obtained in Homework 1:
+We do not rerun the classical baselines inside Homework 2. Instead, we compare against the main Homework 1 reference values already reported there:
 
 \begin{table}[h]
 \centering
 \begin{tabular}{ll}
 \toprule
-Homework 1 Model & Macro F1 (reference) \\
+Homework 1 Model & Macro F1 \\
 \midrule
 TF--IDF + Logistic Regression & \hwonebestf \\
 GloVe Wiki + Logistic Regression & \hwonewikitwo \\
 GloVe Twitter + Logistic Regression & \hwonetwitter \\
 \bottomrule
 \end{tabular}
-\caption{Homework 1 reference results, taken from the previous report.}
+\caption{Homework 1 reference results used for cross-homework comparison.}
 \label{tab:hw1-reference}
 \end{table}
 
-These values are important because they provide the exact comparison point that motivates Homework 2: if contextual transformers are working as intended, they should improve on averaged word embeddings and ideally also exceed the strong TF--IDF baseline.
+These values give the baseline that Homework 2 is trying to improve upon. The strongest classical point of comparison is TF--IDF + Logistic Regression with macro F1 \hwonebestf.
 
-\subsection{Homework 2 Model Comparison}
+\subsection{Transformer Test Results}
 
 \begin{table}[h]
 \centering
@@ -221,54 +304,61 @@ These values are important because they provide the exact comparison point that 
 \toprule
 Model & Accuracy & Macro Precision & Macro Recall & Macro F1 \\
 \midrule
-BERT & \pending & \pending & \pending & \pending \\
-DistilBERT & \pending & \pending & \pending & \pending \\
-DeBERTa-v3 & \pending & \pending & \pending & \pending \\
+BERT & \placeholder{value} & \placeholder{value} & \placeholder{value} & \placeholder{value} \\
+DistilBERT & \placeholder{value} & \placeholder{value} & \placeholder{value} & \placeholder{value} \\
+DeBERTa-v3 & \placeholder{value} & \placeholder{value} & \placeholder{value} & \placeholder{value} \\
 \bottomrule
 \end{tabularx}
-\caption{Homework 2 transformer results on the official test split.}
+\caption{Final transformer results on the official test split.}
 \label{tab:hw2-results}
 \end{table}
 
-\subsection{Interpretation}
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+Best HW2 Model & Macro F1 & $\Delta$ vs HW1 TF--IDF & $\Delta$ vs best HW1 GloVe \\
+\midrule
+\placeholder{model name} & \placeholder{value} & \placeholder{difference} & \placeholder{difference} \\
+\bottomrule
+\end{tabular}
+\caption{Headline comparison between the strongest Homework 2 model and the main Homework 1 baselines.}
+\label{tab:headline-comparison}
+\end{table}
 
-The main hypothesis is that transformer models improve on Homework 1 because they encode:
+\subsection{Interpretation Template}
+
+After the notebooks finish, this subsection should be updated with a short paragraph answering the following:
 \begin{itemize}
-	\item word order,
-	\item contextual meaning,
-	\item the interaction between the journalist's question and the interviewee's answer.
+	\item Which transformer performed best overall?
+	\item Did transformer fine-tuning clearly outperform the Homework 1 GloVe baselines?
+	\item Did it also surpass the stronger TF--IDF baseline?
+	\item Was the gain large enough to count as a meaningful conceptual improvement rather than noise?
 \end{itemize}
 
-These are exactly the aspects that TF--IDF and mean-pooled GloVe struggle to represent well. In particular, the clarity task depends not only on what words appear in the answer, but also on whether the answer is responsive to the specific question asked. Sentence-pair transformers are a natural fit for this interaction.
+A concise fill-in template is:
 
-After notebook execution, Table \ref{tab:hw2-results} should be read together with Table \ref{tab:hw1-reference}. The comparison should answer two questions:
-\begin{enumerate}
-	\item Does contextual fine-tuning clearly outperform the Homework 1 GloVe baselines?
-	\item Does it also beat the stronger TF--IDF baseline?
-\end{enumerate}
+\begin{quote}
+The best Homework 2 model was \placeholder{best model}, which achieved macro F1 \placeholder{value}. This is \placeholder{higher/lower} than the Homework 1 TF--IDF baseline of \hwonebestf\ by \placeholder{difference}, and \placeholder{higher/lower} than the best Homework 1 GloVe baseline by \placeholder{difference}. This suggests that contextual sentence-pair encoding \placeholder{did/did not} provide a clear improvement on this task.
+\end{quote}
 
 \section{Subgroup Analysis}
 
-The assignment explicitly requests analysis across data subgroups. We therefore evaluate the final predictions on buckets formed by question length and answer length:
-\begin{itemize}
-	\item short,
-	\item medium,
-	\item long.
-\end{itemize}
+The assignment explicitly asks for performance across data subgroups. We therefore analyze the final predictions across short, medium, and long buckets for both question length and answer length.
 
 \begin{table}[h]
 \centering
 \small
 \begin{tabularx}{\textwidth}{Xccc}
 \toprule
-Bucket & Count & Accuracy & Macro F1 \\
+Question-Length Bucket & Count & Accuracy & Macro F1 \\
 \midrule
-Short & \pending & \pending & \pending \\
-Medium & \pending & \pending & \pending \\
-Long & \pending & \pending & \pending \\
+Short & \placeholder{count} & \placeholder{value} & \placeholder{value} \\
+Medium & \placeholder{count} & \placeholder{value} & \placeholder{value} \\
+Long & \placeholder{count} & \placeholder{value} & \placeholder{value} \\
 \bottomrule
 \end{tabularx}
-\caption{Performance across question-length buckets.}
+\caption{Performance by question-length bucket.}
 \label{tab:question-subgroups}
 \end{table}
 
@@ -277,56 +367,95 @@ Long & \pending & \pending & \pending \\
 \small
 \begin{tabularx}{\textwidth}{Xccc}
 \toprule
-Bucket & Count & Accuracy & Macro F1 \\
+Answer-Length Bucket & Count & Accuracy & Macro F1 \\
 \midrule
-Short & \pending & \pending & \pending \\
-Medium & \pending & \pending & \pending \\
-Long & \pending & \pending & \pending \\
+Short & \placeholder{count} & \placeholder{value} & \placeholder{value} \\
+Medium & \placeholder{count} & \placeholder{value} & \placeholder{value} \\
+Long & \placeholder{count} & \placeholder{value} & \placeholder{value} \\
 \bottomrule
 \end{tabularx}
-\caption{Performance across answer-length buckets.}
+\caption{Performance by answer-length bucket.}
 \label{tab:answer-subgroups}
 \end{table}
 
-These subgroup tables are useful for testing whether the models struggle more with long, potentially more evasive answers, or with short answers that lack lexical evidence.
+After execution, the report should summarize whether performance degrades more on long answers, short answers, or neither. A useful one-sentence conclusion format is:
+
+\begin{quote}
+The model performs worst on \placeholder{short / medium / long} \placeholder{questions / answers}, suggesting that \placeholder{brief explanation from notebook observations}.
+\end{quote}
 
 \section{Error Analysis}
 
-Error analysis is a central part of this assignment. The notebook extracts the most common confusion pairs and several representative mistakes. The report should summarize the patterns that emerge after execution. The following hypotheses are especially relevant:
+The notebook extracts representative mistakes and the most common confusion pairs. This section should keep the final report qualitative but concrete.
+
+\subsection{Expected Error Patterns}
+
+Before inserting the final examples, the main hypotheses are:
 \begin{enumerate}
-	\item \textbf{Ambivalent} is likely to remain the hardest class.
-	\item Clear Non-Reply and Ambivalent may still be confused when the answer is topically related but not directly responsive.
-	\item Longer answers may hurt performance when they contain partial responsiveness mixed with rhetorical evasion.
+	\item \emph{Ambivalent} remains the hardest class.
+	\item \emph{Ambivalent} and \emph{Clear Non-Reply} are confused when an answer is topically related but not directly responsive.
+	\item long answers may mix responsive and evasive content, which makes a single global label harder.
 \end{enumerate}
 
-Concrete examples should be inserted here after running the notebooks. A useful structure is:
-\begin{itemize}
-	\item one example where the model predicts Clear Reply instead of Ambivalent,
-	\item one example where it predicts Ambivalent instead of Clear Non-Reply,
-\item one example where contextual modeling helps relative to the Homework 1 baselines.
-\end{itemize}
+\subsection{Representative Mistakes}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{l l l X}
+\toprule
+Case & Gold Label & Predicted Label & Short Explanation / Example Snippet \\
+\midrule
+1 & \placeholder{label} & \placeholder{label} & \placeholder{insert one representative mistake from notebook} \\
+2 & \placeholder{label} & \placeholder{label} & \placeholder{insert one representative mistake from notebook} \\
+3 & \placeholder{label} & \placeholder{label} & \placeholder{insert one representative mistake from notebook} \\
+\bottomrule
+\end{tabularx}
+\caption{Representative errors to be copied from the notebook's qualitative analysis cells.}
+\label{tab:error-examples}
+\end{table}
+
+A good final write-up should mention not only what was wrong, but also why the example is difficult. In particular, the best examples are those where the answer contains lexical overlap with the question but still fails to directly address it.
 
 \section{Discussion}
 
-This simplified Homework 2 design deliberately avoids heavy optimization. That is a feature, not a limitation: it makes the core conceptual improvement over Homework 1 easier to understand. The important difference is not a large hyperparameter search, but the move from non-contextual features to a contextual sentence-pair encoder.
+This Homework 2 design deliberately avoids heavy optimization. That is a feature rather than a weakness. The point of the assignment is to demonstrate understanding of contextual modeling, not to maximize a leaderboard score through large-scale tuning.
 
-The design choices can be summarized as follows:
+The key methodological differences from Homework 1 are:
 \begin{itemize}
-	\item use raw question--answer pairs rather than handcrafted text normalization,
-	\item fine-tune standard pretrained checkpoints instead of building custom architectures,
-	\item use one fixed validation split rather than expensive cross-validation,
-	\item keep the same pipeline abstraction as Homework 1 for clarity of comparison.
+	\item raw question--answer pairs instead of hand-normalized text,
+	\item sentence-pair tokenization instead of concatenated sparse features,
+	\item contextual sequence classifiers instead of Logistic Regression,
+	\item one fixed validation split instead of 3-fold cross-validation.
 \end{itemize}
 
-This setup makes it easy to argue why the transformer approach should improve: the model sees the full question--answer interaction and can condition the meaning of each token on the surrounding context.
+This creates a clean scientific comparison. If Homework 2 improves on Homework 1, the report can reasonably attribute the gain to contextual sentence-pair modeling rather than to a much larger tuning effort.
+
+\subsection{Small Non-Improving Changes}
+
+This subsection can be completed with one or two compact observations from the sweep. Example fill-in patterns:
+\begin{itemize}
+	\item Increasing max length from \placeholder{value} to \placeholder{value} \placeholder{did / did not} help, which suggests \placeholder{brief interpretation}.
+	\item Training for 4 epochs instead of 3 \placeholder{helped / did not help}, which suggests \placeholder{underfitting / overfitting / similar convergence}.
+\end{itemize}
 
 \section{Conclusion}
 
-Homework 2 extends Homework 1 in the most direct possible way: we preserve the pipeline abstraction and replace only the representation and classifier components. This makes the comparison between the two homeworks clean and interpretable. Homework 1 established that TF--IDF was much stronger than averaged GloVe on this task. Homework 2 tests whether contextual fine-tuning can move beyond both of those non-contextual baselines.
+Homework 2 extends Homework 1 in the most direct possible way: it preserves the high-level pipeline but replaces the non-contextual source representation with a contextual transformer encoder and replaces the linear classifier with an end-to-end fine-tuned sequence classifier. This keeps the comparison between the two homeworks clean and easy to explain.
 
-After the GPU notebooks are executed, the remaining task is to populate the result tables, insert the subgroup values, and summarize the concrete failure cases found in the error-analysis cells. The underlying methodology is already fixed: a minimal transformer training loop, a single stratified validation split, the same small 2 x 3 sweep for each required model, and a direct comparison to the Homework 1 reference results.
+After the final GPU run, the conclusion should answer three questions in compact form:
+\begin{enumerate}
+	\item Did contextual fine-tuning outperform the Homework 1 baselines?
+	\item Which of the three transformer checkpoints was strongest?
+	\item What remained difficult about the task even for contextual models?
+\end{enumerate}
 
-\nocite{*}
+A ready-to-fill concluding sentence is:
+
+\begin{quote}
+Overall, Homework 2 shows that \placeholder{best model} \placeholder{did / did not} provide a clear improvement over the Homework 1 baselines. The main remaining challenge is \placeholder{hardest confusion or subgroup}, which indicates that response-clarity classification still requires nuanced reasoning about relevance and evasiveness beyond surface lexical overlap.
+\end{quote}
+
 \bibliographystyle{plain}
 \bibliography{refs}
 
