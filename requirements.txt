@@ -1,3 +1,4 @@
+ipykernel
 dotenv
 rich
 numpy
