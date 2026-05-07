@@ -15,21 +15,37 @@
 
 //	`pylint` exceptions:
 	"pylint.args": [
-		"--disable=attribute-defined-outside-init", // remember to catch all attribute errors
-		"--disable=arguments-differ", // bad practice to change the signature in override but acceptable currently
-		"--disable=bad-indentation", // lets use tabs
-		"--disable=dangerous-default-value", // safe if it is read only
-		"--disable=line-too-long", // proposed line length 132 which is is the free form standard
-		"--disable=no-else-return", // allow playing with the flow of the `return` statement
-		"--not-callable",
+		"--max-line-length=132",
+		"--indent-string='\t'",
+
+		"--disable=arguments-differ",
+		"--disable=broad-exception-caught",
+		"--disable=attribute-defined-outside-init",
+		"--disable=invalid-name",
+		"--disable=logging-fstring-interpolation",
+		"--disable=missing-function-docstring",
+		"--disable=missing-class-docstring",
+		"--disable=missing-module-docstring",
+		"--disable=multiple-statements",
+		"--disable=no-else-return",
+		"--disable=no-member",
 		"--disable=protected-access",
 		"--disable=redefined-builtin",
-		"--disable=too-few-public-methods", // who can tell
-		"--disable=too-many-instance-attributes", // who can tell
-		"--disable=unreachable", // vscode will grey it out already so no need
-		"--disable=unused-argument", // vscode will grey it out already so no need
-		"--disable=unused-import", // vscode will grey it out already so no need
-		"--disable=unused-variable", // vscode will grey it out already so no need
+		"--disable=singleton-comparison",
+		"--disable=too-few-public-methods",
+		"--disable=too-many-ancestors",
+		"--disable=ungrouped-imports",
+		"--disable=unnecessary-ellipsis",
+		"--disable=unreachable",
+		"--disable=unspecified-encoding",
+		"--disable=unused-argument",
+		"--disable=unused-import",
+		"--disable=unused-variable",
+		"--disable=use-dict-literal",
+		"--disable=use-list-literal",
+		"--disable=use-implicit-booleaness-not-len",
+		"--disable=useless-parent-delegation",
+		"--disable=wrong-import-position",
     ],
     "editor.insertSpaces": false,
 }

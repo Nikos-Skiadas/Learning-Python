@@ -1,0 +1,33 @@
+\begin{thebibliography}{1}
+
+\bibitem{qevasion}
+AILS-NTUA.
+\newblock Question evasion detection in political interviews.
+\newblock HuggingFace dataset:
+  \url{https://huggingface.co/datasets/ailsntua/QEvasion}, 2024.
+
+\bibitem{bert}
+Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova.
+\newblock {BERT}: Pre-training of deep bidirectional transformers for language
+  understanding.
+\newblock In {\em Proceedings of the 2019 Conference of the North American
+  Chapter of the Association for Computational Linguistics}, pages 4171--4186,
+  2019.
+
+\bibitem{deberta}
+Pengcheng He, Xiaodong Liu, Jianfeng Gao, and Weizhu Chen.
+\newblock {DeBERTa}: Decoding-enhanced {BERT} with disentangled attention.
+\newblock {\em arXiv preprint arXiv:2006.03654}, 2020.
+
+\bibitem{adamw}
+Ilya Loshchilov and Frank Hutter.
+\newblock Decoupled weight decay regularization.
+\newblock {\em arXiv preprint arXiv:1711.05101}, 2017.
+
+\bibitem{distilbert}
+Victor Sanh, Lysandre Debut, Julien Chaumond, and Thomas Wolf.
+\newblock Distilbert, a distilled version of {BERT}: smaller, faster, cheaper
+  and lighter.
+\newblock {\em arXiv preprint arXiv:1910.01108}, 2019.
+
+\end{thebibliography}
