@@ -100,6 +100,17 @@ python -m project.src.classification -k 5 -- project/data
 - **Confusion Matrices**: use one binary 2x2 confusion matrix per genre label.
 - **Clustering**: run K-Means on fused embeddings, use Silhouette Score, and compare clusters to multi-label ground truth through label-set ARI and average per-label ARI.
 
+**Late fusion ablation note:**
+
+The implemented solution keeps late fusion as soft consensus: for each label, average the text and audio probabilities and threshold the result. Because multi-label predictions are set-valued binary decisions, two useful ablation baselines are probabilistic OR and probabilistic AND:
+
+- **Probabilistic OR**: `1 - (1 - p_text) * (1 - p_audio)`, a permissive fuzzy-union rule that usually increases recall.
+- **Probabilistic AND**: `p_text * p_audio`, a conservative fuzzy-intersection rule that usually increases precision.
+
+Soft consensus sits between these two rules for probabilities in `[0, 1]`, so it is a balanced default rather than a strict union or intersection.
+
+For hard binary modality decisions, averaging has a borderline behavior: with a `>= 0.5` threshold, a disagreement `(1, 0)` or `(0, 1)` is accepted and the rule behaves like set union; with a strict `> 0.5` threshold, disagreement is rejected and the rule behaves like set intersection. With probabilistic outputs, averaging is better interpreted as soft consensus, and the threshold controls how permissive or conservative the resulting label set is.
+
 ## Module Overview
 
 ```text
