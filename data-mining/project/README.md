@@ -71,6 +71,35 @@ python -m project.src.eda -k 5 --output project/figures -- project/data
 
 All plot functions are independently callable and accept an optional `ax` parameter for composition into custom figures.
 
+### 3. Multi-label Classification (`src/classification.py`)
+
+Runs the Part B experiments while preserving the fact that each song can belong to multiple genres. The target matrix keeps the top genre labels as separate binary targets instead of collapsing each song to a single class.
+
+```bash
+python -m project.src.classification -k 5 -- project/data
+```
+
+| Flag | Default | Description |
+| ---- | ------- | ----------- |
+| `data` | required | Path to the cached data directory |
+| `-k` | `5` | Dataset cache to load |
+| `--labels` | same as `-k` | Number of top labels to predict |
+| `--folds` | `10` | Cross-validation folds |
+| `--classifier` | `logistic` | `logistic` or `random_forest` |
+| `--threshold` | `0.5` | Probability threshold for assigning labels |
+| `--max-samples` | `None` | Optional smaller sample for quick checks |
+| `--skip-clustering` | off | Skip K-Means evaluation |
+| `--output` | `None` | Optional directory for metrics CSV files |
+
+**Multi-label adaptation of Part B:**
+
+- **Text-only / Audio-only**: train one-vs-rest multi-label classifiers on lyric and audio embeddings.
+- **Early Fusion**: concatenate text and audio embeddings before training.
+- **Late Fusion**: average the per-label probabilities from the text-only and audio-only models, then threshold them.
+- **Metrics**: report subset accuracy, Hamming loss, macro/micro precision, recall, F1, sample-wise F1, and sample-wise Jaccard.
+- **Confusion Matrices**: use one binary 2x2 confusion matrix per genre label.
+- **Clustering**: run K-Means on fused embeddings, use Silhouette Score, and compare clusters to multi-label ground truth through label-set ARI and average per-label ARI.
+
 ## Module Overview
 
 ```text
@@ -84,6 +113,9 @@ src/
                embeddings, CLI entry point
   eda.py       EDA visualizations — word clouds, distribution plots, t-SNE,
                sentiment analysis, similarity search
+  classification.py
+               Multi-label classification, fusion, evaluation, confusion
+               matrices, and K-Means comparison for Part B
 ```
 
 ## Dependencies
@@ -92,7 +124,7 @@ src/
 - `torch` — audio autoencoder
 - `sentence-transformers` — lyrics embeddings (`all-MiniLM-L6-v2`)
 - `transformers` — sentiment analysis pipeline (DistilBERT)
-- `scikit-learn` — t-SNE, cosine similarity
+- `scikit-learn` — t-SNE, cosine similarity, classifiers, metrics, K-Means
 - `matplotlib`, `seaborn` — plotting
 - `wordcloud` — word cloud generation
 - `nltk` — stopword lists (download with `python -c "import nltk; nltk.download('stopwords')"`)
