@@ -34,7 +34,6 @@
 		"--disable=singleton-comparison",
 		"--disable=too-few-public-methods",
 		"--disable=too-many-ancestors",
-		"--disable=ungrouped-imports",
 		"--disable=unnecessary-ellipsis",
 		"--disable=unreachable",
 		"--disable=unspecified-encoding",
@@ -45,7 +44,6 @@
 		"--disable=use-list-literal",
 		"--disable=use-implicit-booleaness-not-len",
 		"--disable=useless-parent-delegation",
-		"--disable=wrong-import-position",
     ],
     "editor.insertSpaces": false,
 }
