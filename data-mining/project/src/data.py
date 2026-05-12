@@ -60,7 +60,7 @@ class MusicSeries(pandas.Series):
 		)
 
 
-	def mask(self, genres: typing.Iterable[str], multi: bool = True) -> pandas.Series:
+	def filter(self, genres: typing.Iterable[str], multi: bool = True) -> pandas.Series:
 		if multi: return self.encoding[genres].any(axis = "columns")
 		else: return self.isin(genres)
 
@@ -73,7 +73,7 @@ class MusicSeries(pandas.Series):
 		else: return self.distribution(multi = False).head(k).index
 
 	def top(self, k: int, multi: bool = True) -> pandas.Series:
-		return self[self.mask(self.top_labels(k, multi = multi), multi = multi)]
+		return self[self.filter(self.top_labels(k, multi = multi), multi = multi)]
 
 
 class MusicDataFrame(pandas.DataFrame):

@@ -76,7 +76,7 @@ All plot functions are independently callable and accept an optional `ax` parame
 Runs the Part B experiments while preserving the fact that each song can belong to multiple genres. The target matrix keeps the top genre labels as separate binary targets instead of collapsing each song to a single class.
 
 ```bash
-python -m project.src.classification -k 5 -- project/data
+python -m project.src.classification -k 5 --output project/results -- project/data
 ```
 
 | Flag | Default | Description |
@@ -93,6 +93,7 @@ python -m project.src.classification -k 5 -- project/data
 | `--bilinear-c` | `0.1` | Logistic C for bilinear pooling features |
 | `--threshold` | `0.5` | Probability threshold for assigning labels |
 | `--max-samples` | `None` | Optional smaller sample for quick checks |
+| `--n-jobs` | `1` | Number of cross-validation folds to run in parallel |
 | `--skip-bilinear` | off | Skip the bilinear pooling ablation |
 | `--skip-clustering` | off | Skip K-Means evaluation |
 | `--output` | `None` | Optional directory for CSV and PNG evaluation outputs |
@@ -107,17 +108,19 @@ python -m project.src.classification -k 5 -- project/data
 - **Confusion Matrices**: use one binary 2x2 confusion matrix per genre label.
 - **Clustering**: run K-Means on fused embeddings, use Silhouette Score, and compare clusters to multi-label ground truth through label-set ARI and average per-label ARI.
 
-Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation.
+Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation. Runtime parallelism is applied at the fold level through sklearn's `cross_validate(..., n_jobs=...)`; the classifiers themselves are kept single-job to avoid nested CPU oversubscription.
 
 When `--output` is provided, the runtime saves:
 
 - `classification_metrics.csv`
+- `classification_cv_folds.csv`
+- `classification_cv_summary.csv`
 - `clustering_metrics.csv` when clustering is enabled
 - `f1_macro_comparison.png`
 - `confusion_<model>.png` for each classifier/fusion strategy
 - `clustering_metrics.png` when clustering is enabled
 
-The same results remain available in memory through `run_experiments(...)` for notebook use.
+`classification_metrics.csv` contains pooled out-of-fold metrics from the same fitted CV models. `classification_cv_folds.csv` and `classification_cv_summary.csv` contain the formal fold-wise `cross_validate` results. The same results remain available in memory through `run_experiments(...)` for notebook use.
 
 **Bilinear pooling ablation note:**
 
@@ -135,6 +138,8 @@ The implemented solution keeps late fusion as soft consensus: for each label, av
 Soft consensus sits between these two rules for probabilities in `[0, 1]`, so it is a balanced default rather than a strict union or intersection.
 
 For hard binary modality decisions, averaging has a borderline behavior: with a `>= 0.5` threshold, a disagreement `(1, 0)` or `(0, 1)` is accepted and the rule behaves like set union; with a strict `> 0.5` threshold, disagreement is rejected and the rule behaves like set intersection. With probabilistic outputs, averaging is better interpreted as soft consensus, and the threshold controls how permissive or conservative the resulting label set is.
+
+The late-fusion strategy is implemented as a sklearn-compatible estimator that fits separate text and audio classifiers internally, then returns the averaged per-label probabilities through `predict_proba`. This lets it use the same cross-validation machinery as the text-only, audio-only, early-fusion, and bilinear-pooling models.
 
 ## Module Overview
 

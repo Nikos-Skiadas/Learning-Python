@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Protocol, cast
 import numpy
 import pandas
 
-from sklearn.base import BaseEstimator, TransformerMixin, clone
+from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -25,7 +25,7 @@ from sklearn.metrics import (
 	recall_score,
 	silhouette_score,
 )
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold, cross_validate
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -47,7 +47,7 @@ class SupportsPredictProba(Protocol):
 		...
 
 
-class BilinearPooling(BaseEstimator, TransformerMixin):
+class BilinearPooling(TransformerMixin, BaseEstimator):
 	def __init__(self, n_text_features: int) -> None:
 		self.n_text_features = n_text_features
 		self.text_scaler_: StandardScaler | None = None
@@ -86,6 +86,58 @@ class BilinearPooling(BaseEstimator, TransformerMixin):
 		)
 
 
+class LateFusionClassifier(ClassifierMixin, BaseEstimator):
+	def __init__(self,
+		text_estimator: BaseEstimator,
+		audio_estimator: BaseEstimator,
+		n_text_features: int,
+	) -> None:
+		self.text_estimator = text_estimator
+		self.audio_estimator = audio_estimator
+		self.n_text_features = n_text_features
+		self.text_model_: BaseEstimator | None = None
+		self.audio_model_: BaseEstimator | None = None
+		self.n_labels_: int | None = None
+		self.classes_: numpy.ndarray | None = None
+
+	def fit(self, x: numpy.ndarray,
+		y: numpy.ndarray,
+	) -> LateFusionClassifier:
+		text, audio = self.split(x)
+		self.text_model_ = clone(self.text_estimator).fit(text, y)
+		self.audio_model_ = clone(self.audio_estimator).fit(audio, y)
+		self.n_labels_ = y.shape[1]
+		self.classes_ = numpy.arange(y.shape[1])
+
+		return self
+
+	def predict_proba(self, x: numpy.ndarray) -> numpy.ndarray:
+		text_model = self.text_model_
+		audio_model = self.audio_model_
+		n_labels = self.n_labels_
+
+		if text_model is None or audio_model is None or n_labels is None:
+			raise RuntimeError("LateFusionClassifier must be fitted before predict_proba.")
+
+		text, audio = self.split(x)
+
+		text_proba = multilabel_proba(text_model, text, n_labels)
+		audio_proba = multilabel_proba(audio_model, audio, n_labels)
+
+		return (text_proba + audio_proba) / 2
+
+	def predict(self, x: numpy.ndarray) -> numpy.ndarray:
+		return probabilities_to_labels(self.predict_proba(x))
+
+	def split(self, x: numpy.ndarray) -> tuple[numpy.ndarray, numpy.ndarray]:
+		values = numpy.asarray(x, dtype = float)
+
+		return (
+			values[:, :self.n_text_features],
+			values[:, self.n_text_features:],
+		)
+
+
 @dataclass
 class MultilabelData:
 	dataset: pandas.DataFrame
@@ -109,6 +161,8 @@ class ExperimentResults:
 	data: MultilabelData
 	predictions: dict[str, PredictionResult]
 	metrics: pandas.DataFrame
+	cv_scores: pandas.DataFrame
+	cv_summary: pandas.DataFrame
 	confusion_matrices: dict[str, dict[str, pandas.DataFrame]]
 	clustering: pandas.DataFrame | None = None
 
@@ -187,16 +241,18 @@ def build_classifier(kind: str = "logistic",
 
 		return make_pipeline(
 			StandardScaler(),
-			OneVsRestClassifier(base),
+			OneVsRestClassifier(base, n_jobs = 1),
 		)
 
 	if kind == "random_forest":
-		return RandomForestClassifier(
+		base = RandomForestClassifier(
 			n_estimators = 300,
 			class_weight = "balanced_subsample",
-			n_jobs = -1,
+			n_jobs = 1,
 			random_state = random_state,
 		)
+
+		return OneVsRestClassifier(base, n_jobs = 1)
 
 	raise ValueError(f"Unsupported classifier kind: {kind}")
 
@@ -217,21 +273,44 @@ def build_bilinear_classifier(kind: str,
 
 		return make_pipeline(
 			BilinearPooling(n_text_features),
-			OneVsRestClassifier(base),
+			OneVsRestClassifier(base, n_jobs = 1),
 		)
 
 	if kind == "random_forest":
+		base = RandomForestClassifier(
+			n_estimators = 300,
+			class_weight = "balanced_subsample",
+			n_jobs = 1,
+			random_state = random_state,
+		)
+
 		return make_pipeline(
 			BilinearPooling(n_text_features),
-			RandomForestClassifier(
-				n_estimators = 300,
-				class_weight = "balanced_subsample",
-				n_jobs = -1,
-				random_state = random_state,
-			),
+			OneVsRestClassifier(base, n_jobs = 1),
 		)
 
 	raise ValueError(f"Unsupported classifier kind: {kind}")
+
+
+def build_late_fusion_classifier(kind: str,
+	n_text_features: int,
+	random_state: int = 42,
+	text_regularization_c: float = DEFAULT_TEXT_C,
+	audio_regularization_c: float = DEFAULT_AUDIO_C,
+) -> BaseEstimator:
+	return LateFusionClassifier(
+		text_estimator = build_classifier(
+			kind,
+			random_state = random_state,
+			regularization_c = text_regularization_c,
+		),
+		audio_estimator = build_classifier(
+			kind,
+			random_state = random_state,
+			regularization_c = audio_regularization_c,
+		),
+		n_text_features = n_text_features,
+	)
 
 
 def labelset_codes(y: pandas.DataFrame | numpy.ndarray) -> numpy.ndarray:
@@ -363,35 +442,47 @@ def cross_validated_predictions(name: str,
 	y: pandas.DataFrame,
 	splits: Iterable[tuple[numpy.ndarray, numpy.ndarray]],
 	threshold: float = 0.5,
-) -> PredictionResult:
+	n_jobs: int = 1,
+) -> tuple[PredictionResult, pandas.DataFrame]:
 	x_values = x.to_numpy(dtype = float)
 	y_values = y.to_numpy(dtype = int)
+	split_list = list(splits)
+	cv_result = cross_validate(
+		estimator,
+		x_values,
+		y_values,
+		cv = split_list,
+			n_jobs = n_jobs,
+			pre_dispatch = n_jobs if n_jobs not in (None, -1) else "2*n_jobs",
+			return_estimator = True,
+			return_indices = True,  # type: ignore
+		)
+
 	probabilities = numpy.zeros(y_values.shape, dtype = float)
+	fold_rows = []
 
-	for train_idx, test_idx in splits:
-		model = clone(estimator)
-		model.fit(x_values[train_idx], y_values[train_idx])
-		probabilities[test_idx] = multilabel_proba(model, x_values[test_idx], y.shape[1])
+	for fold, (model, test_idx) in enumerate(
+		zip(cv_result["estimator"], cv_result["indices"]["test"]),
+		start = 1,
+	):
+		fold_probabilities = multilabel_proba(model, x_values[test_idx], y.shape[1])
+		fold_predictions = probabilities_to_labels(fold_probabilities, threshold = threshold)
+		fold_scores = score_multilabel(y_values[test_idx], fold_predictions)
+
+		probabilities[test_idx] = fold_probabilities
+
+		fold_rows.append({
+			"model": name,
+			"fold": fold,
+			"fit_time": cv_result["fit_time"][fold - 1],
+			"score_time": cv_result["score_time"][fold - 1],
+			**fold_scores.to_dict(),
+		})
 
 	predictions = probabilities_to_labels(probabilities, threshold = threshold)
+	fold_frame = pandas.DataFrame(fold_rows).set_index(["model", "fold"])
 
-	return make_prediction_result(name, y, predictions, probabilities)
-
-
-def late_fusion(text: PredictionResult,
-	audio: PredictionResult,
-	y_true: pandas.DataFrame,
-	threshold: float = 0.5,
-) -> PredictionResult:
-	probabilities = (text.y_proba.to_numpy() + audio.y_proba.to_numpy()) / 2
-	predictions = probabilities_to_labels(probabilities, threshold = threshold)
-
-	return make_prediction_result(
-		"Late fusion",
-		y_true,
-		predictions,
-		probabilities,
-	)
+	return make_prediction_result(name, y, predictions, probabilities), fold_frame
 
 
 def confusion_by_label(y_true: pandas.DataFrame,
@@ -464,6 +555,7 @@ def run_experiments(data_dir: str | pathlib.Path,
 	max_samples: int | None = None,
 	include_bilinear: bool = True,
 	include_clustering: bool = True,
+	n_jobs: int = 1,
 	random_state: int = 42,
 ) -> ExperimentResults:
 	if regularization_c is not None:
@@ -476,32 +568,49 @@ def run_experiments(data_dir: str | pathlib.Path,
 	data = sample_data(data, max_samples = max_samples, random_state = random_state)
 	splits = make_cv_splits(data.y, n_splits = n_splits, random_state = random_state)
 
-	text = cross_validated_predictions(
+	text, text_cv = cross_validated_predictions(
 		"Text-only",
 		build_classifier(classifier, random_state = random_state, regularization_c = text_regularization_c),
 		data.text,
 		data.y,
 		splits,
 		threshold = threshold,
+		n_jobs = n_jobs,
 	)
-	audio = cross_validated_predictions(
+	audio, audio_cv = cross_validated_predictions(
 		"Audio-only",
 		build_classifier(classifier, random_state = random_state, regularization_c = audio_regularization_c),
 		data.audio,
 		data.y,
 		splits,
 		threshold = threshold,
+		n_jobs = n_jobs,
 	)
-	early = cross_validated_predictions(
+	early, early_cv = cross_validated_predictions(
 		"Early fusion",
 		build_classifier(classifier, random_state = random_state, regularization_c = early_regularization_c),
 		data.fused,
 		data.y,
 		splits,
 		threshold = threshold,
+		n_jobs = n_jobs,
 	)
-	late = late_fusion(text, audio, data.y, threshold = threshold)
-	bilinear = cross_validated_predictions(
+	late, late_cv = cross_validated_predictions(
+		"Late fusion",
+		build_late_fusion_classifier(
+			classifier,
+			n_text_features = data.text.shape[1],
+			random_state = random_state,
+			text_regularization_c = text_regularization_c,
+			audio_regularization_c = audio_regularization_c,
+		),
+		data.fused,
+		data.y,
+		splits,
+		threshold = threshold,
+		n_jobs = n_jobs,
+	)
+	bilinear_result = cross_validated_predictions(
 		"Bilinear pooling",
 		build_bilinear_classifier(
 			classifier,
@@ -513,7 +622,12 @@ def run_experiments(data_dir: str | pathlib.Path,
 		data.y,
 		splits,
 		threshold = threshold,
+		n_jobs = n_jobs,
 	) if include_bilinear else None
+	bilinear = bilinear_cv = None
+
+	if bilinear_result is not None:
+		bilinear, bilinear_cv = bilinear_result
 
 	predictions = {
 		result.name: result
@@ -526,6 +640,15 @@ def run_experiments(data_dir: str | pathlib.Path,
 			for name, result in predictions.items()
 		}
 	).T
+	cv_scores = pandas.concat(
+		[
+			frame
+			for frame in (text_cv, audio_cv, early_cv, late_cv, bilinear_cv)
+			if frame is not None
+		],
+		axis = "index",
+	)
+	cv_summary = cv_scores.groupby(level = "model").agg(["mean", "std"])
 	confusions = {
 		name: confusion_by_label(data.y, result.y_pred)
 		for name, result in predictions.items()
@@ -536,6 +659,8 @@ def run_experiments(data_dir: str | pathlib.Path,
 		data = data,
 		predictions = predictions,
 		metrics = metrics,
+		cv_scores = cv_scores,
+		cv_summary = cv_summary,
 		confusion_matrices = confusions,
 		clustering = clustering,
 	)
@@ -639,6 +764,8 @@ def save_evaluation_outputs(results: ExperimentResults,
 	import matplotlib.pyplot
 
 	results.metrics.to_csv(output / "classification_metrics.csv")
+	results.cv_scores.to_csv(output / "classification_cv_folds.csv")
+	results.cv_summary.to_csv(output / "classification_cv_summary.csv")
 
 	fig = plot_f1_comparison(results.metrics)
 	fig.savefig(output / "f1_macro_comparison.png", dpi = 150, bbox_inches = "tight")
@@ -675,9 +802,10 @@ def main() -> None:
 	parser.add_argument("--bilinear-c", type = float, default = DEFAULT_BILINEAR_C, help = "Logistic C for bilinear pooling features.")
 	parser.add_argument("--threshold", type = float, default = 0.5)
 	parser.add_argument("--max-samples", type = int, default = None, help = "Optional sample size for quick checks.")
+	parser.add_argument("--n-jobs", type = int, default = 1, help = "Number of cross-validation folds to run in parallel.")
 	parser.add_argument("--skip-bilinear", action = "store_true")
 	parser.add_argument("--skip-clustering", action = "store_true")
-	parser.add_argument("--output", type = str, default = None, help = "Optional directory for CSV outputs.")
+	parser.add_argument("--output", type = str, default = None, help = "Optional directory for CSV and PNG outputs.")
 
 	args = parser.parse_args()
 
@@ -696,11 +824,25 @@ def main() -> None:
 		max_samples = args.max_samples,
 		include_bilinear = not args.skip_bilinear,
 		include_clustering = not args.skip_clustering,
+		n_jobs = args.n_jobs,
 	)
 
 	print("Labels:", ", ".join(results.data.labels))
 	print()
 	print(results.metrics.round(4).to_string())
+	print()
+	print("Fold-wise CV summary:")
+	print(
+		results.cv_summary.loc[
+			:,
+			[
+				("precision_macro", "mean"),
+				("recall_macro", "mean"),
+				("f1_macro", "mean"),
+				("f1_macro", "std"),
+			],
+		].round(4).to_string()
+	)
 
 	if results.clustering is not None:
 		print()
