@@ -35,6 +35,8 @@ DEFAULT_TEXT_C = 1.
 DEFAULT_AUDIO_C = 10.
 DEFAULT_EARLY_C = 1.
 DEFAULT_BILINEAR_C = 0.1
+DEFAULT_CV_N_JOBS = -1
+DEFAULT_BILINEAR_CV_N_JOBS = 1
 
 
 if TYPE_CHECKING:
@@ -442,7 +444,7 @@ def cross_validated_predictions(name: str,
 	y: pandas.DataFrame,
 	splits: Iterable[tuple[numpy.ndarray, numpy.ndarray]],
 	threshold: float = 0.5,
-	n_jobs: int = 1,
+	n_jobs: int = DEFAULT_CV_N_JOBS,
 ) -> tuple[PredictionResult, pandas.DataFrame]:
 	x_values = x.to_numpy(dtype = float)
 	y_values = y.to_numpy(dtype = int)
@@ -452,11 +454,11 @@ def cross_validated_predictions(name: str,
 		x_values,
 		y_values,
 		cv = split_list,
-			n_jobs = n_jobs,
-			pre_dispatch = n_jobs if n_jobs not in (None, -1) else "2*n_jobs",
-			return_estimator = True,
-			return_indices = True,  # type: ignore
-		)
+		n_jobs = n_jobs,
+		pre_dispatch = n_jobs if n_jobs not in (None, -1) else "2*n_jobs",
+		return_estimator = True,
+		return_indices = True,  # type: ignore
+	)
 
 	probabilities = numpy.zeros(y_values.shape, dtype = float)
 	fold_rows = []
@@ -555,7 +557,6 @@ def run_experiments(data_dir: str | pathlib.Path,
 	max_samples: int | None = None,
 	include_bilinear: bool = True,
 	include_clustering: bool = True,
-	n_jobs: int = 1,
 	random_state: int = 42,
 ) -> ExperimentResults:
 	if regularization_c is not None:
@@ -575,7 +576,7 @@ def run_experiments(data_dir: str | pathlib.Path,
 		data.y,
 		splits,
 		threshold = threshold,
-		n_jobs = n_jobs,
+		n_jobs = DEFAULT_CV_N_JOBS,
 	)
 	audio, audio_cv = cross_validated_predictions(
 		"Audio-only",
@@ -584,7 +585,7 @@ def run_experiments(data_dir: str | pathlib.Path,
 		data.y,
 		splits,
 		threshold = threshold,
-		n_jobs = n_jobs,
+		n_jobs = DEFAULT_CV_N_JOBS,
 	)
 	early, early_cv = cross_validated_predictions(
 		"Early fusion",
@@ -593,7 +594,7 @@ def run_experiments(data_dir: str | pathlib.Path,
 		data.y,
 		splits,
 		threshold = threshold,
-		n_jobs = n_jobs,
+		n_jobs = DEFAULT_CV_N_JOBS,
 	)
 	late, late_cv = cross_validated_predictions(
 		"Late fusion",
@@ -608,7 +609,7 @@ def run_experiments(data_dir: str | pathlib.Path,
 		data.y,
 		splits,
 		threshold = threshold,
-		n_jobs = n_jobs,
+		n_jobs = DEFAULT_CV_N_JOBS,
 	)
 	bilinear_result = cross_validated_predictions(
 		"Bilinear pooling",
@@ -622,7 +623,7 @@ def run_experiments(data_dir: str | pathlib.Path,
 		data.y,
 		splits,
 		threshold = threshold,
-		n_jobs = n_jobs,
+		n_jobs = DEFAULT_BILINEAR_CV_N_JOBS,
 	) if include_bilinear else None
 	bilinear = bilinear_cv = None
 
@@ -802,7 +803,6 @@ def main() -> None:
 	parser.add_argument("--bilinear-c", type = float, default = DEFAULT_BILINEAR_C, help = "Logistic C for bilinear pooling features.")
 	parser.add_argument("--threshold", type = float, default = 0.5)
 	parser.add_argument("--max-samples", type = int, default = None, help = "Optional sample size for quick checks.")
-	parser.add_argument("--n-jobs", type = int, default = 1, help = "Number of cross-validation folds to run in parallel.")
 	parser.add_argument("--skip-bilinear", action = "store_true")
 	parser.add_argument("--skip-clustering", action = "store_true")
 	parser.add_argument("--output", type = str, default = None, help = "Optional directory for CSV and PNG outputs.")
@@ -824,7 +824,6 @@ def main() -> None:
 		max_samples = args.max_samples,
 		include_bilinear = not args.skip_bilinear,
 		include_clustering = not args.skip_clustering,
-		n_jobs = args.n_jobs,
 	)
 
 	print("Labels:", ", ".join(results.data.labels))

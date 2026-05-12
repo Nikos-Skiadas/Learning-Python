@@ -93,7 +93,6 @@ python -m project.src.classification -k 5 --output project/results -- project/da
 | `--bilinear-c` | `0.1` | Logistic C for bilinear pooling features |
 | `--threshold` | `0.5` | Probability threshold for assigning labels |
 | `--max-samples` | `None` | Optional smaller sample for quick checks |
-| `--n-jobs` | `1` | Number of cross-validation folds to run in parallel |
 | `--skip-bilinear` | off | Skip the bilinear pooling ablation |
 | `--skip-clustering` | off | Skip K-Means evaluation |
 | `--output` | `None` | Optional directory for CSV and PNG evaluation outputs |
@@ -108,7 +107,7 @@ python -m project.src.classification -k 5 --output project/results -- project/da
 - **Confusion Matrices**: use one binary 2x2 confusion matrix per genre label.
 - **Clustering**: run K-Means on fused embeddings, use Silhouette Score, and compare clusters to multi-label ground truth through label-set ARI and average per-label ARI.
 
-Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation. Runtime parallelism is applied at the fold level through sklearn's `cross_validate(..., n_jobs=...)`; the classifiers themselves are kept single-job to avoid nested CPU oversubscription.
+Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation. Runtime parallelism is applied at the fold level through sklearn's `cross_validate(..., n_jobs=...)`: text-only, audio-only, concatenated early fusion, and late fusion use `n_jobs=-1`, while bilinear pooling uses `n_jobs=1` to avoid multiplying the dense outer-product memory across folds. The classifiers themselves are kept single-job to avoid nested CPU oversubscription.
 
 When `--output` is provided, the runtime saves:
 
