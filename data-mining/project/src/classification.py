@@ -5,15 +5,12 @@ import argparse
 import pathlib
 from dataclasses import dataclass
 from collections.abc import Iterable
-from typing import Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
-import matplotlib.axes
-import matplotlib.figure
-import matplotlib.pyplot
 import numpy
 import pandas
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -34,9 +31,59 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 
+DEFAULT_TEXT_C = 1.
+DEFAULT_AUDIO_C = 10.
+DEFAULT_EARLY_C = 1.
+DEFAULT_BILINEAR_C = 0.1
+
+
+if TYPE_CHECKING:
+	import matplotlib.axes
+	import matplotlib.figure
+
+
 class SupportsPredictProba(Protocol):
 	def predict_proba(self, x: numpy.ndarray) -> numpy.ndarray | list[numpy.ndarray]:
 		...
+
+
+class BilinearPooling(BaseEstimator, TransformerMixin):
+	def __init__(self, n_text_features: int) -> None:
+		self.n_text_features = n_text_features
+		self.text_scaler_: StandardScaler | None = None
+		self.audio_scaler_: StandardScaler | None = None
+
+	def fit(self, x: numpy.ndarray,
+		y: numpy.ndarray | None = None,
+	) -> BilinearPooling:
+		del y
+
+		text, audio = self.split(x)
+		self.text_scaler_ = StandardScaler().fit(text)
+		self.audio_scaler_ = StandardScaler().fit(audio)
+
+		return self
+
+	def transform(self, x: numpy.ndarray) -> numpy.ndarray:
+		text_scaler = self.text_scaler_
+		audio_scaler = self.audio_scaler_
+
+		if text_scaler is None or audio_scaler is None:
+			raise RuntimeError("BilinearPooling must be fitted before transform.")
+
+		text, audio = self.split(x)
+		text = text_scaler.transform(text)
+		audio = audio_scaler.transform(audio)
+
+		return numpy.einsum("ni,nj->nij", text, audio).reshape(len(x), -1)
+
+	def split(self, x: numpy.ndarray) -> tuple[numpy.ndarray, numpy.ndarray]:
+		values = numpy.asarray(x, dtype = float)
+
+		return (
+			values[:, :self.n_text_features],
+			values[:, self.n_text_features:],
+		)
 
 
 @dataclass
@@ -127,9 +174,11 @@ def sample_data(data: MultilabelData,
 
 def build_classifier(kind: str = "logistic",
 	random_state: int = 42,
+	regularization_c: float = 1.,
 ) -> BaseEstimator:
 	if kind == "logistic":
 		base = LogisticRegression(
+			C = regularization_c,
 			max_iter = 1000,
 			class_weight = "balanced",
 			solver = "liblinear",
@@ -147,6 +196,39 @@ def build_classifier(kind: str = "logistic",
 			class_weight = "balanced_subsample",
 			n_jobs = -1,
 			random_state = random_state,
+		)
+
+	raise ValueError(f"Unsupported classifier kind: {kind}")
+
+
+def build_bilinear_classifier(kind: str,
+	n_text_features: int,
+	random_state: int = 42,
+	regularization_c: float = 1.,
+) -> BaseEstimator:
+	if kind == "logistic":
+		base = LogisticRegression(
+			C = regularization_c,
+			max_iter = 1000,
+			class_weight = "balanced",
+			solver = "liblinear",
+			random_state = random_state,
+		)
+
+		return make_pipeline(
+			BilinearPooling(n_text_features),
+			OneVsRestClassifier(base),
+		)
+
+	if kind == "random_forest":
+		return make_pipeline(
+			BilinearPooling(n_text_features),
+			RandomForestClassifier(
+				n_estimators = 300,
+				class_weight = "balanced_subsample",
+				n_jobs = -1,
+				random_state = random_state,
+			),
 		)
 
 	raise ValueError(f"Unsupported classifier kind: {kind}")
@@ -373,18 +455,30 @@ def run_experiments(data_dir: str | pathlib.Path,
 	label_count: int | None = None,
 	n_splits: int = 10,
 	classifier: str = "logistic",
+	regularization_c: float | None = None,
+	text_regularization_c: float = DEFAULT_TEXT_C,
+	audio_regularization_c: float = DEFAULT_AUDIO_C,
+	early_regularization_c: float = DEFAULT_EARLY_C,
+	bilinear_regularization_c: float = DEFAULT_BILINEAR_C,
 	threshold: float = 0.5,
 	max_samples: int | None = None,
+	include_bilinear: bool = True,
 	include_clustering: bool = True,
 	random_state: int = 42,
 ) -> ExperimentResults:
+	if regularization_c is not None:
+		text_regularization_c = regularization_c
+		audio_regularization_c = regularization_c
+		early_regularization_c = regularization_c
+		bilinear_regularization_c = regularization_c
+
 	data = load_multilabel_data(data_dir, k = k, label_count = label_count)
 	data = sample_data(data, max_samples = max_samples, random_state = random_state)
 	splits = make_cv_splits(data.y, n_splits = n_splits, random_state = random_state)
 
 	text = cross_validated_predictions(
 		"Text-only",
-		build_classifier(classifier, random_state = random_state),
+		build_classifier(classifier, random_state = random_state, regularization_c = text_regularization_c),
 		data.text,
 		data.y,
 		splits,
@@ -392,7 +486,7 @@ def run_experiments(data_dir: str | pathlib.Path,
 	)
 	audio = cross_validated_predictions(
 		"Audio-only",
-		build_classifier(classifier, random_state = random_state),
+		build_classifier(classifier, random_state = random_state, regularization_c = audio_regularization_c),
 		data.audio,
 		data.y,
 		splits,
@@ -400,17 +494,31 @@ def run_experiments(data_dir: str | pathlib.Path,
 	)
 	early = cross_validated_predictions(
 		"Early fusion",
-		build_classifier(classifier, random_state = random_state),
+		build_classifier(classifier, random_state = random_state, regularization_c = early_regularization_c),
 		data.fused,
 		data.y,
 		splits,
 		threshold = threshold,
 	)
 	late = late_fusion(text, audio, data.y, threshold = threshold)
+	bilinear = cross_validated_predictions(
+		"Bilinear pooling",
+		build_bilinear_classifier(
+			classifier,
+			n_text_features = data.text.shape[1],
+			random_state = random_state,
+			regularization_c = bilinear_regularization_c,
+		),
+		data.fused,
+		data.y,
+		splits,
+		threshold = threshold,
+	) if include_bilinear else None
 
 	predictions = {
 		result.name: result
-		for result in (text, audio, early, late)
+		for result in (text, audio, early, late, bilinear)
+		if result is not None
 	}
 	metrics = pandas.DataFrame(
 		{
@@ -436,6 +544,8 @@ def run_experiments(data_dir: str | pathlib.Path,
 def plot_f1_comparison(metrics: pandas.DataFrame,
 	ax: matplotlib.axes.Axes | None = None,
 ) -> matplotlib.figure.Figure:
+	import matplotlib.pyplot
+
 	if ax is None:
 		fig, ax = matplotlib.pyplot.subplots(figsize = (8, 5))
 	else:
@@ -454,6 +564,8 @@ def plot_f1_comparison(metrics: pandas.DataFrame,
 def plot_label_confusions(confusions: dict[str, pandas.DataFrame],
 	title: str,
 ) -> matplotlib.figure.Figure:
+	import matplotlib.pyplot
+
 	n_labels = len(confusions)
 	fig, axes = matplotlib.pyplot.subplots(
 		1,
@@ -492,8 +604,14 @@ def main() -> None:
 	parser.add_argument("--labels", type = int, default = None, help = "Number of top labels to predict.")
 	parser.add_argument("--folds", type = int, default = 10, help = "Number of cross-validation folds.")
 	parser.add_argument("--classifier", choices = ["logistic", "random_forest"], default = "logistic")
+	parser.add_argument("--regularization-c", type = float, default = None, help = "Override all logistic C values.")
+	parser.add_argument("--text-c", type = float, default = DEFAULT_TEXT_C, help = "Logistic C for text-only features.")
+	parser.add_argument("--audio-c", type = float, default = DEFAULT_AUDIO_C, help = "Logistic C for audio-only features.")
+	parser.add_argument("--early-c", type = float, default = DEFAULT_EARLY_C, help = "Logistic C for concatenated early-fusion features.")
+	parser.add_argument("--bilinear-c", type = float, default = DEFAULT_BILINEAR_C, help = "Logistic C for bilinear pooling features.")
 	parser.add_argument("--threshold", type = float, default = 0.5)
 	parser.add_argument("--max-samples", type = int, default = None, help = "Optional sample size for quick checks.")
+	parser.add_argument("--skip-bilinear", action = "store_true")
 	parser.add_argument("--skip-clustering", action = "store_true")
 	parser.add_argument("--output", type = str, default = None, help = "Optional directory for CSV outputs.")
 
@@ -505,8 +623,14 @@ def main() -> None:
 		label_count = args.labels,
 		n_splits = args.folds,
 		classifier = args.classifier,
+		regularization_c = args.regularization_c,
+		text_regularization_c = args.text_c,
+		audio_regularization_c = args.audio_c,
+		early_regularization_c = args.early_c,
+		bilinear_regularization_c = args.bilinear_c,
 		threshold = args.threshold,
 		max_samples = args.max_samples,
+		include_bilinear = not args.skip_bilinear,
 		include_clustering = not args.skip_clustering,
 	)
 

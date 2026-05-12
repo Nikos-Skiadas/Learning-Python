@@ -86,8 +86,14 @@ python -m project.src.classification -k 5 -- project/data
 | `--labels` | same as `-k` | Number of top labels to predict |
 | `--folds` | `10` | Cross-validation folds |
 | `--classifier` | `logistic` | `logistic` or `random_forest` |
+| `--regularization-c` | `None` | Optional override for all logistic C values |
+| `--text-c` | `1.0` | Logistic C for text-only features |
+| `--audio-c` | `10.0` | Logistic C for audio-only features |
+| `--early-c` | `1.0` | Logistic C for concatenated early-fusion features |
+| `--bilinear-c` | `0.1` | Logistic C for bilinear pooling features |
 | `--threshold` | `0.5` | Probability threshold for assigning labels |
 | `--max-samples` | `None` | Optional smaller sample for quick checks |
+| `--skip-bilinear` | off | Skip the bilinear pooling ablation |
 | `--skip-clustering` | off | Skip K-Means evaluation |
 | `--output` | `None` | Optional directory for metrics CSV files |
 
@@ -95,10 +101,19 @@ python -m project.src.classification -k 5 -- project/data
 
 - **Text-only / Audio-only**: train one-vs-rest multi-label classifiers on lyric and audio embeddings.
 - **Early Fusion**: concatenate text and audio embeddings before training.
+- **Bilinear Pooling / Outer-product Fusion**: use only all pairwise text-audio products as interaction features. With 384 lyric dimensions and 11 audio dimensions, this produces `384 * 11 = 4224` cross-modal features per song.
 - **Late Fusion**: average the per-label probabilities from the text-only and audio-only models, then threshold them.
 - **Metrics**: report subset accuracy, Hamming loss, macro/micro precision, recall, F1, sample-wise F1, and sample-wise Jaccard.
 - **Confusion Matrices**: use one binary 2x2 confusion matrix per genre label.
 - **Clustering**: run K-Means on fused embeddings, use Silhouette Score, and compare clusters to multi-label ground truth through label-set ARI and average per-label ARI.
+
+Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation.
+
+**Bilinear pooling ablation note:**
+
+Bilinear pooling, also called outer-product fusion, models cross-modal interactions by forming `text_i * audio_j` for every lyric/audio feature pair. In this project we use the cross-products alone for the ablation, rather than appending them to the concatenated vector. This tests whether interaction information is useful by itself, while the standard early-fusion baseline remains simple concatenation.
+
+Because the feature dimensions differ substantially across experiments, regularization matters. The defaults use weaker regularization for the compact audio vector (`--audio-c 10.0`), standard regularization for text and concatenated early fusion (`--text-c 1.0`, `--early-c 1.0`), and stronger regularization for the 4224-dimensional bilinear representation (`--bilinear-c 0.1`). Use `--regularization-c` only when intentionally forcing one shared value across all logistic models.
 
 **Late fusion ablation note:**
 
