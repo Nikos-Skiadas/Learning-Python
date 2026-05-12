@@ -173,7 +173,9 @@ class TransformerModel(sklearn.base.BaseEstimator):
 	def _make_loss_fn(self) -> torch.nn.CrossEntropyLoss:
 		weights = None
 		if self.class_weights is not None:
-			weights = self.class_weights.to(self.device)
+			assert self._model is not None
+			model_dtype = next(self._model.parameters()).dtype
+			weights = self.class_weights.to(device = self.device, dtype = model_dtype)
 
 		return torch.nn.CrossEntropyLoss(weight = weights)
 

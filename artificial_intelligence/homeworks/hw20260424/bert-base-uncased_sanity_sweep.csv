@@ -1,0 +1,7 @@
+model,num_epochs,max_length,best_epoch,val_f1
+bert-base-uncased,4,256,4,0.6869615337944425
+bert-base-uncased,3,256,3,0.6593012537284983
+bert-base-uncased,4,128,3,0.6592788146268621
+bert-base-uncased,3,128,3,0.6592788146268621
+bert-base-uncased,4,384,3,0.6567648616102019
+bert-base-uncased,3,384,2,0.6437483129591844

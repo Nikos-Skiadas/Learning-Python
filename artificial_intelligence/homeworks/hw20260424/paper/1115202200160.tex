@@ -1,0 +1,729 @@
+\begin{filecontents*}{refs.bib}
+@misc{qevasion,
+  title={Question Evasion Detection in Political Interviews},
+  author={AILS-NTUA},
+  howpublished={HuggingFace dataset: \url{https://huggingface.co/datasets/ailsntua/QEvasion}},
+  year={2024}
+}
+
+@inproceedings{bert,
+  title={{BERT}: Pre-training of Deep Bidirectional Transformers for Language Understanding},
+  author={Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},
+  booktitle={Proceedings of NAACL-HLT},
+  pages={4171--4186},
+  year={2019}
+}
+
+@article{distilbert,
+  title={DistilBERT, a distilled version of {BERT}: smaller, faster, cheaper and lighter},
+  author={Sanh, Victor and Debut, Lysandre and Chaumond, Julien and Wolf, Thomas},
+  journal={arXiv preprint arXiv:1910.01108},
+  year={2019}
+}
+
+@article{deberta,
+  title={{DeBERTa}: Decoding-enhanced {BERT} with disentangled attention},
+  author={He, Pengcheng and Liu, Xiaodong and Gao, Jianfeng and Chen, Weizhu},
+  journal={arXiv preprint arXiv:2006.03654},
+  year={2020}
+}
+
+@article{adamw,
+  title={Decoupled Weight Decay Regularization},
+  author={Loshchilov, Ilya and Hutter, Frank},
+  journal={arXiv preprint arXiv:1711.05101},
+  year={2017}
+}
+\end{filecontents*}
+
+\documentclass[12pt]{fphw}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage[section]{placeins}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+\urlstyle{same}
+
+\title{Deep Learning for NLP}
+\author{sdi2200160}
+\date{Spring Semester 2025-2026}
+\institute{National and Kapodistrian University of Athens \\ Department of Informatics and Telecommunications}
+\class{Artificial Intelligence II (YS19 M226 M262 M325 M405)}
+
+\newcommand{\hwonebestf}{0.45}
+\newcommand{\hwonewikitwo}{0.39}
+\newcommand{\hwonetwitter}{0.38}
+\newcommand{\bertf}{0.5561}
+\newcommand{\bertdeltatfidf}{+0.1061}
+\newcommand{\bertdeltaglove}{+0.1661}
+\newcommand{\distilbertf}{0.5066}
+\newcommand{\distilbertdeltatfidf}{+0.0566}
+\newcommand{\distilbertdeltaglove}{+0.1166}
+\newcommand{\debertaf}{0.2672}
+\newcommand{\debertadeltatfidf}{-0.1828}
+\newcommand{\debertadeltaglove}{-0.1228}
+
+\begin{document}
+\maketitle
+
+{
+  \hypersetup{linkcolor=black}
+  \tableofcontents
+}
+\newpage
+
+\section{Abstract}
+
+We study \textbf{response clarity classification} on the QEvasion political interview dataset \cite{qevasion}. Each example is a question--answer pair, and the target label is one of \emph{Clear Reply}, \emph{Ambivalent}, or \emph{Clear Non-Reply}. Homework 1 approached this task with non-contextual representations such as TF--IDF and averaged GloVe embeddings combined with Logistic Regression. Homework 2 keeps the same high-level pipeline abstraction, but replaces the source encoder with a pretrained transformer tokenizer and replaces the linear model with a fine-tuned transformer sequence classifier.
+
+The goal of this report is not to present an aggressively optimized system. Instead, we document a \textbf{simple and principled transformer baseline}: raw question--answer pairs, sentence-pair tokenization, one fixed stratified validation split, AdamW optimization, class-weighted loss, gradient clipping, and checkpoint selection by validation macro F1. The BERT-base, DistilBERT, and DeBERTa-v3 experiments have completed successfully in the sense that all notebooks produced outputs. However, the DeBERTa-v3 fine-tuning run was numerically unstable: its losses became \texttt{nan}, and the final model collapsed to predicting only \emph{Ambivalent}. We therefore report it transparently as a failed fine-tuning run rather than as a competitive model.
+
+\section{Task and Data}
+
+\subsection{Dataset and Labels}
+
+We use the QEvasion dataset from Hugging Face \cite{qevasion}. Each supervised example contains:
+\begin{itemize}
+	\item a segmented journalist \texttt{question},
+	\item the corresponding \texttt{interview\_answer},
+	\item the target label \texttt{clarity\_label}.
+\end{itemize}
+
+The task is three-way classification:
+\begin{itemize}
+	\item \textbf{Clear Reply},
+	\item \textbf{Ambivalent},
+	\item \textbf{Clear Non-Reply}.
+\end{itemize}
+
+As in Homework 1, we use the official train/test split provided by the dataset. The training split is used for fitting and internal validation, while the official test split is used only for final evaluation and Kaggle submission export.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+Split & Instances & Usage \\
+\midrule
+Train & 3448 & fitting + internal validation \\
+Test & 308 & final reporting only \\
+\bottomrule
+\end{tabular}
+\caption{Dataset split summary used in the completed transformer runs.}
+\label{tab:dataset-sizes}
+\end{table}
+
+\subsection{From Homework 1 to Homework 2}
+
+The conceptual pipeline remains the same across the two assignments:
+\begin{enumerate}
+	\item preprocess the raw input,
+	\item encode the source text,
+	\item encode the target labels,
+	\item fit a classifier,
+	\item decode predictions and evaluate.
+\end{enumerate}
+
+This continuity is deliberate. Homework 2 should read as a clean extension of Homework 1 rather than a completely different implementation. The important change is therefore the \emph{representation}: Homework 1 used concatenated text plus non-contextual encoders, while Homework 2 keeps the question and answer as a pair and lets the transformer model learn contextual interactions between them.
+
+\subsection{Preprocessing and Input Construction}
+
+Preprocessing is intentionally lighter than in Homework 1. We do \emph{not} apply lemmatization, stopword removal, or handcrafted punctuation normalization. Instead, we keep the raw question and answer text, replace missing values with empty strings, and strip only outer whitespace.
+
+This design is natural for transformer fine-tuning because the pretrained checkpoints were trained on raw text and expect model-specific special tokens and subword segmentation. Each example is passed to the tokenizer as a sentence pair:
+\[
+(\text{question}, \text{answer})
+\]
+which is internally converted to the checkpoint-specific format. For BERT-like models, this is conceptually similar to:
+\[
+[\text{CLS}]~\text{question}~[\text{SEP}]~\text{answer}~[\text{SEP}].
+\]
+
+Relative to Homework 1, this is a principled simplification: instead of manually engineering lexical features, we rely on the pretrained tokenizer and contextual encoder to model the interaction between the question and the response.
+
+\subsection{Compact Exploratory Analysis}
+
+The notebook keeps the exploratory analysis compact and focused on factors that matter for model behavior:
+\begin{itemize}
+	\item class imbalance,
+	\item question length distribution,
+	\item answer length distribution,
+	\item combined text-length variation across splits.
+\end{itemize}
+
+As in Homework 1, class imbalance remains important. In the completed transformer runs, the training labels required class weights 0.5634 for \emph{Ambivalent}, 3.2285 for \emph{Clear Non-Reply}, and 1.0925 for \emph{Clear Reply}. This indicates that \emph{Clear Non-Reply} is the smallest training class and receives the strongest upweighting. The test split is similarly imbalanced, with 206 \emph{Ambivalent}, 23 \emph{Clear Non-Reply}, and 79 \emph{Clear Reply} examples. This motivates both macro-averaged evaluation and class-weighted training.
+
+\section{Method}
+
+\subsection{Shared Pipeline Structure}
+
+We reuse the same thin \texttt{Classifier} wrapper idea from Homework 1. The wrapper coordinates:
+\begin{itemize}
+	\item preprocessing,
+	\item source encoding,
+	\item target encoding,
+	\item model fitting,
+	\item prediction and scoring.
+\end{itemize}
+
+This matters pedagogically. The new report can then argue that the conceptual pipeline is stable while only the encoder and model components change.
+
+\subsection{Transformer Components}
+
+Homework 2 introduces two new central components:
+\begin{itemize}
+	\item \texttt{TokenizerEncoder}, which wraps a Hugging Face \texttt{AutoTokenizer} and converts each $(\text{question}, \text{answer})$ pair into transformer inputs;
+	\item \texttt{TransformerModel}, which wraps the Hugging Face sequence-classification auto-model and fine-tunes it using an explicit PyTorch loop.
+\end{itemize}
+
+We do \emph{not} use the Hugging Face Trainer API. The training loop is written manually, which keeps the mechanics visible and stays aligned with the assignment's spirit.
+
+\subsection{Training Loop}
+
+The training loop is intentionally minimal:
+\begin{itemize}
+	\item optimizer: AdamW \cite{adamw},
+	\item loss: weighted cross-entropy,
+	\item model selection: best validation macro F1,
+	\item regularization: weight decay and gradient clipping,
+	\item device: CUDA only.
+\end{itemize}
+
+Class weights are computed from the training labels using the standard balanced-class formula:
+\[
+w_c = \frac{N}{K \cdot n_c},
+\]
+where $N$ is the number of training examples, $K$ is the number of classes, and $n_c$ is the number of training examples belonging to class $c$.
+
+After each epoch, we evaluate on the fixed validation split and keep the best checkpoint by validation macro F1. This means the reported final model is not merely the last epoch, but the best epoch observed during training.
+
+\section{Experimental Protocol}
+
+\subsection{Compared Models}
+
+We compare the three required pretrained checkpoints:
+\begin{itemize}
+	\item \texttt{bert-base-uncased} \cite{bert},
+	\item \texttt{distilbert-base-uncased} \cite{distilbert},
+	\item \texttt{microsoft/deberta-v3-base} \cite{deberta}.
+\end{itemize}
+
+All three are fine-tuned as three-class sequence classifiers under the same overall recipe. At the time of this report, all required notebooks have produced Kaggle outputs. BERT and DistilBERT trained normally. DeBERTa-v3 produced \texttt{nan} losses throughout the sweep and final run, so its numbers should be interpreted as an unstable run rather than evidence that the architecture itself is weak.
+
+\subsection{Kaggle Notebooks}
+
+The executed Kaggle notebooks used for the reported runs are:
+\begin{itemize}
+	\item BERT: \href{https://www.kaggle.com/code/nikosskiadas/sdi2200160-bert-base-uncased}{Kaggle notebook for \texttt{bert-base-uncased}}.
+	\item DistilBERT: \href{https://www.kaggle.com/code/nikosskiadas/sdi2200160-distilbert-base-uncased}{Kaggle notebook for \texttt{distilbert-base-uncased}}.
+	\item DeBERTa-v3: \href{https://www.kaggle.com/code/nikosskiadas/sdi2200160-microsoft-deberta-v3-base}{Kaggle notebook for \texttt{microsoft/deberta-v3-base}}.
+\end{itemize}
+
+\subsection{Validation Strategy}
+
+Homework 1 used 3-fold cross-validation because the classical models were relatively cheap to train. Homework 2 uses transformer fine-tuning, so repeating full training several times per hyperparameter setting would make the workflow much heavier. We therefore replace cross-validation with a single \textbf{15\% stratified validation split} taken from the official training split.
+
+This yields a simple and defensible procedure:
+\begin{itemize}
+	\item 85\% of the official training split is used for gradient updates,
+	\item 15\% is used for validation,
+	\item the official test split is never used for model selection.
+\end{itemize}
+
+\subsection{Default Training Recipe}
+
+The shared default recipe is:
+\begin{itemize}
+	\item learning rate: $2 \times 10^{-5}$,
+	\item batch size: 16,
+	\item weight decay: 0.01,
+	\item maximum gradient norm: 1.0,
+	\item validation fraction: 0.15,
+	\item random seed: 42,
+	\item class weighting: enabled.
+\end{itemize}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xll}
+\toprule
+Parameter & Value & Role \\
+\midrule
+Learning rate & $2 \times 10^{-5}$ & conservative fine-tuning step size \\
+Batch size & 16 & fits standard Kaggle GPU memory budgets \\
+Weight decay & 0.01 & mild regularization \\
+Max gradient norm & 1.0 & stabilizes training \\
+Validation split & 15\% stratified & checkpoint selection \\
+Class weights & enabled & partially offsets imbalance \\
+Random seed & 42 & reproducibility \\
+\bottomrule
+\end{tabularx}
+\caption{Shared default training recipe.}
+\label{tab:default-recipe}
+\end{table}
+
+\subsection{Tiny Uniform Sanity Sweep}
+
+The only tuning we allow is the same small sweep for each required model:
+\begin{itemize}
+	\item epochs $\in \{3, 4\}$,
+	\item maximum sequence length $\in \{128, 256, 384\}$.
+\end{itemize}
+
+This produces 6 runs per model, or 18 runs in total across BERT, DistilBERT, and DeBERTa. The sweep is intentionally small. Its role is not exhaustive optimization, but a sanity check over two fundamental choices:
+\begin{itemize}
+	\item \textbf{training duration}, via the number of epochs;
+	\item \textbf{visible context}, via the maximum input length.
+\end{itemize}
+
+Because the same 2 x 3 search space is used for all three models, the tuning budget remains uniform across architectures.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{XcccX}
+\toprule
+Model & Best Epochs & Best Max Length & Best Validation Macro F1 & Notes \\
+\midrule
+BERT & 4 & 256 & 0.6657 & Best completed run \\
+DistilBERT & 4 & 256 & 0.6229 & Same selected recipe as BERT \\
+DeBERTa-v3 & 4 & 384 & 0.2476 & Unstable run; losses were \texttt{nan} \\
+\bottomrule
+\end{tabularx}
+\caption{Best configuration selected by the tiny sweep. DeBERTa-v3 is included for completeness, but its run was numerically unstable.}
+\label{tab:sweep-results}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+BERT Sweep Setting & Best Epoch & Validation Macro F1 & Rank \\
+\midrule
+4 epochs, max length 256 & 4 & 0.6657 & 1 \\
+4 epochs, max length 384 & 4 & 0.6655 & 2 \\
+4 epochs, max length 128 & 2 & 0.6593 & 3 \\
+3 epochs, max length 128 & 2 & 0.6593 & 4 \\
+3 epochs, max length 384 & 3 & 0.6586 & 5 \\
+3 epochs, max length 256 & 3 & 0.6558 & 6 \\
+\bottomrule
+\end{tabular}
+\caption{Full tiny sweep for the completed BERT experiment.}
+\label{tab:bert-sweep-full}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+DistilBERT Sweep Setting & Best Epoch & Validation Macro F1 & Rank \\
+\midrule
+4 epochs, max length 256 & 4 & 0.6229 & 1 \\
+4 epochs, max length 384 & 4 & 0.5918 & 2 \\
+3 epochs, max length 256 & 3 & 0.5742 & 3 \\
+3 epochs, max length 384 & 3 & 0.5643 & 4 \\
+4 epochs, max length 128 & 2 & 0.5523 & 5 \\
+3 epochs, max length 128 & 2 & 0.5523 & 6 \\
+\bottomrule
+\end{tabular}
+\caption{Full tiny sweep for the completed DistilBERT experiment.}
+\label{tab:distilbert-sweep-full}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+DeBERTa-v3 Sweep Setting & Best Epoch & Validation Macro F1 & Rank \\
+\midrule
+4 epochs, max length 384 & 1 & 0.2476 & 1 \\
+3 epochs, max length 384 & 1 & 0.2476 & 2 \\
+4 epochs, max length 256 & 1 & 0.2476 & 3 \\
+3 epochs, max length 256 & 1 & 0.2476 & 4 \\
+4 epochs, max length 128 & 1 & 0.2476 & 5 \\
+3 epochs, max length 128 & 1 & 0.2476 & 6 \\
+\bottomrule
+\end{tabular}
+\caption{Full tiny sweep for DeBERTa-v3. Every run produced \texttt{nan} losses and the same validation macro F1, so the selected configuration is not meaningful.}
+\label{tab:deberta-sweep-full}
+\end{table}
+
+\section{Evaluation Protocol}
+
+We report the same metrics as in Homework 1:
+\begin{itemize}
+	\item Accuracy,
+	\item Macro Precision,
+	\item Macro Recall,
+	\item Macro F1.
+\end{itemize}
+
+Macro F1 remains the primary metric because it treats all classes equally and is therefore more informative than plain accuracy on an imbalanced three-class task.
+
+In addition to overall scores, the notebook also produces:
+\begin{itemize}
+	\item confusion matrices,
+	\item learning curves for train loss, validation loss, and validation macro F1,
+	\item subgroup results by question length and answer length,
+	\item representative misclassifications for qualitative error analysis.
+\end{itemize}
+
+\section{Results}
+
+\subsection{Homework 1 Reference Point}
+
+We do not rerun the classical baselines inside Homework 2. Instead, we compare against the main Homework 1 reference values already reported there:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+Homework 1 Model & Macro F1 \\
+\midrule
+TF--IDF + Logistic Regression & \hwonebestf \\
+GloVe Wiki + Logistic Regression & \hwonewikitwo \\
+GloVe Twitter + Logistic Regression & \hwonetwitter \\
+\bottomrule
+\end{tabular}
+\caption{Homework 1 reference results used for cross-homework comparison.}
+\label{tab:hw1-reference}
+\end{table}
+
+These values give the baseline that Homework 2 is trying to improve upon. The strongest classical point of comparison is TF--IDF + Logistic Regression with macro F1 \hwonebestf.
+
+\subsection{Transformer Test Results}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xcccc}
+\toprule
+Model & Accuracy & Macro Precision & Macro Recall & Macro F1 \\
+\midrule
+BERT & 0.6299 & 0.5372 & 0.5879 & \bertf \\
+DistilBERT & 0.5779 & 0.4881 & 0.5620 & \distilbertf \\
+DeBERTa-v3 & 0.6688 & 0.2229 & 0.3333 & \debertaf \\
+\bottomrule
+\end{tabularx}
+\caption{Final transformer results on the official test split. DeBERTa-v3 has high accuracy only because it predicts the majority class for every test example.}
+\label{tab:hw2-results}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+BERT Class & Precision & Recall & F1 & Support \\
+\midrule
+Ambivalent & 0.7692 & 0.6796 & 0.7216 & 206 \\
+Clear Non-Reply & 0.4062 & 0.5652 & 0.4727 & 23 \\
+Clear Reply & 0.4362 & 0.5190 & 0.4740 & 79 \\
+\bottomrule
+\end{tabular}
+\caption{Per-class BERT results on the official test split.}
+\label{tab:bert-per-class}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+DistilBERT Class & Precision & Recall & F1 & Support \\
+\midrule
+Ambivalent & 0.7561 & 0.6019 & 0.6703 & 206 \\
+Clear Non-Reply & 0.3023 & 0.5652 & 0.3939 & 23 \\
+Clear Reply & 0.4059 & 0.5190 & 0.4556 & 79 \\
+\bottomrule
+\end{tabular}
+\caption{Per-class DistilBERT results on the official test split.}
+\label{tab:distilbert-per-class}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+DeBERTa-v3 Class & Precision & Recall & F1 & Support \\
+\midrule
+Ambivalent & 0.6688 & 1.0000 & 0.8016 & 206 \\
+Clear Non-Reply & 0.0000 & 0.0000 & 0.0000 & 23 \\
+Clear Reply & 0.0000 & 0.0000 & 0.0000 & 79 \\
+\bottomrule
+\end{tabular}
+\caption{Per-class DeBERTa-v3 results on the official test split. The model predicted only \emph{Ambivalent}.}
+\label{tab:deberta-per-class}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llll}
+\toprule
+Completed HW2 run & Macro F1 & $\Delta$ vs HW1 TF--IDF & $\Delta$ vs best HW1 GloVe \\
+\midrule
+\texttt{bert-base-uncased} & \bertf & \bertdeltatfidf & \bertdeltaglove \\
+\texttt{distilbert-base-uncased} & \distilbertf & \distilbertdeltatfidf & \distilbertdeltaglove \\
+\texttt{microsoft/deberta-v3-base} & \debertaf & \debertadeltatfidf & \debertadeltaglove \\
+\bottomrule
+\end{tabular}
+\caption{Headline comparison between the completed Homework 2 runs and the main Homework 1 baselines.}
+\label{tab:headline-comparison}
+\end{table}
+
+\subsection{Partial Interpretation}
+
+The completed BERT run achieved macro F1 \bertf, which is higher than the Homework 1 TF--IDF baseline of \hwonebestf\ by \bertdeltatfidf\ and higher than the best Homework 1 GloVe baseline by \bertdeltaglove. DistilBERT also improved over the Homework 1 baselines, reaching macro F1 \distilbertf. BERT is the strongest completed transformer, ahead of DistilBERT by 0.0495 macro F1. DeBERTa-v3 reached only macro F1 \debertaf, below all Homework 1 baselines, because the run became numerically unstable and predicted only the majority class. Thus the useful comparison is primarily between BERT, DistilBERT, and the Homework 1 baselines.
+
+Per-class scores show that the aggregate gain does not solve the task completely. BERT performs best on \emph{Ambivalent} with F1 0.7216, while \emph{Clear Non-Reply} remains its hardest class with F1 0.4727. DistilBERT has lower \emph{Ambivalent} and \emph{Clear Reply} F1, and also lower \emph{Clear Non-Reply} F1 at 0.3939. DeBERTa-v3 obtains F1 0.0000 on both non-majority classes because it never predicts them. The low scores for \emph{Clear Non-Reply} are consistent with its small test support of only 23 examples and with the qualitative difficulty of distinguishing a genuinely non-responsive answer from a partially responsive one.
+
+\section{Subgroup Analysis}
+
+The assignment explicitly asks for performance across data subgroups. We therefore analyze the final predictions across short, medium, and long buckets for both question length and answer length.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Question-Length Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & 107 & 0.5981 & 0.5687 \\
+Medium & 107 & 0.6168 & 0.5569 \\
+Long & 94 & 0.6809 & 0.5162 \\
+\bottomrule
+\end{tabularx}
+\caption{BERT performance by question-length bucket.}
+\label{tab:question-subgroups}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Question-Length Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & 107 & 0.5140 & 0.5010 \\
+Medium & 107 & 0.5514 & 0.4536 \\
+Long & 94 & 0.6809 & 0.5123 \\
+\bottomrule
+\end{tabularx}
+\caption{DistilBERT performance by question-length bucket.}
+\label{tab:distilbert-question-subgroups}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Question-Length Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & 107 & 0.5234 & 0.2290 \\
+Medium & 107 & 0.7477 & 0.2852 \\
+Long & 94 & 0.7447 & 0.2846 \\
+\bottomrule
+\end{tabularx}
+\caption{DeBERTa-v3 performance by question-length bucket. These scores reflect the all-\emph{Ambivalent} prediction collapse.}
+\label{tab:deberta-question-subgroups}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Answer-Length Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & 102 & 0.6569 & 0.6398 \\
+Medium & 104 & 0.5962 & 0.4666 \\
+Long & 102 & 0.6373 & 0.3752 \\
+\bottomrule
+\end{tabularx}
+\caption{BERT performance by answer-length bucket.}
+\label{tab:answer-subgroups}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Answer-Length Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & 102 & 0.5294 & 0.5132 \\
+Medium & 104 & 0.5769 & 0.4704 \\
+Long & 102 & 0.6275 & 0.3951 \\
+\bottomrule
+\end{tabularx}
+\caption{DistilBERT performance by answer-length bucket.}
+\label{tab:distilbert-answer-subgroups}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+Answer-Length Bucket & Count & Accuracy & Macro F1 \\
+\midrule
+Short & 102 & 0.5490 & 0.2363 \\
+Medium & 104 & 0.6731 & 0.2682 \\
+Long & 102 & 0.7843 & 0.2930 \\
+\bottomrule
+\end{tabularx}
+\caption{DeBERTa-v3 performance by answer-length bucket. These scores reflect the all-\emph{Ambivalent} prediction collapse.}
+\label{tab:deberta-answer-subgroups}
+\end{table}
+
+The BERT model performs worst on long questions and long answers when measured by macro F1. The degradation is especially clear for answer length: short answers reach macro F1 0.6398, while long answers fall to 0.3752. DistilBERT shows a similar answer-length pattern, with macro F1 falling from 0.5132 on short answers to 0.3951 on long answers. This suggests that long responses often contain mixed signals: they may include relevant phrases, hedging, topic shifts, or partial answers, making a single clarity label harder to infer. DeBERTa-v3's subgroup scores should not be interpreted as meaningful length behavior because the model predicted \emph{Ambivalent} for every test example.
+
+\section{Error Analysis}
+
+The notebook extracts representative mistakes and the most common confusion pairs. This section should keep the final report qualitative but concrete.
+
+\subsection{Observed Error Patterns}
+
+The BERT run produced 114 errors on 308 test examples. The most common BERT confusion pairs were:
+\begin{enumerate}
+	\item \emph{Ambivalent} predicted as \emph{Clear Reply}: 52 cases.
+	\item \emph{Clear Reply} predicted as \emph{Ambivalent}: 33 cases.
+	\item \emph{Ambivalent} predicted as \emph{Clear Non-Reply}: 14 cases.
+	\item \emph{Clear Non-Reply} predicted as \emph{Ambivalent}: 9 cases.
+\end{enumerate}
+
+The DistilBERT run produced 130 errors on the same 308 test examples. Its most common confusion pairs were:
+\begin{enumerate}
+	\item \emph{Ambivalent} predicted as \emph{Clear Reply}: 58 cases.
+	\item \emph{Clear Reply} predicted as \emph{Ambivalent}: 32 cases.
+	\item \emph{Ambivalent} predicted as \emph{Clear Non-Reply}: 24 cases.
+	\item \emph{Clear Non-Reply} predicted as \emph{Ambivalent}: 8 cases.
+\end{enumerate}
+
+The DeBERTa-v3 run produced 102 errors, but this lower error count is misleading: it predicted \emph{Ambivalent} for all 308 test examples. Therefore all 79 \emph{Clear Reply} examples and all 23 \emph{Clear Non-Reply} examples were misclassified.
+
+Thus the main boundary problem for the stable runs is not simply detecting the majority class; it is deciding whether an answer is fully responsive or only partially responsive. \emph{Clear Non-Reply} is weak for both stable completed models, but DistilBERT is more willing to predict this class: it predicts \emph{Clear Non-Reply} 43 times, compared with 32 times for BERT. This increases DistilBERT's \emph{Clear Non-Reply} recall relative to a conservative classifier, but also creates more \emph{Ambivalent} $\to$ \emph{Clear Non-Reply} mistakes than BERT.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Gold Label & Pred. Ambivalent & Pred. Clear Non-Reply & Pred. Clear Reply \\
+\midrule
+Ambivalent & 140 & 14 & 52 \\
+Clear Non-Reply & 9 & 13 & 1 \\
+Clear Reply & 33 & 5 & 41 \\
+\bottomrule
+\end{tabular}
+\caption{BERT confusion matrix on the official test split. Rows are gold labels and columns are predictions.}
+\label{tab:bert-confusion}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Gold Label & Pred. Ambivalent & Pred. Clear Non-Reply & Pred. Clear Reply \\
+\midrule
+Ambivalent & 124 & 24 & 58 \\
+Clear Non-Reply & 8 & 13 & 2 \\
+Clear Reply & 32 & 6 & 41 \\
+\bottomrule
+\end{tabular}
+\caption{DistilBERT confusion matrix on the official test split. Rows are gold labels and columns are predictions.}
+\label{tab:distilbert-confusion}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Gold Label & Pred. Ambivalent & Pred. Clear Non-Reply & Pred. Clear Reply \\
+\midrule
+Ambivalent & 206 & 0 & 0 \\
+Clear Non-Reply & 23 & 0 & 0 \\
+Clear Reply & 79 & 0 & 0 \\
+\bottomrule
+\end{tabular}
+\caption{DeBERTa-v3 confusion matrix on the official test split. Rows are gold labels and columns are predictions.}
+\label{tab:deberta-confusion}
+\end{table}
+
+\subsection{Representative Mistakes}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{l l l X}
+\toprule
+Case & Gold Label & Predicted Label & Short Explanation / Example Snippet \\
+\midrule
+1 & Ambivalent & Clear Reply & A question about a political decision received an answer with topical content and institutional framing, but the gold label treated it as only partially responsive. \\
+2 & Clear Reply & Ambivalent & A long explanatory answer contained enough hesitation and setup that the model treated it as less direct than the gold label. \\
+3 & Clear Non-Reply & Ambivalent & A hypothetical-question answer was rejected by the speaker; the model recognized evasiveness but softened it to the middle class. \\
+\bottomrule
+\end{tabularx}
+\caption{Representative BERT error types summarized from the notebook examples.}
+\label{tab:error-examples}
+\end{table}
+
+These mistakes are difficult because political interview answers often contain lexical overlap with the question even when they are evasive or only partially responsive. This weakens surface cues and forces the model to judge the relation between the question's demand and the answer's actual commitment.
+
+\section{Discussion}
+
+This Homework 2 design deliberately avoids heavy optimization. That is a feature rather than a weakness. The point of the assignment is to demonstrate understanding of contextual modeling, not to maximize a leaderboard score through large-scale tuning.
+
+The key methodological differences from Homework 1 are:
+\begin{itemize}
+	\item raw question--answer pairs instead of hand-normalized text,
+	\item sentence-pair tokenization instead of concatenated sparse features,
+	\item contextual sequence classifiers instead of Logistic Regression,
+	\item one fixed validation split instead of 3-fold cross-validation.
+\end{itemize}
+
+This creates a clean scientific comparison. If Homework 2 improves on Homework 1, the report can reasonably attribute the gain to contextual sentence-pair modeling rather than to a much larger tuning effort.
+
+\subsection{Small Non-Improving Changes}
+
+The completed sweeps give two compact observations:
+\begin{itemize}
+	\item Increasing max length beyond 256 did not help for either completed model. The 384-token settings underperformed the best 256-token setting for both BERT and DistilBERT, suggesting that extra context may introduce noise or that truncation is not the main bottleneck on this split.
+	\item Training for 4 epochs helped when paired with max length 256. BERT rose from 0.6558 at 3 epochs to 0.6657 at 4 epochs, while DistilBERT rose from 0.5742 to 0.6229 under the same max-length setting.
+	\item DeBERTa-v3 did not provide a meaningful tuning signal because every sweep setting produced \texttt{nan} losses and the same validation macro F1 of 0.2476. This points to a numerical stability problem in the run rather than a normal hyperparameter preference.
+\end{itemize}
+
+\clearpage
+\section{Conclusion}
+
+Homework 2 extends Homework 1 in the most direct possible way: it preserves the high-level pipeline but replaces the non-contextual source representation with a contextual transformer encoder and replaces the linear classifier with an end-to-end fine-tuned sequence classifier. This keeps the comparison between the two homeworks clean and easy to explain.
+
+For the stable completed transformer runs, contextual fine-tuning improved over the Homework 1 baselines. BERT reached macro F1 \bertf\ and DistilBERT reached macro F1 \distilbertf, compared with \hwonebestf\ for TF--IDF + Logistic Regression, \hwonewikitwo\ for GloVe Wiki, and \hwonetwitter\ for GloVe Twitter. The best recipe for both stable models was the default-like setting of 4 epochs and maximum length 256. BERT is the strongest valid run. DeBERTa-v3 reached macro F1 \debertaf, but this result is not a successful fine-tuning outcome because the losses were \texttt{nan} and all predictions were \emph{Ambivalent}.
+
+The main remaining challenge is the boundary between direct and partially responsive answers. \emph{Clear Non-Reply} is weak for both stable completed models, while the largest number of errors occurs between \emph{Ambivalent} and \emph{Clear Reply}. Long answers are also harder than short answers by macro F1, which suggests that response-clarity classification still requires nuanced reasoning about relevance and evasiveness beyond surface lexical overlap.
+
+\clearpage
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}
