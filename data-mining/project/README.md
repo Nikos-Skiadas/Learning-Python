@@ -95,7 +95,7 @@ python -m project.src.classification -k 5 -- project/data
 | `--max-samples` | `None` | Optional smaller sample for quick checks |
 | `--skip-bilinear` | off | Skip the bilinear pooling ablation |
 | `--skip-clustering` | off | Skip K-Means evaluation |
-| `--output` | `None` | Optional directory for metrics CSV files |
+| `--output` | `None` | Optional directory for CSV and PNG evaluation outputs |
 
 **Multi-label adaptation of Part B:**
 
@@ -108,6 +108,16 @@ python -m project.src.classification -k 5 -- project/data
 - **Clustering**: run K-Means on fused embeddings, use Silhouette Score, and compare clusters to multi-label ground truth through label-set ARI and average per-label ARI.
 
 Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation.
+
+When `--output` is provided, the runtime saves:
+
+- `classification_metrics.csv`
+- `clustering_metrics.csv` when clustering is enabled
+- `f1_macro_comparison.png`
+- `confusion_<model>.png` for each classifier/fusion strategy
+- `clustering_metrics.png` when clustering is enabled
+
+The same results remain available in memory through `run_experiments(...)` for notebook use.
 
 **Bilinear pooling ablation note:**
 

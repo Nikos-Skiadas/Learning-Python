@@ -597,6 +597,70 @@ def plot_label_confusions(confusions: dict[str, pandas.DataFrame],
 	return fig
 
 
+def plot_clustering_metrics(clustering: pandas.DataFrame,
+	ax: matplotlib.axes.Axes | None = None,
+) -> matplotlib.figure.Figure:
+	import matplotlib.pyplot
+
+	if ax is None:
+		fig, ax = matplotlib.pyplot.subplots(figsize = (8, 5))
+	else:
+		fig = ax.figure
+
+	clustering[["silhouette", "ari_labelset", "ari_per_label_macro"]].plot(
+		ax = ax,
+		marker = "o",
+	)
+	ax.set_xlabel("Number of clusters")
+	ax.set_ylabel("Score")
+	ax.set_title("K-Means Clustering Evaluation")
+	ax.grid(alpha = 0.25)
+
+	return fig  # type: ignore
+
+
+def safe_filename(name: str) -> str:
+	slug = "".join(
+		char.lower() if char.isalnum() else "_"
+		for char in name
+	).strip("_")
+
+	return "_".join(part for part in slug.split("_") if part)
+
+
+def save_evaluation_outputs(results: ExperimentResults,
+	output: pathlib.Path,
+) -> None:
+	import os
+
+	output.mkdir(parents = True, exist_ok = True)
+	os.environ.setdefault("MPLCONFIGDIR", str(output / ".matplotlib"))
+
+	import matplotlib.pyplot
+
+	results.metrics.to_csv(output / "classification_metrics.csv")
+
+	fig = plot_f1_comparison(results.metrics)
+	fig.savefig(output / "f1_macro_comparison.png", dpi = 150, bbox_inches = "tight")
+	matplotlib.pyplot.close(fig)
+
+	for model_name, confusions in results.confusion_matrices.items():
+		fig = plot_label_confusions(confusions, f"{model_name} Confusion Matrices")
+		fig.savefig(
+			output / f"confusion_{safe_filename(model_name)}.png",
+			dpi = 150,
+			bbox_inches = "tight",
+		)
+		matplotlib.pyplot.close(fig)
+
+	if results.clustering is not None:
+		results.clustering.to_csv(output / "clustering_metrics.csv")
+
+		fig = plot_clustering_metrics(results.clustering)
+		fig.savefig(output / "clustering_metrics.png", dpi = 150, bbox_inches = "tight")
+		matplotlib.pyplot.close(fig)
+
+
 def main() -> None:
 	parser = argparse.ArgumentParser(description = "Multi-label Part B experiments.")
 	parser.add_argument("data", type = str, help = "Path to the cached data directory.")
@@ -643,12 +707,7 @@ def main() -> None:
 		print(results.clustering.round(4).to_string())
 
 	if args.output:
-		output = pathlib.Path(args.output)
-		output.mkdir(parents = True, exist_ok = True)
-		results.metrics.to_csv(output / "classification_metrics.csv")
-
-		if results.clustering is not None:
-			results.clustering.to_csv(output / "clustering_metrics.csv")
+		save_evaluation_outputs(results, pathlib.Path(args.output))
 
 
 if __name__ == "__main__":
