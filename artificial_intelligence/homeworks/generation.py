@@ -1,4 +1,4 @@
-"""Prompted generation helpers for instruction-tuned causal LMs."""
+"""Prompted generation helpers for instruction-tuned Hugging Face models."""
 
 
 from __future__ import annotations
@@ -25,6 +25,9 @@ class DecodingConfig:
 	temperature: float = 0.0
 	top_p: float = 1.0
 	repetition_penalty: float = 1.0
+
+	def asdict(self) -> dict[str, int | float | bool]:
+		return dataclasses.asdict(self)
 
 
 @typing.runtime_checkable
@@ -60,11 +63,12 @@ class StaticGenerator:
 		return [self.output for _ in prompts]
 
 
-class HuggingFaceCausalLMGenerator:
-	"""Generate continuations with AutoModelForCausalLM.
+class HuggingFaceGenerator:
+	"""Generate continuations with Hugging Face chat/instruction models.
 
-	The implementation is intentionally thin so that Kaggle notebooks can still
-	control model names, device maps, dtypes, and decoding settings explicitly.
+	`backend="auto"` first tries the image-text-to-text API used by current
+	Qwen3.5 model cards, then falls back to AutoModelForCausalLM for text-only
+	instruction models.
 	"""
 
 	def __init__(
@@ -77,6 +81,7 @@ class HuggingFaceCausalLMGenerator:
 		trust_remote_code: bool = True,
 		use_chat_template: bool = True,
 		system_message: str | None = None,
+		backend: typing.Literal["auto", "causal-lm", "image-text-to-text"] = "auto",
 	) -> None:
 		self.model_name = model_name
 		self.decoding = decoding or DecodingConfig()
@@ -86,11 +91,26 @@ class HuggingFaceCausalLMGenerator:
 		self.trust_remote_code = trust_remote_code
 		self.use_chat_template = use_chat_template
 		self.system_message = system_message
+		self.backend = backend
 		self._tokenizer = None
+		self._processor = None
 		self._model = None
+		self._loaded_backend: str | None = None
 
 	def generate(self, prompts: typing.Sequence[str], /) -> list[str]:
 		self._load()
+		assert self._model is not None
+		assert self._loaded_backend is not None
+
+		match self._loaded_backend:
+			case "image-text-to-text":
+				return self._generate_image_text_to_text(prompts)
+			case "causal-lm":
+				return self._generate_causal_lm(prompts)
+
+		raise ValueError(f"Unsupported loaded backend: {self._loaded_backend}")
+
+	def _generate_causal_lm(self, prompts: typing.Sequence[str], /) -> list[str]:
 		assert self._tokenizer is not None
 		assert self._model is not None
 
@@ -107,10 +127,7 @@ class HuggingFaceCausalLMGenerator:
 				return_tensors = "pt",
 				padding = True,
 			)
-			encoded = {
-				key: value.to(self._model.device)
-				for key, value in encoded.items()
-			}
+			encoded = self._move_batch(encoded)
 			input_width = encoded["input_ids"].shape[1]
 
 			with torch.no_grad():
@@ -132,12 +149,69 @@ class HuggingFaceCausalLMGenerator:
 
 		return outputs
 
+	def _generate_image_text_to_text(self, prompts: typing.Sequence[str], /) -> list[str]:
+		assert self._processor is not None
+		assert self._model is not None
+
+		import torch
+
+		outputs: list[str] = []
+		for start in range(0, len(prompts), self.batch_size):
+			batch_messages = [
+				self._messages(prompt, structured_content = True)
+				for prompt in prompts[start:start + self.batch_size]
+			]
+			batch_text = [
+				self._processor.apply_chat_template(
+					messages,
+					tokenize = False,
+					add_generation_prompt = True,
+				)
+				for messages in batch_messages
+			]
+			encoded = self._processor(
+				text = batch_text,
+				return_tensors = "pt",
+				padding = True,
+			)
+			encoded = self._move_batch(encoded)
+			input_width = encoded["input_ids"].shape[1]
+
+			with torch.no_grad():
+				generated = self._model.generate(
+					**encoded,
+					**self._generation_kwargs(),
+				)
+
+			continuations = generated[:, input_width:]
+			outputs.extend(
+				text.strip()
+				for text in self._processor.batch_decode(
+					continuations,
+					skip_special_tokens = True,
+				)
+			)
+
+		return outputs
+
 	def _load(self) -> None:
-		if self._model is not None and self._tokenizer is not None:
+		if self._model is not None:
 			return
 
 		import transformers
 
+		if self.backend in {"auto", "image-text-to-text"}:
+			try:
+				self._load_image_text_to_text(transformers)
+			except (AttributeError, OSError, ValueError) as error:
+				if self.backend == "image-text-to-text":
+					raise
+				print(f"Image-text-to-text load failed for {self.model_name}: {error}")
+
+		if self._model is None and self.backend in {"auto", "causal-lm"}:
+			self._load_causal_lm(transformers)
+
+	def _load_causal_lm(self, transformers) -> None:
 		self._tokenizer = transformers.AutoTokenizer.from_pretrained(
 			self.model_name,
 			trust_remote_code = self.trust_remote_code,
@@ -152,22 +226,50 @@ class HuggingFaceCausalLMGenerator:
 			trust_remote_code = self.trust_remote_code,
 		)
 		self._model.eval()
+		self._loaded_backend = "causal-lm"
+
+	def _load_image_text_to_text(self, transformers) -> None:
+		model_cls = getattr(transformers, "AutoModelForImageTextToText")
+		self._processor = transformers.AutoProcessor.from_pretrained(
+			self.model_name,
+			trust_remote_code = self.trust_remote_code,
+		)
+		self._model = model_cls.from_pretrained(
+			self.model_name,
+			device_map = self.device_map,
+			torch_dtype = self.torch_dtype,
+			trust_remote_code = self.trust_remote_code,
+		)
+		self._model.eval()
+		self._loaded_backend = "image-text-to-text"
 
 	def _format_prompt(self, prompt: str, /) -> str:
 		tokenizer = self._tokenizer
 		if not self.use_chat_template or tokenizer is None or not getattr(tokenizer, "chat_template", None):
 			return prompt
 
-		messages: list[dict[str, str]] = []
-		if self.system_message:
-			messages.append({"role": "system", "content": self.system_message})
-		messages.append({"role": "user", "content": prompt})
+		messages = self._messages(prompt, structured_content = False)
 
 		return tokenizer.apply_chat_template(
 			messages,
 			tokenize = False,
 			add_generation_prompt = True,
 		)
+
+	def _messages(self, prompt: str, /, structured_content: bool) -> list[dict[str, typing.Any]]:
+		messages: list[dict[str, typing.Any]] = []
+		if self.system_message:
+			content: typing.Any = self.system_message
+			if structured_content:
+				content = [{"type": "text", "text": self.system_message}]
+			messages.append({"role": "system", "content": content})
+
+		content = prompt
+		if structured_content:
+			content = [{"type": "text", "text": prompt}]
+		messages.append({"role": "user", "content": content})
+
+		return messages
 
 	def _generation_kwargs(self) -> dict[str, typing.Any]:
 		config = self.decoding
@@ -181,6 +283,27 @@ class HuggingFaceCausalLMGenerator:
 			kwargs["top_p"] = config.top_p
 
 		return kwargs
+
+	def _move_batch(self, batch):
+		device = getattr(self._model, "device", None)
+		if hasattr(batch, "to") and device is not None:
+			return batch.to(device)
+
+		if device is None:
+			return batch
+
+		return {
+			key: value.to(device) if hasattr(value, "to") else value
+			for key, value in batch.items()
+		}
+
+
+class HuggingFaceCausalLMGenerator(HuggingFaceGenerator):
+	"""Backward-compatible causal-LM-only generator."""
+
+	def __init__(self, *args: typing.Any, **kwargs: typing.Any) -> None:
+		kwargs["backend"] = "causal-lm"
+		super().__init__(*args, **kwargs)
 
 
 class PromptedGenerationClassifier:
@@ -244,4 +367,3 @@ class PromptedGenerationClassifier:
 		frame.to_csv(path)
 
 		return frame
-

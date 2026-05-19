@@ -1,7 +1,14 @@
 from __future__ import annotations
 
 
-import dotenv; dotenv.load_dotenv(override = True)
+try:
+	import dotenv
+except ImportError:
+	dotenv = None
+
+if dotenv is not None:
+	dotenv.load_dotenv(override = True)
+
 import datasets
 
 
