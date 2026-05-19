@@ -9,6 +9,9 @@ nltk
 matplotlib
 seaborn
 torch
+torchvision
+torchaudio
+torchtext
 datasets[torch]
 sentence-transformers[torch]
 transformers[torch]
