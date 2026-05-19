@@ -95,6 +95,7 @@ python -m project.src.classification -k 5 --output project/results -- project/da
 | `--max-samples` | `None` | Optional smaller sample for quick checks |
 | `--skip-bilinear` | off | Skip the bilinear pooling ablation |
 | `--skip-clustering` | off | Skip K-Means evaluation |
+| `--no-progress` | off | Disable rich progress bars during the CLI run |
 | `--output` | `None` | Optional directory for CSV and PNG evaluation outputs |
 
 **Multi-label adaptation of Part B:**
@@ -107,7 +108,7 @@ python -m project.src.classification -k 5 --output project/results -- project/da
 - **Confusion Matrices**: use one binary 2x2 confusion matrix per genre label.
 - **Clustering**: run K-Means on fused embeddings, use Silhouette Score, and compare clusters to multi-label ground truth through label-set ARI and average per-label ARI.
 
-Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation. Runtime parallelism is applied at the fold level through sklearn's `cross_validate(..., n_jobs=...)`: text-only, audio-only, concatenated early fusion, and late fusion use `n_jobs=-1`, while bilinear pooling uses `n_jobs=1` to avoid multiplying the dense outer-product memory across folds. The classifiers themselves are kept single-job to avoid nested CPU oversubscription.
+Cross-validation is used as the evaluation protocol: every fixed model configuration is tested through the same folds. It is not used here as an automatic hyperparameter search. The logistic `C` values are chosen upfront from the dimensionality of each representation. Runtime parallelism is applied at the fold level through sklearn's `cross_validate(..., n_jobs=...)`: text-only, audio-only, concatenated early fusion, and late fusion use `n_jobs=-1`, while heavier evaluations are capped by `DEFAULT_HEAVY_CV_N_JOBS = 5`. That cap is used for bilinear-pooling CV and for parallelizing the independent K-Means cluster-count evaluations; sklearn's `KMeans` itself does not expose an `n_jobs` argument. The classifiers themselves are kept single-job to avoid nested CPU oversubscription. CLI runs show rich progress bars for data loading, CV setup, each model/fusion experiment, and clustering; notebook calls stay quiet unless `run_experiments(..., show_progress=True)` is used.
 
 When `--output` is provided, the runtime saves:
 
@@ -168,4 +169,4 @@ src/
 - `matplotlib`, `seaborn` — plotting
 - `wordcloud` — word cloud generation
 - `nltk` — stopword lists (download with `python -c "import nltk; nltk.download('stopwords')"`)
-- `rich` — progress bars for autoencoder training
+- `rich` — progress bars for autoencoder training and classification runs

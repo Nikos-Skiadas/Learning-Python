@@ -2,14 +2,18 @@ from __future__ import annotations
 
 
 import argparse
+import importlib
 import pathlib
+import sys
+from contextlib import contextmanager
 from dataclasses import dataclass
-from collections.abc import Iterable
-from typing import TYPE_CHECKING, Protocol, cast
+from collections.abc import Iterable, Iterator
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import numpy
 import pandas
 
+from joblib import Parallel, delayed, parallel_backend
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin, clone
 from sklearn.cluster import KMeans
 from sklearn.ensemble import RandomForestClassifier
@@ -37,7 +41,7 @@ DEFAULT_EARLY_C = 1.
 DEFAULT_BILINEAR_C = 0.1
 
 DEFAULT_CV_N_JOBS = -1
-DEFAULT_BILINEAR_CV_N_JOBS = 5
+DEFAULT_HEAVY_CV_N_JOBS = 4
 
 
 if TYPE_CHECKING:
@@ -75,10 +79,10 @@ class BilinearPooling(TransformerMixin, BaseEstimator):
 			raise RuntimeError("BilinearPooling must be fitted before transform.")
 
 		text, audio = self.split(x)
-		text = text_scaler.transform(text)
-		audio = audio_scaler.transform(audio)
+		text = numpy.asarray(text_scaler.transform(text), dtype = float)
+		audio = numpy.asarray(audio_scaler.transform(audio), dtype = float)
 
-		return numpy.einsum("ni,nj->nij", text, audio).reshape(len(x), -1)
+		return (text[:, :, numpy.newaxis] * audio[:, numpy.newaxis, :]).reshape(len(x), -1)
 
 	def split(self, x: numpy.ndarray) -> tuple[numpy.ndarray, numpy.ndarray]:
 		values = numpy.asarray(x, dtype = float)
@@ -107,8 +111,8 @@ class LateFusionClassifier(ClassifierMixin, BaseEstimator):
 		y: numpy.ndarray,
 	) -> LateFusionClassifier:
 		text, audio = self.split(x)
-		self.text_model_ = clone(self.text_estimator).fit(text, y)
-		self.audio_model_ = clone(self.audio_estimator).fit(audio, y)
+		self.text_model_ = cast(BaseEstimator, cast(Any, clone(self.text_estimator)).fit(text, y))
+		self.audio_model_ = cast(BaseEstimator, cast(Any, clone(self.audio_estimator)).fit(audio, y))
 		self.n_labels_ = y.shape[1]
 		self.classes_ = numpy.arange(y.shape[1])
 
@@ -168,6 +172,59 @@ class ExperimentResults:
 	cv_summary: pandas.DataFrame
 	confusion_matrices: dict[str, dict[str, pandas.DataFrame]]
 	clustering: pandas.DataFrame | None = None
+
+
+@contextmanager
+def optional_progress(enabled: bool,
+	total_steps: int,
+) -> Iterator[tuple[Any, Any]]:
+	if not enabled:
+		yield None, None
+		return
+
+	try:
+		rich_progress = importlib.import_module("rich.progress")
+	except ModuleNotFoundError:
+		print("rich is not installed; continuing without progress bars.", file = sys.stderr)
+		yield None, None
+		return
+
+	bar_column = getattr(rich_progress, "BarColumn")
+	progress_type = getattr(rich_progress, "Progress")
+	spinner_column = getattr(rich_progress, "SpinnerColumn")
+	text_column = getattr(rich_progress, "TextColumn")
+	time_elapsed_column = getattr(rich_progress, "TimeElapsedColumn")
+
+	with progress_type(
+		spinner_column(),
+		text_column("[progress.description]{task.description}"),
+		bar_column(),
+		time_elapsed_column(),
+	) as progress:
+		overall_task = progress.add_task("Overall classification pipeline", total = total_steps)
+		yield progress, overall_task
+
+
+@contextmanager
+def progress_step(progress: Any,
+	overall_task: Any,
+	description: str,
+) -> Iterator[None]:
+	if progress is None or overall_task is None:
+		yield
+		return
+
+	task = progress.add_task(description, total = None)
+	completed = False
+
+	try:
+		yield
+		completed = True
+	finally:
+		progress.remove_task(task)
+
+		if completed:
+			progress.advance(overall_task)
 
 
 def load_multilabel_data(data_dir: str | pathlib.Path,
@@ -401,17 +458,19 @@ def probabilities_to_labels(probabilities: numpy.ndarray,
 def score_multilabel(y_true: pandas.DataFrame | numpy.ndarray,
 	y_pred: pandas.DataFrame | numpy.ndarray,
 ) -> pandas.Series:
+	zero_division = cast(Any, 0)
+
 	return pandas.Series({
 		"subset_accuracy": accuracy_score(y_true, y_pred),
 		"hamming_loss": hamming_loss(y_true, y_pred),
-		"precision_macro": precision_score(y_true, y_pred, average = "macro", zero_division = 0),
-		"recall_macro": recall_score(y_true, y_pred, average = "macro", zero_division = 0),
-		"f1_macro": f1_score(y_true, y_pred, average = "macro", zero_division = 0),
-		"precision_micro": precision_score(y_true, y_pred, average = "micro", zero_division = 0),
-		"recall_micro": recall_score(y_true, y_pred, average = "micro", zero_division = 0),
-		"f1_micro": f1_score(y_true, y_pred, average = "micro", zero_division = 0),
-		"f1_samples": f1_score(y_true, y_pred, average = "samples", zero_division = 0),
-		"jaccard_samples": jaccard_score(y_true, y_pred, average = "samples", zero_division = 0),
+		"precision_macro": precision_score(y_true, y_pred, average = "macro", zero_division = zero_division),
+		"recall_macro": recall_score(y_true, y_pred, average = "macro", zero_division = zero_division),
+		"f1_macro": f1_score(y_true, y_pred, average = "macro", zero_division = zero_division),
+		"precision_micro": precision_score(y_true, y_pred, average = "micro", zero_division = zero_division),
+		"recall_micro": recall_score(y_true, y_pred, average = "micro", zero_division = zero_division),
+		"f1_micro": f1_score(y_true, y_pred, average = "micro", zero_division = zero_division),
+		"f1_samples": f1_score(y_true, y_pred, average = "samples", zero_division = zero_division),
+		"jaccard_samples": jaccard_score(y_true, y_pred, average = "samples", zero_division = zero_division),
 	})
 
 
@@ -450,13 +509,14 @@ def cross_validated_predictions(name: str,
 	x_values = x.to_numpy(dtype = float)
 	y_values = y.to_numpy(dtype = int)
 	split_list = list(splits)
+	pre_dispatch = n_jobs if n_jobs not in (None, -1) else "2*n_jobs"
 	cv_result = cross_validate(
 		estimator,
 		x_values,
 		y_values,
 		cv = split_list,
 		n_jobs = n_jobs,
-		pre_dispatch = n_jobs if n_jobs not in (None, -1) else "2*n_jobs",
+		pre_dispatch = cast(Any, pre_dispatch),
 		return_estimator = True,
 		return_indices = True,  # type: ignore
 	)
@@ -503,45 +563,68 @@ def confusion_by_label(y_true: pandas.DataFrame,
 	}
 
 
+def evaluate_kmeans_count(n_clusters: int,
+	x: numpy.ndarray,
+	y_values: numpy.ndarray,
+	labelsets: numpy.ndarray,
+	sample_size: int | None,
+	random_state: int,
+) -> dict[str, float | int]:
+	clusters = KMeans(
+		n_clusters = n_clusters,
+		random_state = random_state,
+		n_init = cast(Any, 10),
+	).fit_predict(x)
+
+	per_label_ari = [
+		adjusted_rand_score(y_values[:, label], clusters)
+		for label in range(y_values.shape[1])
+	]
+
+	if sample_size is not None and sample_size < len(x):
+		silhouette = silhouette_score(
+			x,
+			clusters,
+			sample_size = sample_size,
+			random_state = random_state,
+		)
+	else:
+		silhouette = silhouette_score(x, clusters)
+
+	return {
+		"n_clusters": n_clusters,
+		"silhouette": silhouette,  # type: ignore
+		"ari_labelset": adjusted_rand_score(labelsets, clusters),
+		"ari_per_label_macro": float(numpy.mean(per_label_ari)),
+	}
+
+
 def evaluate_kmeans(data: MultilabelData,
 	cluster_counts: Iterable[int] = range(2, 16),
 	sample_size: int | None = 10000,
 	random_state: int = 8312,
+	n_jobs: int = DEFAULT_HEAVY_CV_N_JOBS,
 ) -> pandas.DataFrame:
 	x = StandardScaler().fit_transform(data.fused.to_numpy(dtype = float))
-	labelsets = labelset_codes(data.y)
-	rows = []
+	y_values = data.y.to_numpy(dtype = int)
+	labelsets = labelset_codes(y_values)
+	cluster_count_list = list(cluster_counts)
+	pre_dispatch = n_jobs if n_jobs not in (None, -1) else "2*n_jobs"
 
-	for n_clusters in cluster_counts:
-		clusters = KMeans(
-			n_clusters = n_clusters,
-			random_state = random_state,
-			n_init = 10,
-		).fit_predict(x)
-
-		per_label_ari = [
-			adjusted_rand_score(data.y[label].to_numpy(), clusters)
-			for label in data.labels
-		]
-
-		if sample_size is not None and sample_size < len(x):
-			silhouette = silhouette_score(
+	with parallel_backend("loky", inner_max_num_threads = 1):
+		rows = Parallel(n_jobs = n_jobs, pre_dispatch = cast(Any, pre_dispatch))(
+			delayed(evaluate_kmeans_count)(
+				n_clusters,
 				x,
-				clusters,
-				sample_size = sample_size,
-				random_state = random_state,
+				y_values,
+				labelsets,
+				sample_size,
+				random_state,
 			)
-		else:
-			silhouette = silhouette_score(x, clusters)
+			for n_clusters in cluster_count_list
+		)
 
-		rows.append({
-			"n_clusters": n_clusters,
-			"silhouette": silhouette,
-			"ari_labelset": adjusted_rand_score(labelsets, clusters),
-			"ari_per_label_macro": float(numpy.mean(per_label_ari)),
-		})
-
-	return pandas.DataFrame(rows).set_index("n_clusters")
+	return pandas.DataFrame(rows).set_index("n_clusters")  # type: ignore
 
 
 def run_experiments(data_dir: str | pathlib.Path,
@@ -559,6 +642,8 @@ def run_experiments(data_dir: str | pathlib.Path,
 	include_bilinear: bool = True,
 	include_clustering: bool = True,
 	random_state: int = 42,
+	show_progress: bool = False,
+	heavy_n_jobs: int = DEFAULT_HEAVY_CV_N_JOBS,
 ) -> ExperimentResults:
 	if regularization_c is not None:
 		text_regularization_c = regularization_c
@@ -566,70 +651,102 @@ def run_experiments(data_dir: str | pathlib.Path,
 		early_regularization_c = regularization_c
 		bilinear_regularization_c = regularization_c
 
-	data = load_multilabel_data(data_dir, k = k, label_count = label_count)
-	data = sample_data(data, max_samples = max_samples, random_state = random_state)
-	splits = make_cv_splits(data.y, n_splits = n_splits, random_state = random_state)
+	progress_steps = 6 + int(include_bilinear) + int(include_clustering)
 
-	text, text_cv = cross_validated_predictions(
-		"Text-only",
-		build_classifier(classifier, random_state = random_state, regularization_c = text_regularization_c),
-		data.text,
-		data.y,
-		splits,
-		threshold = threshold,
-		n_jobs = DEFAULT_CV_N_JOBS,
-	)
-	audio, audio_cv = cross_validated_predictions(
-		"Audio-only",
-		build_classifier(classifier, random_state = random_state, regularization_c = audio_regularization_c),
-		data.audio,
-		data.y,
-		splits,
-		threshold = threshold,
-		n_jobs = DEFAULT_CV_N_JOBS,
-	)
-	early, early_cv = cross_validated_predictions(
-		"Early fusion",
-		build_classifier(classifier, random_state = random_state, regularization_c = early_regularization_c),
-		data.fused,
-		data.y,
-		splits,
-		threshold = threshold,
-		n_jobs = DEFAULT_CV_N_JOBS,
-	)
-	late, late_cv = cross_validated_predictions(
-		"Late fusion",
-		build_late_fusion_classifier(
-			classifier,
-			n_text_features = data.text.shape[1],
-			random_state = random_state,
-			text_regularization_c = text_regularization_c,
-			audio_regularization_c = audio_regularization_c,
-		),
-		data.fused,
-		data.y,
-		splits,
-		threshold = threshold,
-		n_jobs = DEFAULT_CV_N_JOBS,
-	)
-	bilinear_result = cross_validated_predictions(
-		"Bilinear pooling",
-		build_bilinear_classifier(
-			classifier,
-			n_text_features = data.text.shape[1],
-			random_state = random_state,
-			regularization_c = bilinear_regularization_c,
-		),
-		data.fused,
-		data.y,
-		splits,
-		threshold = threshold,
-		n_jobs = DEFAULT_BILINEAR_CV_N_JOBS,
-	) if include_bilinear else None
-	bilinear = bilinear_cv = None
+	with optional_progress(show_progress, progress_steps) as (progress, overall_task):
+		with progress_step(progress, overall_task, "Loading cached Part B data"):
+			data = load_multilabel_data(data_dir, k = k, label_count = label_count)
 
-	if bilinear_result is not None:
-		bilinear, bilinear_cv = bilinear_result
+		with progress_step(progress, overall_task, f"Preparing {n_splits}-fold CV splits"):
+			data = sample_data(data, max_samples = max_samples, random_state = random_state)
+			splits = make_cv_splits(data.y, n_splits = n_splits, random_state = random_state)
+
+		with progress_step(progress, overall_task, f"Text-only CV ({n_splits} folds, n_jobs={DEFAULT_CV_N_JOBS})"):
+			text, text_cv = cross_validated_predictions(
+				"Text-only",
+				build_classifier(classifier, random_state = random_state, regularization_c = text_regularization_c),
+				data.text,
+				data.y,
+				splits,
+				threshold = threshold,
+				n_jobs = DEFAULT_CV_N_JOBS,
+			)
+
+		with progress_step(progress, overall_task, f"Audio-only CV ({n_splits} folds, n_jobs={DEFAULT_CV_N_JOBS})"):
+			audio, audio_cv = cross_validated_predictions(
+				"Audio-only",
+				build_classifier(classifier, random_state = random_state, regularization_c = audio_regularization_c),
+				data.audio,
+				data.y,
+				splits,
+				threshold = threshold,
+				n_jobs = DEFAULT_CV_N_JOBS,
+			)
+
+		with progress_step(
+			progress,
+			overall_task,
+			f"Early-fusion CV ({n_splits} folds, n_jobs={DEFAULT_CV_N_JOBS})",
+		):
+			early, early_cv = cross_validated_predictions(
+				"Early fusion",
+				build_classifier(classifier, random_state = random_state, regularization_c = early_regularization_c),
+				data.fused,
+				data.y,
+				splits,
+				threshold = threshold,
+				n_jobs = DEFAULT_CV_N_JOBS,
+			)
+
+		with progress_step(
+			progress,
+			overall_task,
+			f"Late-fusion CV ({n_splits} folds, n_jobs={DEFAULT_CV_N_JOBS})",
+		):
+			late, late_cv = cross_validated_predictions(
+				"Late fusion",
+				build_late_fusion_classifier(
+					classifier,
+					n_text_features = data.text.shape[1],
+					random_state = random_state,
+					text_regularization_c = text_regularization_c,
+					audio_regularization_c = audio_regularization_c,
+				),
+				data.fused,
+				data.y,
+				splits,
+				threshold = threshold,
+				n_jobs = DEFAULT_CV_N_JOBS,
+			)
+
+		bilinear = bilinear_cv = None
+
+		if include_bilinear:
+			with progress_step(
+				progress,
+				overall_task,
+				f"Bilinear-pooling CV ({n_splits} folds, n_jobs={heavy_n_jobs})",
+			):
+				bilinear, bilinear_cv = cross_validated_predictions(
+					"Bilinear pooling",
+					build_bilinear_classifier(
+						classifier,
+						n_text_features = data.text.shape[1],
+						random_state = random_state,
+						regularization_c = bilinear_regularization_c,
+					),
+					data.fused,
+					data.y,
+					splits,
+					threshold = threshold,
+					n_jobs = heavy_n_jobs,
+				)
+
+		clustering = None
+
+		if include_clustering:
+			with progress_step(progress, overall_task, f"K-Means clustering evaluation (n_jobs={heavy_n_jobs})"):
+				clustering = evaluate_kmeans(data, n_jobs = heavy_n_jobs)
 
 	predictions = {
 		result.name: result
@@ -650,13 +767,11 @@ def run_experiments(data_dir: str | pathlib.Path,
 		],
 		axis = "index",
 	)
-	cv_summary = cv_scores.groupby(level = "model").agg(["mean", "std"])
+	cv_summary = cast(pandas.DataFrame, cv_scores.groupby(level = "model").agg(["mean", "std"]))
 	confusions = {
 		name: confusion_by_label(data.y, result.y_pred)
 		for name, result in predictions.items()
 	}
-	clustering = evaluate_kmeans(data) if include_clustering else None
-
 	return ExperimentResults(
 		data = data,
 		predictions = predictions,
@@ -806,6 +921,7 @@ def main() -> None:
 	parser.add_argument("--max-samples", type = int, default = None, help = "Optional sample size for quick checks.")
 	parser.add_argument("--skip-bilinear", action = "store_true")
 	parser.add_argument("--skip-clustering", action = "store_true")
+	parser.add_argument("--no-progress", action = "store_true", help = "Disable rich progress bars.")
 	parser.add_argument("--output", type = str, default = None, help = "Optional directory for CSV and PNG outputs.")
 
 	args = parser.parse_args()
@@ -825,6 +941,7 @@ def main() -> None:
 		max_samples = args.max_samples,
 		include_bilinear = not args.skip_bilinear,
 		include_clustering = not args.skip_clustering,
+		show_progress = not args.no_progress,
 	)
 
 	print("Labels:", ", ".join(results.data.labels))
