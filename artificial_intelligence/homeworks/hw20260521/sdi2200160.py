@@ -93,6 +93,7 @@ BASE_OPTIONS: dict[str, typing.Any] = {
 	"evaluation_split": "validation",
 	"sample_seed": RANDOM_STATE,
 	"validation_fraction": 0.2,
+	"preview_prompts": 0,
 	"batch_size": 1,
 	"k_shots": 3,
 	"k_per_label": 1,
@@ -246,6 +247,36 @@ def choose_evaluation_frame(
 		source = source.head(args.limit).reset_index(drop = True)
 
 	return source
+
+
+def preview_prompts(
+	args: argparse.Namespace,
+	train: pandas.DataFrame,
+	evaluation: pandas.DataFrame,
+	output_dir: pathlib.Path,
+) -> dict[str, str]:
+	if args.preview_prompts <= 0:
+		return {}
+
+	files: dict[str, str] = {}
+	preview_dir = output_dir / "prompts"
+	preview_dir.mkdir(parents = True, exist_ok = True)
+	source = evaluation.head(args.preview_prompts)
+	for strategy in args.strategies:
+		encoder = make_prompt_encoder(
+			strategy = strategy,
+			k_shots = args.k_shots,
+			k_per_label = args.k_per_label,
+			fewshot_strategy = args.fewshot_strategy,
+		)
+		encoder.fit(train, train["clarity_label"])
+		prompts = encoder.transform(source)
+		for i, prompt in enumerate(prompts):
+			path = preview_dir / f"{strategy}.{i}.txt"
+			path.write_text(prompt, encoding = "utf-8")
+			files[f"prompt_preview.{strategy}.{i}"] = str(path)
+
+	return files
 
 
 def synthetic_clarity_data() -> tuple[pandas.DataFrame, pandas.DataFrame]:
@@ -691,6 +722,7 @@ def parse_args() -> argparse.Namespace:
 	data_group.add_argument("--test-csv", default = argparse.SUPPRESS)
 	data_group.add_argument("--synthetic-data", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS, help = "Use a tiny built-in dataset for local artifact smoke tests.")
 	data_group.add_argument("--validation-fraction", type = float, default = argparse.SUPPRESS)
+	data_group.add_argument("--preview-prompts", type = int, default = argparse.SUPPRESS, help = "Write N prompt previews per strategy before running.")
 
 	prompt_group = parser.add_argument_group("prompting and decoding")
 	prompt_group.add_argument("--k-shots", type = int, default = argparse.SUPPRESS)
@@ -759,6 +791,7 @@ def main() -> None:
 	rows: list[dict[str, typing.Any]] = []
 	run_frames: dict[str, pandas.DataFrame] = {}
 	files: dict[str, str] = {}
+	files.update(preview_prompts(args, experiment_train, evaluation, output_dir))
 	for model_key, strategy in itertools.product(args.models, args.strategies):
 		print("=" * 80)
 		print(f"MODEL: {MODELS[model_key]}")

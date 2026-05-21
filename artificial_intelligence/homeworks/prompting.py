@@ -31,17 +31,17 @@ class LabelSpec:
 DEFAULT_LABEL_SPECS: tuple[LabelSpec, ...] = (
 	LabelSpec(
 		name = "Clear Reply",
-		description = "The answer directly and substantially addresses the question.",
+		description = "The answer directly and specifically addresses the main question, even if it includes extra context.",
 		aliases = ("direct reply", "clear answer", "direct answer"),
 	),
 	LabelSpec(
 		name = "Ambivalent",
-		description = "The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.",
+		description = "The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.",
 		aliases = ("ambiguous", "partial reply", "unclear"),
 	),
 	LabelSpec(
 		name = "Clear Non-Reply",
-		description = "The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.",
+		description = "The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.",
 		aliases = ("clear not reply", "non-reply", "non reply", "not reply", "evasion"),
 	),
 )
@@ -88,6 +88,7 @@ class PromptConfig:
 	name: str = "zero_shot"
 	task_description: str = "Classify how clearly the interview answer responds to the question."
 	include_label_definitions: bool = True
+	include_decision_rules: bool = True
 	include_output_schema: bool = True
 	include_context: bool = False
 	context_keys: tuple[str, ...] = ()
@@ -154,6 +155,9 @@ class PromptBuilder:
 		if self.config.include_label_definitions:
 			parts.append(self._label_block())
 
+		if self.config.include_decision_rules:
+			parts.append(self._decision_rules_block())
+
 		if examples:
 			parts.append(self._examples_block(examples))
 
@@ -191,6 +195,17 @@ class PromptBuilder:
 			lines.append(f"- {label.name}: {label.description}")
 
 		return "\n".join(lines)
+
+	def _decision_rules_block(self) -> str:
+		return "\n".join([
+			"Decision rules:",
+			"- Judge the answer relative to the exact question, not by general topical relevance.",
+			"- Choose Clear Reply only when the main question is answered directly and specifically.",
+			"- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.",
+			"- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.",
+			"- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.",
+			"- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.",
+		])
 
 	def _examples_block(self, examples: typing.Sequence[PromptExample], /) -> str:
 		lines = [f"{self.config.example_header}:"]
