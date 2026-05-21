@@ -4,9 +4,17 @@ Id,question,interview_answer,clarity_label,prompt,generation,Predicted,valid,par
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Where is your line in the sand?
@@ -20,9 +28,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Don't your officials vote by mail, sir?
@@ -36,9 +52,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: The statement does not include a payroll tax cut. So, is the relief package perfectly tailored?
@@ -52,9 +76,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Would the invitation be at the White House or at Mar-a-Lago if he were invited?
@@ -62,15 +94,23 @@ Answer: Maybe we'll start with the White House. What do you think? []
 
 Decide the label from the answer's responsiveness to the question. Do not output explanations.
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Reply""}",Clear Reply,True,json,,
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Ambivalent""}",Ambivalent,True,json,,
 4,"If it spreads, what measures are you willing or not willing to take?","First of all, have you ever known Wall Street not in consternation? Number one.Look, I think we've done a pretty damn good job. People's savings are secure, and even those beyond the $250,000 the FDIC is guaranteeing them. And the American taxpayer is not going to have to pay a penny. The banks are in pretty good shape. What's going on in Europe isn't a direct consequence of what's happening in the United States.And I—what we would do is, if we find that there's more instability than appears, we'd be in a position to have the FDIC use the power it has to guarantee those loans above 250, like they did already.And so I think it's going to take a little while for things to just calm down. But I don't see anything that's on the horizon that's about to explode. But I do understand there's an unease about this. And these mid-sized banks have to be able to survive, and I think they'll be able to do that.",Clear Reply,"Classify how clearly the interview answer responds to the question.
 
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: If it spreads, what measures are you willing or not willing to take?
@@ -84,9 +124,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: On Iran, I would like to ask you, Mr. President, there is—seems to be an emerging debate in Israel about a military option against the nuclear installations in Iran. How do you see that debate?
@@ -100,9 +148,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Did he brief you on his plans?
@@ -110,15 +166,23 @@ Answer: And if you ask him, he will tell you, and he'll tell you very nicely: Yo
 
 Decide the label from the answer's responsiveness to the question. Do not output explanations.
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Non-Reply""}",Clear Non-Reply,True,json,,
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Reply""}",Clear Reply,True,json,,
 7,What does it mean for the prospect of future relations between Britain and America when the leader of the opposition dare not set foot in Washington?,"Well, I can just tell you, my relationship with the leader of Great Britain has been unbelievably productive, and I have enjoyed working with Tony Blair more than I could have possibly imagined.It's hard to define our relationship in sound bites or press conferences, or to— in a way that really reflects the depth of what we have done together. And so I— you know, I don't regret things about what may or may not have happened over the past 5 years. I honor a relationship that I truly believe has been laying the foundation for peace.This may not interest you, but I'll tell you anyway. I read three histories on George Washington last year. It's interesting to me that they're still analyzing the Presidency of our first President. And my attitude is, if they're still analyzing 1, 43 doesn't need to worry about it. [] I'm not going to be around to see the final history written on my administration.When you work on big items, items to— agendas based upon sound philosophy that will transform parts of the world to make it more peaceful, we're not going to be around to see it. So my—let me finish. My relationship with this good man is where I've been focused, and that's where my concentration is. And I don't regret any other aspect of it.And so I—we filled a lot of space together. We have had a unique ability to speak in terms that help design common strategies and tactics to achieve big objectives. And it's—will I miss working with Tony Blair? You bet I will. Absolutely. Can I work with the next guy? Of course.And I'm here to make it clear to the people of our respective countries that this relationship is one that is vital to accomplish big objectives. It has been vital in the past; it has stood the free world—it has enabled the free world to do hard things. And it's a relationship that I believe is necessary to do the hard things in the 21st century. And so I honor Tony Blair.",Ambivalent,"Classify how clearly the interview answer responds to the question.
 
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: What does it mean for the prospect of future relations between Britain and America when the leader of the opposition dare not set foot in Washington?
@@ -132,9 +196,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Does the lack of clear procedures for handling captured terrorists increase the risk of American forces being more inclined to kill them in the field rather than capturing them alive, which would deprive the U.S. of potential intelligence?
@@ -148,9 +220,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Are you worried about how your administration is running based on the e-mails indicating concerns at the Office of Management and Budget and the Attorney General's lack of knowledge about Fast and Furious?
@@ -164,9 +244,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Do you back President Karzai when he says he may send his troops into Pakistan to take care of some of the militants who are launching attacks on his territory?
@@ -174,15 +262,23 @@ Answer: Our strategy is to deny safe haven to extremists who would do harm to in
 
 Decide the label from the answer's responsiveness to the question. Do not output explanations.
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Non-Reply""}",Clear Non-Reply,True,json,,
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Reply""}",Clear Reply,True,json,,
 11, Do you support the decision of more than five dozen Democrats to boycott the Inauguration of the incoming President?,"Well, I won't go into details of my conversations with President-elect Trump. As I've said before, they are cordial. At times, they've been fairly lengthy, and they've been substantive. I can't tell you how convincing I've been. I think you'd have to ask him whether I've been convincing or not.I have offered my best advice, counsel about certain issues both foreign and domestic. And my working assumption is, is that having won an election opposed to a number of my initiatives and certain aspects of my vision for where the country needs to go, it is appropriate for him to go forward with his vision and his values. And I don't expect that there's going to be enormous overlap.It may be that on certain issues, once he comes into office and he looks at the complexities of how to, in fact, provide health care for everybody—something he says he wants to do—or wants to make sure that he is encouraging job creation and wage growth in this country, that that may lead him to some of the same conclusions that I arrived at once I got here.But I don't think we'll know until he has an actual chance to get sworn in and sit behind that desk. And I think a lot of his views are going to be shaped by his advisers, the people around him, which is why it's important to pay attention to these confirmation hearings.I can tell you that—and this is something I have told him—that this is a job of such magnitude that you can't do it by yourself. You are enormously reliant on a team: your Cabinet, your senior White House staff, all the way to fairly junior folks in their twenties and thirties, but who are executing on significant responsibilities.And so how you put a team together to make sure that they're getting you the best information and they are teeing up the options from which you will ultimately make decisions, that's probably the most useful advice, the most constructive advice that I've been able to give him. That if you find yourself isolated because the process breaks down, or if you're only hearing from people who agree with you on everything, or if you haven't created a process that is fact-checking and probing and asking hard questions about policies or promises that you've made, that's when you start making mistakes. And as I indicated in some of my previous remarks, reality has a way of biting back if you're not paying attention to it.With respect to the Inauguration, I'm not going to comment on those issues. All I know is I'm going to be there. [] So is Michelle. And I have been checking the weather, and I'm heartened by the fact that it won't be as cold as my first Inauguration—[]—because that was cold.Janet Rodriguez [Univision].'s Post-Presidency Plans/Immigration/Cuba-U.S. Relations",Ambivalent,"Classify how clearly the interview answer responds to the question.
 
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Do you support the decision of more than five dozen Democrats to boycott the Inauguration of the incoming President?
@@ -196,9 +292,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: What would you like to return with to Afghanistan?
@@ -212,9 +316,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Does that wording mean that you are thinking about—you're looking at breaking the package up into individual portions?
@@ -222,15 +334,23 @@ Answer: No, look, first of all, on the last part of the question: The Supreme Co
 
 Decide the label from the answer's responsiveness to the question. Do not output explanations.
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Non-Reply""}",Clear Non-Reply,True,json,,
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Reply""}",Clear Reply,True,json,,
 14,Actions to ensure certain events do not happen.,"Well, you have a lot of actions we can take, including the—including the increase. You know, right now people don't know: China is paying a lot of tariffs. We made a China deal, and they bought just—I think the third highest amount of corn ever in our—in world history. They just bought from us the highest amount, which is great for our farmers. But I view it differently than I did before I made the deal. When I made the deal, I thought this was a great deal. After what happened to us—what happened to the world, coming from China—I view it much differently. But we can impose massive tariffs on China if we want—and other countries, if we want. And we'll see. We just want to be treated fairly. We want a level playing field. Our farmers were never treated properly by anybody, and they were targeted by China.You know, I paid our farmers $28 billion over a 2-year period because they were targeted to that amount of money—to that exact amount of money: $28 [billion]*. It was $16 billion, and it was $12 billion—$28 [billion]* over a 2-year period. And we gave $28 billion to our farmers. That's why they're all here.And now they're doing very well. Our farmers are doing very well because we made really great trade deals. USMCA just kicked in. The China deal, they're buying a lot. They are buying a lot. I will say that: They're buying a lot. A lot of people ask, How are they doing on the trade deal? They're buying a lot.So I want to thank everybody, and we'll be having these conferences again.I—we're going to be signing an immigration act very soon; it's going to be based on merit. It's going to be very strong. We're going to work on DACA because we want to make people happy. And I'll tell you, even conservative Republicans want to see something happen with DACA.The Democrats had their chance for 3 years to do something with DACA, and they always turned it down. They always turned it down. They used it as politics. I'm using it to get something done.But we'll be signing a very powerful immigration act. It will be great. It will be merit-based. The country has tried to get it for 25 or 30 years. It will be strong on the border, but you'll come in legally, and you'll be able to come in legally.And very importantly, we'll be taking care of people from DACA in a very Republican way. A Republicans—I've spoken to many Republicans, and some would like to leave it out, but, really, they understand that it's the right thing to do.So we're going to be taking care of DACA. We will be doing for DACA what the Democrats had a chance to do and they never did it. Okay?Thank you all very much.",Ambivalent,"Classify how clearly the interview answer responds to the question.
 
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Actions to ensure certain events do not happen.
@@ -244,9 +364,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Business advisory for Hong Kong
@@ -260,9 +388,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: What is your reaction to Chavez's opponents winning in the vote in Venezuela?
@@ -276,9 +412,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: The reaction to the Russian Foreign Minister's statement about not pursuing to return to G-8.
@@ -292,9 +436,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: The guarantee that political considerations and ideological issues will play no role in the Government's response to the virus.
@@ -308,9 +460,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Is it actually realistic to end the pandemic by 2022?
@@ -324,9 +484,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Why do you believe that their motive is politics rather than public safety?
@@ -340,9 +508,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Is the person currently working with China?
@@ -356,9 +532,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Aren't you concerned that this could damage the U.S. and make China more influential around the world?
@@ -372,9 +556,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: What kind of message do those images send to your allies in the region and Americans who are skeptical about the Prime Minister's role?
@@ -382,15 +574,23 @@ Answer: Jim, I haven't seen the reports. Before I would like to comment upon how
 
 Decide the label from the answer's responsiveness to the question. Do not output explanations.
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Non-Reply""}",Clear Non-Reply,True,json,,
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Ambivalent""}",Ambivalent,True,json,,
 24,Why have you decided to visit Africa on the last lap of your term?,"Thanks. I actually went to Africa on the first lap of my Presidency too. This is my second trip to the continent of Africa, and I've come to remind our fellow citizens that it is in our interest to help countries deal with curable diseases like malaria and difficult diseases like HIV/ AIDS; that it's in our interest to promote trade between the continent of Africa and the United States of America; that it's in our interest to provide education money so governments will educate children.And there's no better way of making that point than to be in Ghana, where people will get to see firsthand what I'm talking about. It's one thing to be giving speeches in America, it's another thing to actually come to Ghana and meet different folks that are involved with making the—Ghana a better place.Secondly, first of all, Africa has changed since I've been the President, in a very positive way. It's not because of me; it's because of African leaders—I want you to know. But there was six regional conflicts when I became the President. Take Liberia, for example. It was a real issue and a real problem, and along with Nigeria and with John's advice, for example, we—I made some decisions, along with other leaders, that helped put in place the first democratically elected woman on the continent's history. And I'm going there tomorrow to herald the successes she's done and to reaffirm our commitment that we'll help.In other words, conflict resolution has been taking place. And the United States hasn't tried to impose a will. We've just tried to be a useful partner, like in eastern Congo, for example, working with the Presidents of Rwanda and Congo and Burundi.Secondly, democracy is making progress across the continent of Africa. One reason why is because there are examples like John Kufuor for people to look at. I'm telling you, the guy is a respected person. People look at him, and they say, this is the kind of leader that we respect.And thirdly, our aid program has changed from one that basically said, here's your money, good luck, to one that said, in return for generosity, we expect there to be certain habits in place, like fighting corruption or investing in the education of children. I don't think that's too much to ask in return for U.S. taxpayers' money. It hasn't been asked in the past. This is a novel approach, interestingly enough. But I feel confident in asking nations to adhere to good principles because I believe in setting high standards for African leaders.I'm confident in the capacity of the leaders I have met—not every single leader— but on this trip, the leaders I'm with are leaders who have committed themselves to the good of their people, have committed themselves to honest government, have committed themselves to investing in people. They're more interested in leaving behind a legacy of education than leaving behind fancy—a self-serving government. And there's no better way of making that point than coming to the continent. And that's why I'm here, and I'm glad I am here. It's been a great trip, and it's—and I appreciate the hospitality of my friend, and so does Laura.Let's see here, John McKinnon. He would be from your Wall Street Journal. Yes, that's a pretty sophisticated paper, no question about that.",Clear Reply,"Classify how clearly the interview answer responds to the question.
 
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Why have you decided to visit Africa on the last lap of your term?
@@ -404,9 +604,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Do you think the U.S. is playing it right in marking the anniversary of bin Laden's killing?
@@ -420,9 +628,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Reopening schools and the opening of the Major League Baseball season.
@@ -436,9 +652,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: How reliable is this new timetable of 12 to 18 months?
@@ -452,9 +676,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Under what exact conditions would you be walking away from that summit?
@@ -468,9 +700,17 @@ Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Repl
 Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
 
 Label definitions:
-- Clear Reply: The answer directly and substantially addresses the question.
-- Ambivalent: The answer only partially addresses the question, is vague, qualified, mixed, or leaves the response unclear.
-- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise does not answer the question.
+- Clear Reply: The answer directly and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered directly and specifically.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
 
 Instance to classify:
 Question: Sign of Russia's military efforts in Syria focusing on ISIL
@@ -478,4 +718,4 @@ Answer: Well, first of all, destroying ISIL is not only a realistic goal, we're 
 
 Decide the label from the answer's responsiveness to the question. Do not output explanations.
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Non-Reply""}",Clear Non-Reply,True,json,,
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}","{""label"": ""Clear Reply""}",Clear Reply,True,json,,
