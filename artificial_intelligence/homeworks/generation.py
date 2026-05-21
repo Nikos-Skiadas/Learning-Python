@@ -180,6 +180,7 @@ class HuggingFaceGenerator:
 			with torch.no_grad():
 				generated = self._model.generate(
 					**encoded,
+					**self._generation_token_kwargs(),
 					**self._generation_kwargs(),
 				)
 
@@ -234,12 +235,14 @@ class HuggingFaceGenerator:
 			self.model_name,
 			trust_remote_code = self.trust_remote_code,
 		)
+		self._ensure_processor_padding_token()
 		self._model = model_cls.from_pretrained(
 			self.model_name,
 			device_map = self.device_map,
 			torch_dtype = self.torch_dtype,
 			trust_remote_code = self.trust_remote_code,
 		)
+		self._sync_generation_config_token_ids()
 		self._model.eval()
 		self._loaded_backend = "image-text-to-text"
 
@@ -283,6 +286,65 @@ class HuggingFaceGenerator:
 			kwargs["top_p"] = config.top_p
 
 		return kwargs
+
+	def _generation_token_kwargs(self) -> dict[str, typing.Any]:
+		"""Pass explicit special-token ids so Transformers does not warn per batch."""
+		eos_token_id = self._token_id("eos_token_id")
+		pad_token_id = self._token_id("pad_token_id")
+		if pad_token_id is None:
+			pad_token_id = eos_token_id
+
+		kwargs: dict[str, typing.Any] = {}
+		if pad_token_id is not None:
+			kwargs["pad_token_id"] = pad_token_id
+		if eos_token_id is not None:
+			kwargs["eos_token_id"] = eos_token_id
+
+		return kwargs
+
+	def _ensure_processor_padding_token(self) -> None:
+		tokenizer = self._processor_tokenizer()
+		if tokenizer is None or getattr(tokenizer, "pad_token_id", None) is not None:
+			return
+
+		eos_token = getattr(tokenizer, "eos_token", None)
+		if eos_token is not None:
+			tokenizer.pad_token = eos_token
+
+	def _sync_generation_config_token_ids(self) -> None:
+		if self._model is None:
+			return
+
+		generation_config = getattr(self._model, "generation_config", None)
+		if generation_config is None:
+			return
+
+		eos_token_id = self._token_id("eos_token_id")
+		pad_token_id = self._token_id("pad_token_id")
+		if pad_token_id is None:
+			pad_token_id = eos_token_id
+		if getattr(generation_config, "pad_token_id", None) is None and pad_token_id is not None:
+			generation_config.pad_token_id = pad_token_id
+		if getattr(generation_config, "eos_token_id", None) is None and eos_token_id is not None:
+			generation_config.eos_token_id = eos_token_id
+
+	def _token_id(self, name: typing.Literal["eos_token_id", "pad_token_id"]) -> typing.Any:
+		tokenizer = self._tokenizer or self._processor_tokenizer()
+		value = getattr(tokenizer, name, None) if tokenizer is not None else None
+		if value is not None:
+			return value
+
+		if self._model is None:
+			return None
+
+		generation_config = getattr(self._model, "generation_config", None)
+		return getattr(generation_config, name, None)
+
+	def _processor_tokenizer(self) -> typing.Any:
+		if self._processor is None:
+			return None
+
+		return getattr(self._processor, "tokenizer", None)
 
 	def _move_batch(self, batch):
 		device = getattr(self._model, "device", None)
