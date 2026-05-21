@@ -12,10 +12,4 @@ if dotenv is not None:
 import datasets
 
 
-data = datasets.load_dataset("ailsntua/QEvasion").select_columns(
-	[
-		"question",
-		"interview_answer",
-		"clarity_label",
-	]
-)
+data = datasets.load_dataset("ailsntua/QEvasion")

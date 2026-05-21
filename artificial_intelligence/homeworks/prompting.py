@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import dataclasses
 import random
+import re
 import typing
 
 import pandas
@@ -28,6 +29,15 @@ class LabelSpec:
 	aliases: tuple[str, ...] = ()
 
 
+@dataclasses.dataclass(frozen = True)
+class EvasionSpec:
+	"""Fine-grained evasion subtype and its parent clarity label."""
+
+	name: str
+	clarity_label: str
+	description: str
+
+
 DEFAULT_LABEL_SPECS: tuple[LabelSpec, ...] = (
 	LabelSpec(
 		name = "Clear Reply",
@@ -47,6 +57,68 @@ DEFAULT_LABEL_SPECS: tuple[LabelSpec, ...] = (
 )
 
 
+EVASION_DESCRIPTIONS: dict[str, str] = {
+	"Explicit": "Directly and explicitly answers the question.",
+	"Implicit": "Gives an implied or indirect answer, but not a fully explicit one.",
+	"Dodging": "Moves around the question while still touching related material.",
+	"General": "Responds with broad or generic statements instead of the requested specific answer.",
+	"Deflection": "Shifts emphasis toward another issue while keeping some connection to the question.",
+	"Partial": "Answers only part of a multi-part or specific question.",
+	"Declining": "Openly refuses or declines to answer.",
+	"Ignorance": "States lack of knowledge or inability to answer.",
+	"Clarification": "Asks for clarification or challenges the question instead of answering it.",
+}
+
+
+EVASION_SPECS: tuple[EvasionSpec, ...] = (
+	EvasionSpec(
+		name = "Explicit",
+		clarity_label = "Clear Reply",
+		description = EVASION_DESCRIPTIONS["Explicit"],
+	),
+	EvasionSpec(
+		name = "Implicit",
+		clarity_label = "Ambivalent",
+		description = EVASION_DESCRIPTIONS["Implicit"],
+	),
+	EvasionSpec(
+		name = "Dodging",
+		clarity_label = "Ambivalent",
+		description = EVASION_DESCRIPTIONS["Dodging"],
+	),
+	EvasionSpec(
+		name = "General",
+		clarity_label = "Ambivalent",
+		description = EVASION_DESCRIPTIONS["General"],
+	),
+	EvasionSpec(
+		name = "Deflection",
+		clarity_label = "Ambivalent",
+		description = EVASION_DESCRIPTIONS["Deflection"],
+	),
+	EvasionSpec(
+		name = "Partial",
+		clarity_label = "Ambivalent",
+		description = EVASION_DESCRIPTIONS["Partial"],
+	),
+	EvasionSpec(
+		name = "Declining",
+		clarity_label = "Clear Non-Reply",
+		description = EVASION_DESCRIPTIONS["Declining"],
+	),
+	EvasionSpec(
+		name = "Ignorance",
+		clarity_label = "Clear Non-Reply",
+		description = EVASION_DESCRIPTIONS["Ignorance"],
+	),
+	EvasionSpec(
+		name = "Clarification",
+		clarity_label = "Clear Non-Reply",
+		description = EVASION_DESCRIPTIONS["Clarification"],
+	),
+)
+
+
 @dataclasses.dataclass(frozen = True)
 class PromptExample:
 	"""One labeled demonstration example for in-context learning."""
@@ -54,6 +126,7 @@ class PromptExample:
 	question: str
 	answer: str
 	label: str
+	evasion_label: str | None = None
 	rationale: str | None = None
 	source_index: typing.Hashable | None = None
 
@@ -65,6 +138,7 @@ class PromptExample:
 		question_key: str = "question",
 		answer_key: str = "interview_answer",
 		label_key: str = "clarity_label",
+		evasion_key: str = "evasion_label",
 		rationale_key: str | None = None,
 		source_index: typing.Hashable | None = None,
 	) -> typing.Self:
@@ -76,6 +150,7 @@ class PromptExample:
 			question = clean_text(record.get(question_key, "")),
 			answer = clean_text(record.get(answer_key, "")),
 			label = clean_text(record.get(label_key, "")),
+			evasion_label = clean_text(record.get(evasion_key, "")) or None,
 			rationale = rationale,
 			source_index = source_index,
 		)
@@ -89,11 +164,13 @@ class PromptConfig:
 	task_description: str = "Classify how clearly the interview answer responds to the question."
 	include_label_definitions: bool = True
 	include_decision_rules: bool = True
+	include_evasion_taxonomy: bool = True
 	include_output_schema: bool = True
 	include_context: bool = False
 	context_keys: tuple[str, ...] = ()
 	reasoning: typing.Literal["none", "concise", "step_by_step", "self_check"] = "none"
 	use_json: bool = True
+	include_example_evasion: bool = True
 	include_example_rationales: bool = False
 	max_question_chars: int | None = None
 	max_answer_chars: int | None = None
@@ -108,6 +185,64 @@ def clean_text(value: typing.Any, /) -> str:
 		return ""
 
 	return " ".join(str(value).split())
+
+
+def canonical_clarity_label(value: typing.Any, /) -> str:
+	text = clean_text(value)
+	normalized = re.sub(r"[-_]+", " ", text).casefold()
+	normalized = re.sub(r"\s+", " ", normalized).strip()
+
+	if normalized in {"clear reply", "explicit"}:
+		return "Clear Reply"
+	if normalized in {"ambivalent", "ambivalent reply"}:
+		return "Ambivalent"
+	if normalized in {"clear non reply", "clear not reply", "clear non-reply", "clear not-reply"}:
+		return "Clear Non-Reply"
+
+	return text
+
+
+def canonical_evasion_label(value: typing.Any, /) -> str:
+	text = clean_text(value)
+	text = re.sub(r"^\d+(?:\.\d+)*\s*", "", text)
+	for known in EVASION_DESCRIPTIONS:
+		if text.casefold() == known.casefold():
+			return known
+
+	return text
+
+
+def infer_evasion_specs(
+	source: pandas.DataFrame,
+	/,
+	label_key: str = "clarity_label",
+	evasion_key: str = "evasion_label",
+	fallback: tuple[EvasionSpec, ...] = EVASION_SPECS,
+) -> tuple[EvasionSpec, ...]:
+	"""Infer the observed high-level/fine-grained label taxonomy from data."""
+	if label_key not in source or evasion_key not in source:
+		return fallback
+
+	pairs: set[tuple[str, str]] = set()
+	for _, record in source[[label_key, evasion_key]].fillna("").iterrows():
+		label = canonical_clarity_label(record[label_key])
+		evasion = canonical_evasion_label(record[evasion_key])
+		if label and evasion:
+			pairs.add((label, evasion))
+
+	if not pairs:
+		return fallback
+
+	order = {label: i for i, label in enumerate(CLARITY_LABELS)}
+
+	return tuple(
+		EvasionSpec(
+			name = evasion,
+			clarity_label = label,
+			description = EVASION_DESCRIPTIONS.get(evasion, f"Fine-grained subtype observed in the dataset under {label}."),
+		)
+		for label, evasion in sorted(pairs, key = lambda pair: (order.get(pair[0], len(order)), pair[1]))
+	)
 
 
 def truncate_text(text: str, max_chars: int | None, /) -> str:
@@ -127,11 +262,13 @@ class PromptBuilder:
 		self,
 		config: PromptConfig | None = None,
 		labels: tuple[LabelSpec, ...] = DEFAULT_LABEL_SPECS,
+		evasion_specs: tuple[EvasionSpec, ...] = EVASION_SPECS,
 		question_key: str = "question",
 		answer_key: str = "interview_answer",
 	) -> None:
 		self.config = config or PromptConfig()
 		self.labels = labels
+		self.evasion_specs = evasion_specs
 		self.question_key = question_key
 		self.answer_key = answer_key
 
@@ -157,6 +294,9 @@ class PromptBuilder:
 
 		if self.config.include_decision_rules:
 			parts.append(self._decision_rules_block())
+
+		if self.config.include_evasion_taxonomy:
+			parts.append(self._evasion_taxonomy_block())
 
 		if examples:
 			parts.append(self._examples_block(examples))
@@ -207,6 +347,23 @@ class PromptBuilder:
 			"- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.",
 		])
 
+	def _evasion_taxonomy_block(self) -> str:
+		lines = [
+			"Fine-grained evasion taxonomy:",
+			"- First judge whether the answer resembles one of these response/evasion subtypes, then map it to the parent clarity label.",
+			"- Output only the parent clarity label, not the subtype.",
+		]
+		for label in self.label_names:
+			subtypes = [spec for spec in self.evasion_specs if spec.clarity_label == label]
+			if not subtypes:
+				continue
+
+			lines.append(f"- {label}:")
+			for spec in subtypes:
+				lines.append(f"  - {spec.name}: {spec.description}")
+
+		return "\n".join(lines)
+
 	def _examples_block(self, examples: typing.Sequence[PromptExample], /) -> str:
 		lines = [f"{self.config.example_header}:"]
 
@@ -217,6 +374,8 @@ class PromptBuilder:
 				f"Answer: {truncate_text(example.answer, self.config.max_answer_chars)}",
 				f"Label: {example.label}",
 			])
+			if self.config.include_example_evasion and example.evasion_label:
+				lines.append(f"Evasion subtype: {example.evasion_label}")
 			if self.config.include_example_rationales and example.rationale:
 				lines.append(f"Rationale: {example.rationale}")
 			lines.append("")
@@ -308,6 +467,7 @@ class FewShotSampler(sklearn.base.BaseEstimator):
 		answer_key: str = "interview_answer",
 		label_key: str = "clarity_label",
 		rationale_key: str | None = None,
+		evasion_key: str = "evasion_label",
 		labels: tuple[str, ...] = CLARITY_LABELS,
 	) -> None:
 		self.k = k
@@ -318,6 +478,7 @@ class FewShotSampler(sklearn.base.BaseEstimator):
 		self.answer_key = answer_key
 		self.label_key = label_key
 		self.rationale_key = rationale_key
+		self.evasion_key = evasion_key
 		self.labels = labels
 		self._examples: list[PromptExample] = []
 
@@ -332,6 +493,7 @@ class FewShotSampler(sklearn.base.BaseEstimator):
 				question_key = self.question_key,
 				answer_key = self.answer_key,
 				label_key = self.label_key,
+				evasion_key = self.evasion_key,
 				rationale_key = self.rationale_key,
 				source_index = index,
 			)

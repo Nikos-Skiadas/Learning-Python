@@ -39,10 +39,14 @@ from ..generation import (
 )
 from ..parsing import GenerationParser
 from ..prompting import (
+	EvasionSpec,
 	FewShotSampler,
 	PromptBuilder,
 	PromptConfig,
 	PromptEncoder,
+	canonical_clarity_label,
+	canonical_evasion_label,
+	infer_evasion_specs,
 )
 
 
@@ -197,8 +201,12 @@ def normalize_clarity_frame(frame: pandas.DataFrame, /, require_label: bool) -> 
 	result = frame.copy()
 	if "clarity_label" not in result:
 		result["clarity_label"] = ""
+	if "evasion_label" not in result:
+		result["evasion_label"] = ""
+	result["clarity_label"] = result["clarity_label"].apply(canonical_clarity_label)
+	result["evasion_label"] = result["evasion_label"].apply(canonical_evasion_label)
 
-	return result[["question", "interview_answer", "clarity_label"]].fillna("")
+	return result[["question", "interview_answer", "clarity_label", "evasion_label"]].fillna("")
 
 
 def representative_sample(
@@ -254,6 +262,7 @@ def preview_prompts(
 	train: pandas.DataFrame,
 	evaluation: pandas.DataFrame,
 	output_dir: pathlib.Path,
+	evasion_specs: tuple[EvasionSpec, ...],
 ) -> dict[str, str]:
 	if args.preview_prompts <= 0:
 		return {}
@@ -268,6 +277,7 @@ def preview_prompts(
 			k_shots = args.k_shots,
 			k_per_label = args.k_per_label,
 			fewshot_strategy = args.fewshot_strategy,
+			evasion_specs = evasion_specs,
 		)
 		encoder.fit(train, train["clarity_label"])
 		prompts = encoder.transform(source)
@@ -282,23 +292,23 @@ def preview_prompts(
 def synthetic_clarity_data() -> tuple[pandas.DataFrame, pandas.DataFrame]:
 	"""Small local dataset for smoke-testing the artifact pipeline."""
 	rows = [
-		("Will you sign the bill?", "Yes, I will sign it tomorrow.", "Clear Reply"),
-		("Did unemployment fall?", "The unemployment rate fell last quarter.", "Clear Reply"),
-		("Are talks continuing?", "Yes, our teams are meeting this week.", "Clear Reply"),
-		("Will taxes rise?", "No, this budget does not raise taxes.", "Clear Reply"),
-		("Did you meet the minister?", "I met the minister on Monday.", "Clear Reply"),
-		("Why did prices rise?", "There are several complex factors we are studying.", "Ambivalent"),
-		("Will you support the amendment?", "I want to see the final language first.", "Ambivalent"),
-		("Was the policy a mistake?", "It is too early to draw a final conclusion.", "Ambivalent"),
-		("Do you accept responsibility?", "Many people were involved in the process.", "Ambivalent"),
-		("Is the agreement final?", "The broad direction is clear, but details remain.", "Ambivalent"),
-		("Did you approve the plan?", "Let me talk instead about job creation.", "Clear Non-Reply"),
-		("Where did the funds go?", "The important issue is our future agenda.", "Clear Non-Reply"),
-		("Did you read the report?", "I reject the premise of that question.", "Clear Non-Reply"),
-		("When did you know?", "Families care about results, not political games.", "Clear Non-Reply"),
-		("Was there a meeting?", "We should focus on what voters need next.", "Clear Non-Reply"),
+		("Will you sign the bill?", "Yes, I will sign it tomorrow.", "Clear Reply", "Explicit"),
+		("Did unemployment fall?", "The unemployment rate fell last quarter.", "Clear Reply", "Explicit"),
+		("Are talks continuing?", "Yes, our teams are meeting this week.", "Clear Reply", "Explicit"),
+		("Will taxes rise?", "No, this budget does not raise taxes.", "Clear Reply", "Explicit"),
+		("Did you meet the minister?", "I met the minister on Monday.", "Clear Reply", "Explicit"),
+		("Why did prices rise?", "There are several complex factors we are studying.", "Ambivalent", "General"),
+		("Will you support the amendment?", "I want to see the final language first.", "Ambivalent", "Implicit"),
+		("Was the policy a mistake?", "It is too early to draw a final conclusion.", "Ambivalent", "Dodging"),
+		("Do you accept responsibility?", "Many people were involved in the process.", "Ambivalent", "Deflection"),
+		("Is the agreement final?", "The broad direction is clear, but details remain.", "Ambivalent", "Partial"),
+		("Did you approve the plan?", "Let me talk instead about job creation.", "Clear Non-Reply", "Declining"),
+		("Where did the funds go?", "The important issue is our future agenda.", "Clear Non-Reply", "Clarification"),
+		("Did you read the report?", "I reject the premise of that question.", "Clear Non-Reply", "Declining"),
+		("When did you know?", "Families care about results, not political games.", "Clear Non-Reply", "Clarification"),
+		("Was there a meeting?", "We should focus on what voters need next.", "Clear Non-Reply", "Ignorance"),
 	]
-	train = pandas.DataFrame(rows, columns = ["question", "interview_answer", "clarity_label"])
+	train = pandas.DataFrame(rows, columns = ["question", "interview_answer", "clarity_label", "evasion_label"])
 	test = train.groupby("clarity_label", group_keys = False).head(1).reset_index(drop = True)
 
 	return train, test
@@ -319,6 +329,7 @@ def make_prompt_encoder(
 	k_shots: int = 0,
 	k_per_label: int | None = 1,
 	fewshot_strategy: typing.Literal["balanced", "random", "length_matched"] = "balanced",
+	evasion_specs: tuple[EvasionSpec, ...] | None = None,
 ) -> PromptEncoder:
 	"""Build the prompt encoder for one prompting strategy."""
 	config = PROMPT_CONFIGS[strategy]
@@ -331,8 +342,14 @@ def make_prompt_encoder(
 			seed = RANDOM_STATE,
 		)
 
+	builder = (
+		PromptBuilder(config = config)
+		if evasion_specs is None
+		else PromptBuilder(config = config, evasion_specs = evasion_specs)
+	)
+
 	return PromptEncoder(
-		builder = PromptBuilder(config = config),
+		builder = builder,
 		fewshot_sampler = sampler,
 	)
 
@@ -350,6 +367,7 @@ def make_classifier(
 	torch_dtype: str,
 	use_chat_template: bool,
 	system_message: str,
+	evasion_specs: tuple[EvasionSpec, ...],
 	smoke_test: bool = False,
 ) -> PromptedGenerationClassifier:
 	encoder = make_prompt_encoder(
@@ -357,6 +375,7 @@ def make_classifier(
 		k_shots = k_shots,
 		k_per_label = k_per_label,
 		fewshot_strategy = fewshot_strategy,
+		evasion_specs = evasion_specs,
 	)
 	generator = (
 		StaticGenerator()
@@ -386,6 +405,7 @@ def run_experiment(
 	args: argparse.Namespace,
 	train: pandas.DataFrame,
 	evaluation: pandas.DataFrame,
+	evasion_specs: tuple[EvasionSpec, ...],
 ) -> tuple[dict[str, typing.Any], pandas.DataFrame]:
 	"""Run one model/strategy combination on the validation split."""
 	model_name = MODELS[model_key]
@@ -403,6 +423,7 @@ def run_experiment(
 		torch_dtype = args.torch_dtype,
 		use_chat_template = args.use_chat_template,
 		system_message = args.system_message,
+		evasion_specs = evasion_specs,
 		smoke_test = args.smoke_test,
 	)
 	classifier.fit(train, train["clarity_label"])
@@ -585,6 +606,7 @@ def run_final_submission(
 	output_dir: pathlib.Path,
 	final_model: str,
 	final_strategy: str,
+	evasion_specs: tuple[EvasionSpec, ...],
 ) -> dict[str, str]:
 	files: dict[str, str] = {}
 	model_name = MODELS[final_model]
@@ -602,6 +624,7 @@ def run_final_submission(
 		torch_dtype = args.torch_dtype,
 		use_chat_template = args.use_chat_template,
 		system_message = args.system_message,
+		evasion_specs = evasion_specs,
 		smoke_test = args.smoke_test,
 	)
 	classifier.fit(train, train["clarity_label"])
@@ -653,6 +676,7 @@ def write_manifest(
 	validation: pandas.DataFrame,
 	test: pandas.DataFrame,
 	evaluation: pandas.DataFrame,
+	evasion_specs: tuple[EvasionSpec, ...],
 	files: dict[str, str],
 ) -> None:
 	manifest = json_ready({
@@ -671,6 +695,14 @@ def write_manifest(
 		},
 		"models": MODELS,
 		"prompt_strategies": list(PROMPT_CONFIGS),
+		"evasion_taxonomy": [
+			{
+				"name": spec.name,
+				"clarity_label": spec.clarity_label,
+				"description": spec.description,
+			}
+			for spec in evasion_specs
+		],
 		"artifacts": files,
 	})
 	(output_dir / "manifest.json").write_text(
@@ -788,15 +820,17 @@ def main() -> None:
 		if args.evaluation_split == "test"
 		else train
 	)
+	taxonomy_source = pandas.concat([train, validation], ignore_index = True)
+	evasion_specs = infer_evasion_specs(taxonomy_source)
 	rows: list[dict[str, typing.Any]] = []
 	run_frames: dict[str, pandas.DataFrame] = {}
 	files: dict[str, str] = {}
-	files.update(preview_prompts(args, experiment_train, evaluation, output_dir))
+	files.update(preview_prompts(args, experiment_train, evaluation, output_dir, evasion_specs))
 	for model_key, strategy in itertools.product(args.models, args.strategies):
 		print("=" * 80)
 		print(f"MODEL: {MODELS[model_key]}")
 		print(f"STRATEGY: {strategy}")
-		row, run_frame = run_experiment(model_key, strategy, args, experiment_train, evaluation)
+		row, run_frame = run_experiment(model_key, strategy, args, experiment_train, evaluation, evasion_specs)
 		rows.append(row)
 		name = run_id(model_key, strategy)
 		run_frames[name] = run_frame
@@ -827,9 +861,9 @@ def main() -> None:
 			final_strategy = args.final_strategy
 
 		full_train = pandas.concat([train, validation], ignore_index = True)
-		files.update(run_final_submission(args, full_train, test, output_dir, final_model, final_strategy))
+		files.update(run_final_submission(args, full_train, test, output_dir, final_model, final_strategy, evasion_specs))
 
-	write_manifest(args, output_dir, train, validation, test, evaluation, files)
+	write_manifest(args, output_dir, train, validation, test, evaluation, evasion_specs, files)
 
 
 if __name__ == "__main__":
