@@ -89,6 +89,9 @@ BASE_OPTIONS: dict[str, typing.Any] = {
 	"test_csv": None,
 	"synthetic_data": False,
 	"limit": 0,
+	"eval_size": 0,
+	"evaluation_split": "validation",
+	"sample_seed": RANDOM_STATE,
 	"validation_fraction": 0.2,
 	"batch_size": 1,
 	"k_shots": 3,
@@ -138,6 +141,7 @@ PRESETS: dict[str, dict[str, typing.Any]] = {
 		"models": list(MODELS),
 		"strategies": list(PROMPT_CONFIGS),
 		"output_dir": "runs_hw3_full",
+		"eval_size": 90,
 		"limit": 0,
 		"make_submission": True,
 	},
@@ -194,6 +198,54 @@ def normalize_clarity_frame(frame: pandas.DataFrame, /, require_label: bool) -> 
 		result["clarity_label"] = ""
 
 	return result[["question", "interview_answer", "clarity_label"]].fillna("")
+
+
+def representative_sample(
+	frame: pandas.DataFrame,
+	size: int,
+	/,
+	label_key: str = "clarity_label",
+	seed: int = RANDOM_STATE,
+) -> pandas.DataFrame:
+	"""Return a deterministic stratified sample when labels are available."""
+	if size <= 0 or size >= len(frame):
+		return frame.reset_index(drop = True)
+
+	labels = frame[label_key].fillna("").astype(str) if label_key in frame else pandas.Series(dtype = str)
+	can_stratify = (
+		label_key in frame
+		and labels.ne("").all()
+		and labels.nunique() > 1
+		and size >= labels.nunique()
+		and labels.value_counts().min() >= 2
+	)
+	if can_stratify:
+		_, sample = sklearn.model_selection.train_test_split(
+			frame,
+			test_size = size,
+			random_state = seed,
+			stratify = labels,
+		)
+	else:
+		sample = frame.sample(n = size, random_state = seed)
+
+	return sample.sort_index().reset_index(drop = True)
+
+
+def choose_evaluation_frame(
+	args: argparse.Namespace,
+	validation: pandas.DataFrame,
+	test: pandas.DataFrame,
+) -> pandas.DataFrame:
+	source = validation if args.evaluation_split == "validation" else test
+	if args.evaluation_split == "test" and source["clarity_label"].fillna("").astype(str).eq("").all():
+		raise ValueError("Cannot evaluate on test split because clarity_label is not available.")
+
+	source = representative_sample(source, args.eval_size, seed = args.sample_seed)
+	if args.limit:
+		source = source.head(args.limit).reset_index(drop = True)
+
+	return source
 
 
 def synthetic_clarity_data() -> tuple[pandas.DataFrame, pandas.DataFrame]:
@@ -302,7 +354,7 @@ def run_experiment(
 	strategy: str,
 	args: argparse.Namespace,
 	train: pandas.DataFrame,
-	validation: pandas.DataFrame,
+	evaluation: pandas.DataFrame,
 ) -> tuple[dict[str, typing.Any], pandas.DataFrame]:
 	"""Run one model/strategy combination on the validation split."""
 	model_name = MODELS[model_key]
@@ -324,9 +376,8 @@ def run_experiment(
 	)
 	classifier.fit(train, train["clarity_label"])
 
-	source = validation.head(args.limit) if args.limit else validation
-	run_frame = classifier.generate_frame(source, include_prompts = args.save_prompts)
-	joined = source.join(run_frame)
+	run_frame = classifier.generate_frame(evaluation, include_prompts = args.save_prompts)
+	joined = evaluation.join(run_frame)
 	row = experiment_row(
 		model = model_name,
 		strategy = strategy,
@@ -335,6 +386,8 @@ def run_experiment(
 		run_id = run_id(model_key, strategy),
 		model_key = model_key,
 		preset = args.preset,
+		evaluation_split = args.evaluation_split,
+		eval_size = len(evaluation),
 		max_new_tokens = args.max_new_tokens,
 		do_sample = args.do_sample,
 		temperature = args.temperature,
@@ -382,6 +435,10 @@ def write_analysis_artifacts(
 	matrix_path = f"{prefix}.confusion.csv"
 	matrix.to_csv(matrix_path)
 	files["confusion"] = matrix_path
+
+	counts_path = f"{prefix}.prediction_counts.csv"
+	run_frame["Predicted"].value_counts(dropna = False).rename_axis("Predicted").reset_index(name = "count").to_csv(counts_path, index = False)
+	files["prediction_counts"] = counts_path
 
 	if not skip_plots:
 		plot_path = output_dir / "plots" / f"{run_name}.confusion.png"
@@ -564,6 +621,7 @@ def write_manifest(
 	train: pandas.DataFrame,
 	validation: pandas.DataFrame,
 	test: pandas.DataFrame,
+	evaluation: pandas.DataFrame,
 	files: dict[str, str],
 ) -> None:
 	manifest = json_ready({
@@ -574,7 +632,11 @@ def write_manifest(
 			"train_fit_examples": len(train),
 			"validation_examples": len(validation),
 			"test_examples": len(test),
+			"evaluation_examples": len(evaluation),
 			"validation_fraction": args.validation_fraction,
+			"evaluation_split": args.evaluation_split,
+			"eval_size": args.eval_size,
+			"sample_seed": args.sample_seed,
 		},
 		"models": MODELS,
 		"prompt_strategies": list(PROMPT_CONFIGS),
@@ -620,6 +682,9 @@ def parse_args() -> argparse.Namespace:
 	common.add_argument("--strategies", nargs = "+", default = argparse.SUPPRESS, choices = list(PROMPT_CONFIGS))
 	common.add_argument("--output-dir", default = argparse.SUPPRESS)
 	common.add_argument("--limit", type = int, default = argparse.SUPPRESS, help = "Optional row limit for quick checks.")
+	common.add_argument("--eval-size", type = int, default = argparse.SUPPRESS, help = "Representative evaluation sample size. Use 0 for the whole evaluation split.")
+	common.add_argument("--evaluation-split", default = argparse.SUPPRESS, choices = ["validation", "test"])
+	common.add_argument("--sample-seed", type = int, default = argparse.SUPPRESS)
 
 	data_group = parser.add_argument_group("data")
 	data_group.add_argument("--train-csv", default = argparse.SUPPRESS)
@@ -685,6 +750,12 @@ def main() -> None:
 		test_csv = args.test_csv,
 		synthetic_data = args.synthetic_data,
 	)
+	evaluation = choose_evaluation_frame(args, validation, test)
+	experiment_train = (
+		pandas.concat([train, validation], ignore_index = True)
+		if args.evaluation_split == "test"
+		else train
+	)
 	rows: list[dict[str, typing.Any]] = []
 	run_frames: dict[str, pandas.DataFrame] = {}
 	files: dict[str, str] = {}
@@ -692,7 +763,7 @@ def main() -> None:
 		print("=" * 80)
 		print(f"MODEL: {MODELS[model_key]}")
 		print(f"STRATEGY: {strategy}")
-		row, run_frame = run_experiment(model_key, strategy, args, train, validation)
+		row, run_frame = run_experiment(model_key, strategy, args, experiment_train, evaluation)
 		rows.append(row)
 		name = run_id(model_key, strategy)
 		run_frames[name] = run_frame
@@ -725,7 +796,7 @@ def main() -> None:
 		full_train = pandas.concat([train, validation], ignore_index = True)
 		files.update(run_final_submission(args, full_train, test, output_dir, final_model, final_strategy))
 
-	write_manifest(args, output_dir, train, validation, test, files)
+	write_manifest(args, output_dir, train, validation, test, evaluation, files)
 
 
 if __name__ == "__main__":
