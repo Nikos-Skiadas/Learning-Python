@@ -40,6 +40,7 @@ from ..generation import (
 )
 from ..parsing import GenerationParser
 from ..prompting import (
+	CLARITY_LABELS,
 	EvasionSpec,
 	FewShotSampler,
 	PromptBuilder,
@@ -95,6 +96,7 @@ BASE_OPTIONS: dict[str, typing.Any] = {
 	"synthetic_data": False,
 	"limit": 0,
 	"eval_size": 0,
+	"eval_per_label": 0,
 	"evaluation_split": "validation",
 	"sample_seed": RANDOM_STATE,
 	"validation_fraction": 0.2,
@@ -246,6 +248,32 @@ def representative_sample(
 	return sample.sort_index().reset_index(drop = True)
 
 
+def balanced_label_sample(
+	frame: pandas.DataFrame,
+	per_label: int,
+	/,
+	label_key: str = "clarity_label",
+	seed: int = RANDOM_STATE,
+	labels: tuple[str, ...] = CLARITY_LABELS,
+) -> pandas.DataFrame:
+	"""Return exactly N examples for each clarity label."""
+	if per_label <= 0:
+		return frame.reset_index(drop = True)
+	if label_key not in frame:
+		raise ValueError(f"Cannot sample per label because {label_key!r} is missing.")
+
+	parts: list[pandas.DataFrame] = []
+	for i, label in enumerate(labels):
+		group = frame[frame[label_key] == label]
+		if len(group) < per_label:
+			raise ValueError(
+				f"Cannot sample {per_label} examples for {label!r}; only {len(group)} available."
+			)
+		parts.append(group.sample(n = per_label, random_state = seed + i))
+
+	return pandas.concat(parts, ignore_index = False).sort_index().reset_index(drop = True)
+
+
 def choose_evaluation_frame(
 	args: argparse.Namespace,
 	validation: pandas.DataFrame,
@@ -255,7 +283,10 @@ def choose_evaluation_frame(
 	if args.evaluation_split == "test" and source["clarity_label"].fillna("").astype(str).eq("").all():
 		raise ValueError("Cannot evaluate on test split because clarity_label is not available.")
 
-	source = representative_sample(source, args.eval_size, seed = args.sample_seed)
+	if args.eval_per_label:
+		source = balanced_label_sample(source, args.eval_per_label, seed = args.sample_seed)
+	else:
+		source = representative_sample(source, args.eval_size, seed = args.sample_seed)
 	if args.limit:
 		source = source.head(args.limit).reset_index(drop = True)
 
@@ -337,6 +368,43 @@ def _none_if_non_positive(value: int | None, /) -> int | None:
 		return None
 
 	return value
+
+
+def _column_key(value: str, /) -> str:
+	return value.casefold().replace("-", " ").replace("/", " ").replace(" ", "_")
+
+
+def count_columns(prefix: str, values: pandas.Series, /) -> dict[str, int]:
+	counts = values.fillna("__invalid__").astype(str).value_counts(dropna = False)
+	result: dict[str, int] = {}
+	for label in (*CLARITY_LABELS, "__invalid__"):
+		result[f"{prefix}_{_column_key(label)}"] = int(counts.get(label, 0))
+
+	return result
+
+
+def update_run_diagnostics(row: dict[str, typing.Any], run_frame: pandas.DataFrame, /) -> None:
+	true = run_frame["clarity_label"].fillna("").astype(str)
+	pred = run_frame["Predicted"].fillna("__invalid__").astype(str)
+	pred = pred.where(pred.isin(CLARITY_LABELS), "__invalid__")
+	row.update(count_columns("truth", true))
+	row.update(count_columns("pred", pred))
+
+	majority_label = true.value_counts().idxmax()
+	majority_accuracy = float((true == majority_label).mean())
+	row.update({
+		"majority_label": majority_label,
+		"majority_accuracy": majority_accuracy,
+		"accuracy_minus_majority": float(row.get("accuracy", 0.0) - majority_accuracy),
+	})
+
+	if "valid" in run_frame:
+		valid = run_frame["valid"].fillna(False).astype(bool)
+		row["valid_rate"] = float(valid.mean()) if len(valid) else 0.0
+	if "parse_method" in run_frame:
+		parse_counts = run_frame["parse_method"].fillna("__missing__").astype(str).value_counts()
+		for method, count in parse_counts.items():
+			row[f"parse_{_column_key(str(method))}"] = int(count)
 
 
 def make_prompt_encoder(
@@ -475,6 +543,7 @@ def run_experiment(
 		preset = args.preset,
 		evaluation_split = args.evaluation_split,
 		eval_size = len(evaluation),
+		eval_per_label = args.eval_per_label,
 		max_new_tokens = args.max_new_tokens,
 		do_sample = args.do_sample,
 		temperature = args.temperature,
@@ -495,6 +564,7 @@ def run_experiment(
 			"prompt_chars_mean": float(prompt_chars.mean()),
 			"prompt_chars_max": int(prompt_chars.max()),
 		})
+	update_run_diagnostics(row, joined)
 
 	return row, joined
 
@@ -744,6 +814,7 @@ def write_manifest(
 			"validation_fraction": args.validation_fraction,
 			"evaluation_split": args.evaluation_split,
 			"eval_size": args.eval_size,
+			"eval_per_label": args.eval_per_label,
 			"sample_seed": args.sample_seed,
 		},
 		"models": MODELS,
@@ -799,6 +870,7 @@ def parse_args() -> argparse.Namespace:
 	common.add_argument("--output-dir", default = argparse.SUPPRESS)
 	common.add_argument("--limit", type = int, default = argparse.SUPPRESS, help = "Optional row limit for quick checks.")
 	common.add_argument("--eval-size", type = int, default = argparse.SUPPRESS, help = "Representative evaluation sample size. Use 0 for the whole evaluation split.")
+	common.add_argument("--eval-per-label", type = int, default = argparse.SUPPRESS, help = "Evaluate on exactly N examples from each clarity label. Overrides --eval-size when positive.")
 	common.add_argument("--evaluation-split", default = argparse.SUPPRESS, choices = ["validation", "test"])
 	common.add_argument("--sample-seed", type = int, default = argparse.SUPPRESS)
 
