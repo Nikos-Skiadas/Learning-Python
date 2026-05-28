@@ -1,0 +1,22 @@
+{
+  "model_key": "qwen-4b",
+  "model": "Qwen/Qwen3.5-4B",
+  "strategy": "few-shot",
+  "selection": "best",
+  "decoding": {
+    "max_new_tokens": 48,
+    "do_sample": false,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "repetition_penalty": 1.0
+  },
+  "k_shots": 3,
+  "k_per_label": 1,
+  "fewshot_strategy": "balanced",
+  "max_question_chars": 300,
+  "max_answer_chars": 900,
+  "max_context_chars": 500,
+  "enable_thinking": false,
+  "generator_backend": "auto",
+  "preset": "full"
+}
