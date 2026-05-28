@@ -27,6 +27,7 @@ class LabelSpec:
 	name: str
 	description: str
 	aliases: tuple[str, ...] = ()
+	display_name: str | None = None
 
 
 @dataclasses.dataclass(frozen = True)
@@ -48,6 +49,7 @@ DEFAULT_LABEL_SPECS: tuple[LabelSpec, ...] = (
 		name = "Ambivalent",
 		description = "The answer is partly responsive but incomplete, implicit, vague, hedged, mixed, conditional, deflective, or mostly topic-adjacent rather than explicitly answering.",
 		aliases = ("ambivalent reply", "ambiguous", "partial reply", "unclear", "implicit", "dodging", "general", "deflection", "partial", "partial half answer", "half answer"),
+		display_name = "Ambivalent Reply",
 	),
 	LabelSpec(
 		name = "Clear Non-Reply",
@@ -288,6 +290,17 @@ class PromptBuilder:
 	def label_names(self) -> tuple[str, ...]:
 		return tuple(label.name for label in self.labels)
 
+	@property
+	def display_label_names(self) -> tuple[str, ...]:
+		return tuple(self._display_label(label.name) for label in self.labels)
+
+	def _display_label(self, label_name: str, /) -> str:
+		for label in self.labels:
+			if label.name == label_name:
+				return label.display_name or label.name
+
+		return label_name
+
 	def build(
 		self,
 		record: typing.Mapping[str, typing.Any] | pandas.Series,
@@ -337,7 +350,7 @@ class PromptBuilder:
 		]
 
 	def _label_instruction(self) -> str:
-		labels = ", ".join(self.label_names)
+		labels = ", ".join(self.display_label_names)
 
 		return f"Use exactly one of these labels: {labels}."
 
@@ -363,10 +376,10 @@ class PromptBuilder:
 	def _evasion_taxonomy_block(self) -> str:
 		if self.config.evasion_taxonomy_style == "bare":
 			lines = ["Label taxonomy (dataset subtypes under each allowed label; output only the allowed label):"]
-			for label in self.label_names:
-				subtypes = [spec.name for spec in self.evasion_specs if spec.clarity_label == label]
+			for label in self.labels:
+				subtypes = [spec.name for spec in self.evasion_specs if spec.clarity_label == label.name]
 				if subtypes:
-					lines.append(f"- {label}: {', '.join(subtypes)}")
+					lines.append(f"- {self._display_label(label.name)}: {', '.join(subtypes)}")
 
 			return "\n".join(lines)
 
@@ -375,12 +388,12 @@ class PromptBuilder:
 			"- First judge whether the answer resembles one of these response/evasion subtypes, then map it to the parent clarity label.",
 			"- Output only the parent clarity label, not the subtype.",
 		]
-		for label in self.label_names:
-			subtypes = [spec for spec in self.evasion_specs if spec.clarity_label == label]
+		for label in self.labels:
+			subtypes = [spec for spec in self.evasion_specs if spec.clarity_label == label.name]
 			if not subtypes:
 				continue
 
-			lines.append(f"- {label}:")
+			lines.append(f"- {self._display_label(label.name)}:")
 			for spec in subtypes:
 				lines.append(f"  - {spec.name}: {spec.description}")
 
@@ -391,11 +404,11 @@ class PromptBuilder:
 
 		for i, example in enumerate(examples, start = 1):
 			lines.extend([
-				f"Example {i}:",
-				f"Question: {truncate_text(example.question, self.config.max_question_chars)}",
-				f"Answer: {truncate_text(example.answer, self.config.max_answer_chars)}",
-				f"Label: {example.label}",
-			])
+					f"Example {i}:",
+					f"Question: {truncate_text(example.question, self.config.max_question_chars)}",
+					f"Answer: {truncate_text(example.answer, self.config.max_answer_chars)}",
+					f"Label: {self._display_label(example.label)}",
+				])
 			if self.config.include_example_evasion and example.evasion_label:
 				lines.append(f"Evasion subtype: {example.evasion_label}")
 			if self.config.include_example_rationales and example.rationale:
@@ -466,7 +479,7 @@ class PromptBuilder:
 		raise ValueError(f"Unknown reasoning mode: {self.config.reasoning}")
 
 	def _output_block(self) -> str:
-		label_hint = " | ".join(self.label_names)
+		label_hint = " | ".join(self.display_label_names)
 
 		if not self.config.use_json:
 			return (
