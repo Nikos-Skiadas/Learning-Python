@@ -362,7 +362,7 @@ class PromptBuilder:
 
 	def _evasion_taxonomy_block(self) -> str:
 		if self.config.evasion_taxonomy_style == "bare":
-			lines = ["Label taxonomy:"]
+			lines = ["Label taxonomy (dataset subtypes under each allowed label; output only the allowed label):"]
 			for label in self.label_names:
 				subtypes = [spec.name for spec in self.evasion_specs if spec.clarity_label == label]
 				if subtypes:
@@ -453,13 +453,14 @@ class PromptBuilder:
 				return "Briefly justify the decision using evidence from the question-answer pair."
 			case "step_by_step":
 				return (
-					"Analyze the response step by step: whether it addresses the asked content, "
-					"whether it is specific or vague, and whether it redirects away from the question."
+					"Think through whether the response addresses the asked content, "
+					"whether it is specific or vague, and whether it redirects away from the question. "
+					"Output only the final label."
 				)
 			case "self_check":
 				return (
-					"First decide the most likely label, then check that it is one of the allowed labels "
-					"and that the answer is judged relative to the question rather than in isolation."
+					"Choose the most likely label, check that it is one of the allowed labels "
+					"and that the answer is judged relative to the question, then output only the final label."
 				)
 
 		raise ValueError(f"Unknown reasoning mode: {self.config.reasoning}")
