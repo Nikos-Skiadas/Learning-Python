@@ -41,10 +41,8 @@ from ..generation import (
 from ..parsing import GenerationParser
 from ..prompting import (
 	CLARITY_LABELS,
-	DEFAULT_LABEL_SPECS,
 	EvasionSpec,
 	FewShotSampler,
-	LabelSpec,
 	PromptBuilder,
 	PromptConfig,
 	PromptEncoder,
@@ -60,11 +58,6 @@ MODELS: dict[str, str] = {
 	"qwen-0.8b": "Qwen/Qwen3.5-0.8B",
 	"qwen-2b": "Qwen/Qwen3.5-2B",
 	"qwen-4b": "Qwen/Qwen3.5-4B",
-}
-
-LABEL_ORDERS: dict[str, tuple[str, ...]] = {
-	"default": CLARITY_LABELS,
-	"ambivalent-nonreply-clear": ("Ambivalent", "Clear Non-Reply", "Clear Reply"),
 }
 
 BASELINE_TASK_DESCRIPTION = "Classify the interview answer's responsiveness to the question."
@@ -125,7 +118,6 @@ BASE_OPTIONS: dict[str, typing.Any] = {
 	"k_shots": 3,
 	"k_per_label": 1,
 	"fewshot_strategy": "balanced",
-	"label_order": "ambivalent-nonreply-clear",
 	"max_question_chars": 300,
 	"max_answer_chars": 900,
 	"max_context_chars": 500,
@@ -334,7 +326,6 @@ def preview_prompts(
 			k_shots = args.k_shots,
 			k_per_label = args.k_per_label,
 			fewshot_strategy = args.fewshot_strategy,
-			label_order = args.label_order,
 			max_question_chars = args.max_question_chars,
 			max_answer_chars = args.max_answer_chars,
 			max_context_chars = args.max_context_chars,
@@ -429,21 +420,11 @@ def update_run_diagnostics(row: dict[str, typing.Any], run_frame: pandas.DataFra
 			row[f"parse_{_column_key(str(method))}"] = int(count)
 
 
-def label_specs_for_order(label_order: str, /) -> tuple[LabelSpec, ...]:
-	if label_order not in LABEL_ORDERS:
-		raise ValueError(f"Unknown label order: {label_order}")
-
-	spec_by_name = {spec.name: spec for spec in DEFAULT_LABEL_SPECS}
-
-	return tuple(spec_by_name[label] for label in LABEL_ORDERS[label_order])
-
-
 def make_prompt_encoder(
 	strategy: str,
 	k_shots: int = 0,
 	k_per_label: int | None = 1,
 	fewshot_strategy: typing.Literal["balanced", "random", "length_matched"] = "balanced",
-	label_order: str = "ambivalent-nonreply-clear",
 	max_question_chars: int | None = None,
 	max_answer_chars: int | None = None,
 	max_context_chars: int | None = None,
@@ -456,8 +437,6 @@ def make_prompt_encoder(
 		max_answer_chars = _none_if_non_positive(max_answer_chars),
 		max_context_chars = _none_if_non_positive(max_context_chars),
 	)
-	label_specs = label_specs_for_order(label_order)
-	labels = LABEL_ORDERS[label_order]
 	sampler = None
 	if strategy in {"few-shot", "cot", "self-check"} and k_shots:
 		sampler = FewShotSampler(
@@ -465,13 +444,12 @@ def make_prompt_encoder(
 			k_per_label = k_per_label,
 			strategy = fewshot_strategy,
 			seed = RANDOM_STATE,
-			labels = labels,
 		)
 
 	builder = (
-		PromptBuilder(config = config, labels = label_specs)
+		PromptBuilder(config = config)
 		if evasion_specs is None
-		else PromptBuilder(config = config, labels = label_specs, evasion_specs = evasion_specs)
+		else PromptBuilder(config = config, evasion_specs = evasion_specs)
 	)
 
 	return PromptEncoder(
@@ -487,7 +465,6 @@ def make_classifier(
 	k_shots: int,
 	k_per_label: int | None,
 	fewshot_strategy: typing.Literal["balanced", "random", "length_matched"],
-	label_order: str,
 	batch_size: int,
 	generator_backend: typing.Literal["auto", "causal-lm", "image-text-to-text"],
 	device_map: str,
@@ -506,7 +483,6 @@ def make_classifier(
 		k_shots = k_shots,
 		k_per_label = k_per_label,
 		fewshot_strategy = fewshot_strategy,
-		label_order = label_order,
 		max_question_chars = max_question_chars,
 		max_answer_chars = max_answer_chars,
 		max_context_chars = max_context_chars,
@@ -553,7 +529,6 @@ def run_experiment(
 		k_shots = args.k_shots,
 		k_per_label = args.k_per_label,
 		fewshot_strategy = args.fewshot_strategy,
-		label_order = args.label_order,
 		batch_size = args.batch_size,
 		generator_backend = args.generator_backend,
 		device_map = args.device_map,
@@ -590,7 +565,6 @@ def run_experiment(
 		k_shots = args.k_shots,
 		k_per_label = args.k_per_label,
 		fewshot_strategy = args.fewshot_strategy,
-		label_order = args.label_order,
 		max_question_chars = args.max_question_chars,
 		max_answer_chars = args.max_answer_chars,
 		max_context_chars = args.max_context_chars,
@@ -772,7 +746,6 @@ def run_final_submission(
 		k_shots = args.k_shots,
 		k_per_label = args.k_per_label,
 		fewshot_strategy = args.fewshot_strategy,
-		label_order = args.label_order,
 		batch_size = args.batch_size,
 		generator_backend = args.generator_backend,
 		device_map = args.device_map,
@@ -816,7 +789,6 @@ def run_final_submission(
 				"k_shots": args.k_shots,
 				"k_per_label": args.k_per_label,
 				"fewshot_strategy": args.fewshot_strategy,
-				"label_order": args.label_order,
 				"max_question_chars": args.max_question_chars,
 				"max_answer_chars": args.max_answer_chars,
 				"max_context_chars": args.max_context_chars,
@@ -926,7 +898,6 @@ def parse_args() -> argparse.Namespace:
 	prompt_group.add_argument("--k-shots", type = int, default = argparse.SUPPRESS)
 	prompt_group.add_argument("--k-per-label", type = int, default = argparse.SUPPRESS)
 	prompt_group.add_argument("--fewshot-strategy", default = argparse.SUPPRESS, choices = ["balanced", "random", "length_matched"])
-	prompt_group.add_argument("--label-order", default = argparse.SUPPRESS, choices = list(LABEL_ORDERS))
 	prompt_group.add_argument("--max-question-chars", type = int, default = argparse.SUPPRESS, help = "Truncate questions in prompts. Use 0 to disable truncation.")
 	prompt_group.add_argument("--max-answer-chars", type = int, default = argparse.SUPPRESS, help = "Truncate answers in prompts using a head/tail excerpt. Use 0 to disable truncation.")
 	prompt_group.add_argument("--max-context-chars", type = int, default = argparse.SUPPRESS, help = "Truncate auxiliary context fields. Use 0 to disable truncation.")
