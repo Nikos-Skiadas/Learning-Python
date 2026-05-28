@@ -3,6 +3,8 @@
   "model": "Qwen/Qwen3.5-4B",
   "strategy": "few-shot",
   "selection": "best",
+  "selection_metric": "f1_macro",
+  "selection_tie_breaker": "accuracy",
   "decoding": {
     "max_new_tokens": 48,
     "do_sample": false,

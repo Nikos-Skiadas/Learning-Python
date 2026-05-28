@@ -41,5 +41,7 @@
   "majority_accuracy": 0.3333333333333333,
   "accuracy_minus_majority": 0.13333333333333336,
   "valid_rate": 1.0,
-  "parse_single_mention": 30
+  "parse_single_mention": 30,
+  "selection_metric": "f1_macro",
+  "selection_tie_breaker": "accuracy"
 }

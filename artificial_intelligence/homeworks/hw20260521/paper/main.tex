@@ -1,0 +1,241 @@
+\documentclass[12pt]{fphw}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage[section]{placeins}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+\urlstyle{same}
+\setlength{\emergencystretch}{3em}
+
+\title{Deep Learning for NLP}
+\author{sdi2200160}
+\date{Spring Semester 2025-2026}
+\institute{National and Kapodistrian University of Athens \\ Department of Informatics and Telecommunications}
+\class{Artificial Intelligence II (YS19 M226 M262 M325 M405)}
+
+\newcommand{\CR}{Clear Reply}
+\newcommand{\AMB}{Ambivalent}
+\newcommand{\CNR}{Clear Non-Reply}
+
+\begin{document}
+\maketitle
+
+{
+  \hypersetup{linkcolor=black}
+  \tableofcontents
+}
+\newpage
+
+\section{Abstract}
+
+This report studies the third QEvasion response-clarity assignment, where the supervised classifier from the previous two homeworks is replaced by prompt-based prediction with Qwen-family language models. The task remains unchanged: given a political interview question and answer, predict \CR, \AMB, or \CNR. The new system evaluates zero-shot prompting, few-shot prompting, a chain-of-thought-style instruction, and a self-check instruction across 0.8B, 2B, and 4B Qwen models.
+
+The final notebook and script select the best prompting system by \textbf{validation macro F1}, with accuracy used only as a tie-breaker. This is intentional. Accuracy can reward systems that avoid the difficult middle class, while macro F1 exposes whether the model can detect \AMB. The best prompting run is \texttt{qwen-4b\_few-shot}, with 0.4667 accuracy and 0.4667 macro F1 on a balanced 30-example validation sample. The most important finding is negative: small prompted language models repeatedly fail to identify \AMB. The 2B few-shot run has the highest raw accuracy at 0.5000, but it predicts zero \AMB{} examples, so it is not selected by the macro-F1 rule. Compared with the earlier classical and fine-tuned transformer systems, prompting is operationally convenient but substantially weaker on the core semantic boundary of the task.
+
+\section{Task and Prior Homeworks}
+
+\subsection{Dataset}
+
+All three homeworks use the QEvasion dataset \cite{qevasion}. Each example contains a political interview question, the interviewee response, and a clarity label. The three target labels are:
+\begin{itemize}
+    \item \textbf{\CR}: the answer explicitly addresses the question;
+    \item \textbf{\AMB}: the answer partly addresses the question, shifts scope, hedges, or gives only a partial response;
+    \item \textbf{\CNR}: the answer clearly does not answer, asks for clarification, claims ignorance, or declines.
+\end{itemize}
+
+The label taxonomy exposed by the dataset was included in the prompt as minimal task context:
+\[
+\begin{aligned}
+\text{\CR} &\leftarrow \text{Explicit}, \\
+\text{\AMB} &\leftarrow \text{Implicit, Dodging, General, Deflection, Partial}, \\
+\text{\CNR} &\leftarrow \text{Declining, Ignorance, Clarification}.
+\end{aligned}
+\]
+This is not extra supervision beyond the dataset definition; it is the natural label specification for the prompting task.
+
+\subsection{Continuity With Homeworks 1 and 2}
+
+Homework 1 solved the task with classical machine-learning representations. The strongest system was TF--IDF plus Logistic Regression, with a reported test macro F1 of approximately 0.45 and accuracy around 0.63. Averaged GloVe representations performed worse, with macro F1 around 0.39 for Wiki/Gigaword vectors and 0.38 for Twitter vectors. The main lesson was that sparse lexical features preserve phrase-level cues that mean-pooled embeddings wash out.
+
+Homework 2 replaced the classical encoder with fine-tuned transformer sequence classifiers. BERT-base achieved 0.6299 accuracy and 0.5561 macro F1 on the official test split. DistilBERT reached 0.5779 accuracy and 0.5066 macro F1. DeBERTa-v3 produced high accuracy but only 0.2672 macro F1 because the run collapsed to predicting \AMB{} for every test instance. That failure already showed why macro F1 is the right metric for this assignment: a system can look acceptable by accuracy and still be useless for two of the classes.
+
+Homework 3 keeps the same prediction target but changes the learning regime completely. The Qwen models are not fine-tuned. They are used through generation, and the generated text is parsed back into one of the three classification labels.
+
+\section{Prompting System}
+
+\subsection{Prompt Variants}
+
+The final pipeline runs four prompt strategies:
+\begin{itemize}
+    \item \textbf{Zero-shot}: the model sees only the label list, the dataset taxonomy, the question, and the answer.
+    \item \textbf{Few-shot}: the model also sees one balanced example per class sampled from the training split.
+    \item \textbf{Chain-of-thought-style}: the model is encouraged to consider the responsiveness relation before giving a final label. The parser still uses only the final label.
+    \item \textbf{Self-check}: the model is asked to verify that its final label is one of the allowed labels.
+\end{itemize}
+
+All prompt variants strongly constrain the output format. The generated answer must contain exactly one final label from \CR, \AMB, and \CNR. This was added because early runs showed that unconstrained generations were too verbose and hard to parse reliably.
+
+\subsection{Parsing and Evaluation Framework}
+
+Prompting does not directly produce class IDs, so the toolset includes a parser that maps generations back to dataset labels. The parser normalizes casing, hyphenation, and simple aliases, then validates that the output contains exactly one recognized clarity label. Invalid generations are tracked explicitly rather than silently coerced.
+
+In the final run, output formatting was not the problem: every model/strategy combination had \texttt{valid\_rate = 1.0} and \texttt{invalid\_rate = 0.0}. The failures discussed below are therefore semantic failures, not parsing failures.
+
+\subsection{Execution Protocol}
+
+The final diagnostic run is stored under \texttt{runs\_hw3\_semifinal}. It uses:
+\begin{itemize}
+    \item Qwen3.5 0.8B, 2B, and 4B models \cite{qwen};
+    \item the four prompt strategies above;
+    \item deterministic decoding with temperature 0.0;
+    \item \texttt{max\_new\_tokens = 48};
+    \item a balanced validation sample with 10 examples per label;
+    \item macro F1 as the primary selection metric.
+\end{itemize}
+
+The balanced validation design is important. A 30-example sample is small, but it makes the failure mode visible: each class contributes exactly one third of the validation set, so a model cannot hide by following the natural class imbalance. Runtime is dominated by generation rather than training. The full validation grid requires $3 \times 4 \times 30 = 360$ generations, followed by one 308-example final submission pass for the selected system.
+
+The final Kaggle notebook is \href{https://www.kaggle.com/code/nikosskiadas/sdi2200160-homework-3-prompting}{\texttt{sdi2200160 homework-3-prompting}}. It writes the required file:
+\[
+\texttt{submission\_best\_prompting\_system.csv}.
+\]
+
+\section{Homework 3 Results}
+
+\subsection{Validation Grid}
+
+Table \ref{tab:hw3-grid} reports all final prompting runs. The table is sorted by macro F1, matching the notebook and script selection rule.
+
+\begin{table}[h]
+\centering
+\scriptsize
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{llrrrrrrr}
+\toprule
+Model & Prompt & Acc. & Macro F1 & Macro P & Macro R & Pred. CR & Pred. Amb. & Pred. CNR \\
+\midrule
+4B & few-shot & 0.4667 & 0.4667 & 0.4667 & 0.4667 & 10 & 10 & 10 \\
+4B & self-check & 0.4667 & 0.4626 & 0.4639 & 0.4667 & 12 & 8 & 10 \\
+4B & zero-shot & 0.4667 & 0.4626 & 0.5102 & 0.4667 & 9 & 16 & 5 \\
+0.8B & few-shot & 0.4667 & 0.4091 & 0.6860 & 0.4667 & 23 & 1 & 6 \\
+2B & few-shot & 0.5000 & 0.4044 & 0.4167 & 0.5000 & 24 & 0 & 6 \\
+4B & cot & 0.4333 & 0.4002 & 0.3872 & 0.4333 & 13 & 5 & 12 \\
+0.8B & self-check & 0.4333 & 0.3845 & 0.4841 & 0.4333 & 21 & 2 & 7 \\
+0.8B & cot & 0.4667 & 0.3779 & 0.3685 & 0.4667 & 23 & 0 & 7 \\
+2B & zero-shot & 0.4667 & 0.3683 & 0.4000 & 0.4667 & 25 & 0 & 5 \\
+2B & cot & 0.4333 & 0.3333 & 0.3833 & 0.4333 & 25 & 1 & 4 \\
+2B & self-check & 0.4333 & 0.3280 & 0.3782 & 0.4333 & 26 & 0 & 4 \\
+0.8B & zero-shot & 0.3667 & 0.2315 & 0.4483 & 0.3667 & 29 & 0 & 1 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Final HW3 validation runs on a balanced 30-example sample. CR = \CR; Amb. = \AMB; CNR = \CNR. Selection is by macro F1, with accuracy as tie-breaker.}
+\label{tab:hw3-grid}
+\end{table}
+
+The selected system is \texttt{qwen-4b\_few-shot}. It is not selected because it has the highest raw accuracy; it is selected because it is the best balanced classifier under macro F1. The contrast with \texttt{qwen-2b\_few-shot} is the key example: the 2B model reaches 0.5000 accuracy, but never predicts \AMB. That is exactly the kind of run the selection rule must reject.
+
+\subsection{Prompt and Model Trends}
+
+Few-shot prompting is the most reliable prompt family in this run. Averaged across model sizes, it gives the highest mean accuracy and mean macro F1. Self-check does not help; for the smaller models it mostly reinforces overconfident majority-like predictions. Chain-of-thought-style prompting is also not a clear win. The best chain-of-thought run, 4B CoT, is below the 4B zero-shot, self-check, and few-shot runs.
+
+Model size matters mainly for \AMB. The 0.8B and 2B systems often collapse toward \CR, with a small number of \CNR{} predictions. The 4B model is the first one that consistently uses all three labels. Even then, its performance is weak: the best 4B run finds only 4 of the 10 \AMB{} validation examples.
+
+\subsection{Ambivalent Failure}
+
+Table \ref{tab:confusions} compares the selected 4B few-shot system against the accuracy-best 2B few-shot system.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llrrr}
+\toprule
+System & True label & Pred. CR & Pred. Amb. & Pred. CNR \\
+\midrule
+4B few-shot & \CR & 5 & 3 & 2 \\
+4B few-shot & \AMB & 3 & 4 & 3 \\
+4B few-shot & \CNR & 2 & 3 & 5 \\
+\midrule
+2B few-shot & \CR & 10 & 0 & 0 \\
+2B few-shot & \AMB & 9 & 0 & 1 \\
+2B few-shot & \CNR & 5 & 0 & 5 \\
+\bottomrule
+\end{tabular}
+\caption{Confusion matrices for the macro-F1-selected system and the raw-accuracy-best system. The 2B model wins accuracy by turning the task into an almost binary decision and eliminating \AMB.}
+\label{tab:confusions}
+\end{table}
+
+The inability to detect \AMB{} is the central result of the prompting experiments. It is not a small fluctuation. In the final grid, six of the twelve systems predict zero or one \AMB{} example out of thirty. The 2B model predicts zero \AMB{} in three of its four prompt variants. The 0.8B model predicts zero \AMB{} in two variants and only one in the few-shot variant. These systems are not merely underperforming; they frequently fail to represent the middle class as a real decision option.
+
+This is especially damaging because \AMB{} is the conceptual heart of the dataset. A clear reply and a clear non-reply can often be recognized from local cues. \AMB{} requires comparing the question against the response and deciding whether the response is partial, evasive, or only indirectly relevant. Small instruction-following LMs appear to default to surface adequacy: if the answer is topical and fluent, they tend to call it \CR; if it is visibly evasive, they may call it \CNR. The in-between category is where they collapse.
+
+\section{Comparison Across Homeworks}
+
+\begin{table}[h]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrrl}
+\toprule
+Homework & System & Evaluation & Acc. & Macro F1 & Ambivalent behavior \\
+\midrule
+HW1 & TF--IDF + Logistic Regression & official test & $\sim$0.63 & $\sim$0.45 & hardest class, but learned useful lexical cues \\
+HW1 & GloVe Wiki + Logistic Regression & official test & -- & $\sim$0.39 & mean pooling lost phrase-level evidence \\
+HW1 & GloVe Twitter + Logistic Regression & official test & -- & $\sim$0.38 & similar weakness to Wiki embeddings \\
+HW2 & BERT-base fine-tuning & official test & 0.6299 & 0.5561 & \AMB{} F1 = 0.7216 \\
+HW2 & DistilBERT fine-tuning & official test & 0.5779 & 0.5066 & \AMB{} F1 = 0.6703 \\
+HW2 & DeBERTa-v3 fine-tuning & official test & 0.6688 & 0.2672 & collapsed to all \AMB{} predictions \\
+HW3 & Qwen 4B few-shot prompting & balanced validation & 0.4667 & 0.4667 & \AMB{} F1 = 0.4000 \\
+HW3 & Qwen 2B few-shot prompting & balanced validation & 0.5000 & 0.4044 & \AMB{} F1 = 0.0000 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Cross-homework comparison. HW3 is evaluated on a balanced validation sample, so its numbers are diagnostic rather than directly test-comparable. The qualitative comparison is still clear: prompt-only Qwen systems struggle most with \AMB.}
+\label{tab:cross-homework}
+\end{table}
+
+The comparison yields three conclusions.
+
+First, discriminative training matters. The best BERT model from Homework 2 is the strongest overall system among the completed assignments, with 0.5561 macro F1 on the official test split. It is not merely better on average; it is much better on \AMB, where its class F1 is 0.7216. DistilBERT also outperforms the prompt-only systems while using a smaller encoder.
+
+Second, classical TF--IDF remains surprisingly competitive. Its reported macro F1 of about 0.45 is close to the best HW3 prompt result, despite using a much simpler representation. This is not embarrassing for TF--IDF; it is a reminder that the task contains many lexical and phrase-level cues, and that a trained linear classifier can exploit them consistently.
+
+Third, accuracy is unsafe for this task. DeBERTa-v3 in HW2 and Qwen 2B few-shot in HW3 fail in opposite directions. DeBERTa-v3 predicts only \AMB; Qwen 2B few-shot predicts no \AMB. Both can obtain superficially nontrivial accuracy, but both are invalid as balanced three-class systems. Macro F1 catches both failures.
+
+\section{Final Submission System}
+
+The final notebook now implements the same policy used in this report:
+\[
+\text{select by macro F1, break ties by accuracy.}
+\]
+Under this rule, the selected system is \texttt{qwen-4b\_few-shot}. It is rerun on the full official test split, and the resulting predictions are written to:
+\[
+\texttt{submission\_best\_prompting\_system.csv}.
+\]
+
+The selected system is the best available prompting system because it is the only top-performing run that both uses all three labels evenly and maximizes macro F1. The raw-accuracy-best 2B system is deliberately not selected because it has zero \AMB{} recall on validation.
+
+\section{Conclusion}
+
+The third homework shows the limits of prompt-only classification for this dataset. The pipeline itself works: prompts are generated, Qwen models are run, outputs are parsed cleanly, all metrics and artifacts are saved, and the final Kaggle submission file is produced with the required name. The failure is not engineering; the failure is classification behavior.
+
+The strongest result is that \AMB{} remains poorly modeled by small and medium Qwen prompting systems. The 4B model partially recovers the class, but only enough to reach 0.4667 macro F1 on the balanced validation sample. Smaller models often erase the class entirely. This is worse than the fine-tuned BERT and DistilBERT systems from Homework 2, and only roughly comparable to the classical TF--IDF baseline from Homework 1. For QEvasion, in-context prompting is convenient and analyzable, but discriminative training is still the more reliable tool.
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}

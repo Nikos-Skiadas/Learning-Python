@@ -99,6 +99,8 @@ PROMPT_CONFIGS: dict[str, PromptConfig] = {
 
 
 SYSTEM_MESSAGE = "You are a careful annotator for political interview response clarity."
+SELECTION_METRIC = "f1_macro"
+SELECTION_TIE_BREAKER = "accuracy"
 
 BASE_OPTIONS: dict[str, typing.Any] = {
 	"models": list(MODELS),
@@ -720,6 +722,8 @@ def write_global_artifacts(
 
 	if not results.empty:
 		best = json_ready(results.iloc[0].to_dict())
+		best["selection_metric"] = SELECTION_METRIC
+		best["selection_tie_breaker"] = SELECTION_TIE_BREAKER
 		best_path = output_dir / "best_validation_system.json"
 		best_path.write_text(json.dumps(best, indent = 2), encoding = "utf-8")
 		files["best_validation_system"] = str(best_path)
@@ -785,6 +789,8 @@ def run_final_submission(
 				"model": model_name,
 				"strategy": final_strategy,
 				"selection": args.submission_source,
+				"selection_metric": SELECTION_METRIC,
+				"selection_tie_breaker": SELECTION_TIE_BREAKER,
 				"decoding": decoding.asdict(),
 				"k_shots": args.k_shots,
 				"k_per_label": args.k_per_label,
@@ -992,7 +998,7 @@ def main() -> None:
 	results = summarize_experiments(rows)
 	if not results.empty:
 		results = results.sort_values(
-			by = ["f1_macro", "accuracy"],
+			by = [SELECTION_METRIC, SELECTION_TIE_BREAKER],
 			ascending = [False, False],
 		).reset_index(drop = True)
 	files.update(write_global_artifacts(results, run_frames, output_dir, skip_plots = not args.plots))
