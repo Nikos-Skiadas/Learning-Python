@@ -1,4 +1,5 @@
-,Clear Reply,Ambivalent,Clear Non-Reply
-Clear Reply,7,0,2
-Ambivalent,12,0,6
-Clear Non-Reply,1,0,2
+,Clear Reply,Ambivalent,Clear Non-Reply,__invalid__
+Clear Reply,7,0,1,1
+Ambivalent,14,0,4,0
+Clear Non-Reply,1,1,1,0
+__invalid__,0,0,0,0
