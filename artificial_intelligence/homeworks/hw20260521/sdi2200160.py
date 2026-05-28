@@ -60,27 +60,40 @@ MODELS: dict[str, str] = {
 	"qwen-4b": "Qwen/Qwen3.5-4B",
 }
 
+BASELINE_TASK_DESCRIPTION = "Classify the interview answer's responsiveness to the question."
+
+BASELINE_PROMPT_OPTIONS: dict[str, typing.Any] = {
+	"task_description": BASELINE_TASK_DESCRIPTION,
+	"include_label_definitions": False,
+	"include_decision_rules": False,
+	"include_evasion_taxonomy": True,
+	"evasion_taxonomy_style": "bare",
+	"include_example_evasion": False,
+	"use_json": False,
+}
+
+
 PROMPT_CONFIGS: dict[str, PromptConfig] = {
 	"zero-shot": PromptConfig(
 		name = "zero-shot",
 		reasoning = "none",
-		use_json = False,
+		**BASELINE_PROMPT_OPTIONS,
 	),
 	"few-shot": PromptConfig(
 		name = "few-shot",
 		reasoning = "none",
-		use_json = False,
+		**BASELINE_PROMPT_OPTIONS,
 	),
 	"cot": PromptConfig(
 		name = "cot",
 		reasoning = "step_by_step",
-		use_json = False,
+		**BASELINE_PROMPT_OPTIONS,
 		include_example_rationales = False,
 	),
 	"self-check": PromptConfig(
 		name = "self-check",
 		reasoning = "self_check",
-		use_json = False,
+		**BASELINE_PROMPT_OPTIONS,
 	),
 }
 
@@ -105,8 +118,8 @@ BASE_OPTIONS: dict[str, typing.Any] = {
 	"k_shots": 3,
 	"k_per_label": 1,
 	"fewshot_strategy": "balanced",
-	"max_question_chars": 500,
-	"max_answer_chars": 2400,
+	"max_question_chars": 300,
+	"max_answer_chars": 900,
 	"max_context_chars": 500,
 	"max_new_tokens": 48,
 	"do_sample": False,

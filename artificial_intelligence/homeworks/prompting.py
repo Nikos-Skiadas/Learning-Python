@@ -173,6 +173,7 @@ class PromptConfig:
 	context_keys: tuple[str, ...] = ()
 	reasoning: typing.Literal["none", "concise", "step_by_step", "self_check"] = "none"
 	use_json: bool = True
+	evasion_taxonomy_style: typing.Literal["descriptive", "bare"] = "descriptive"
 	include_example_evasion: bool = True
 	include_example_rationales: bool = False
 	max_question_chars: int | None = None
@@ -360,6 +361,15 @@ class PromptBuilder:
 		])
 
 	def _evasion_taxonomy_block(self) -> str:
+		if self.config.evasion_taxonomy_style == "bare":
+			lines = ["Label taxonomy:"]
+			for label in self.label_names:
+				subtypes = [spec.name for spec in self.evasion_specs if spec.clarity_label == label]
+				if subtypes:
+					lines.append(f"- {label}: {', '.join(subtypes)}")
+
+			return "\n".join(lines)
+
 		lines = [
 			"Fine-grained evasion taxonomy:",
 			"- First judge whether the answer resembles one of these response/evasion subtypes, then map it to the parent clarity label.",
