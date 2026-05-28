@@ -1,0 +1,63 @@
+Classify how clearly the interview answer responds to the question.
+
+Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
+
+Label definitions:
+- Clear Reply: The answer explicitly, directly, and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, implicit, vague, hedged, mixed, conditional, deflective, or mostly topic-adjacent rather than explicitly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered explicitly, directly, and specifically.
+- Before choosing Clear Reply, rule out the Ambivalent subtypes; if the answer is implicit, partial, generic, deflective, or dodging, choose Ambivalent.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
+
+Fine-grained evasion taxonomy:
+- First judge whether the answer resembles one of these response/evasion subtypes, then map it to the parent clarity label.
+- Output only the parent clarity label, not the subtype.
+- Clear Reply:
+  - Explicit: Directly and explicitly answers the question.
+- Ambivalent:
+  - Deflection: Shifts emphasis toward another issue while keeping some connection to the question.
+  - Dodging: Moves around the question while still touching related material.
+  - General: Responds with broad or generic statements instead of the requested specific answer.
+  - Implicit: Gives an implied or indirect answer, but not a fully explicit one.
+  - Partial/half-answer: Answers only part of the question or gives a half-answer that leaves the requested point unresolved.
+- Clear Non-Reply:
+  - Claims ignorance: States lack of knowledge or inability to answer.
+  - Clarification: Asks for clarification or challenges the question instead of answering it.
+  - Declining to answer: Openly refuses or declines to answer.
+
+Examples:
+Example 1:
+Question: Is ASEAN ready for the more advanced role in world affairs the U.S. would like to see it play?
+Answer: I have not--I've been out of town, so I'm just seeing the press reports. I have not had a full briefing on Israel's intentions and what they've communicated to our administration. But this kind of activity is never helpful when it comes to peace negotiations. And I'm concerned that we're not seeing each side make the extra effort involved to get a breakthrough that could finally create a framework for a secure Israel living side and side--side by side in peace with a sovereign Palestine.We're going to keep on working on it, though, because it is in the world's interest, it is in the interest of the people of Israel, and it is in the interest of the Palestinian people to achieve that settlement, to achieve that agreement. But each of these incremental steps can end up breaking down trust between the parties.Even though it wasn't directed to me, I do want to just chime in briefly on the issue of China. We want China to succeed and prosper. It's good for the United States if China continues on the path of development that it's on.That means that, first of all, just from a humanitarian point of view, lifting millions of people out of poverty is a good thing. It is also a huge expand ... orm of dynamic equilibrium in Asia-Pacific, in East and Southeast Asia. And the formation of such regional cooperation such that is East Asia summit, where there are 10 countries from ASEAN and there is also China, Republic of Korea, Japan, India, Australia, New Zealand, and now Russia and the United States, therefore, I have faith that it will be more effective to ensure peace, stability, and order in this region.And in this regard, with such a condition, such cooperation in the area of economic will go effectively, and it is Indonesia's hope that China and the U.S. relations will continue to flow well because if something happens between those two states, it will have severe impacts to not only countries in the region, in Asia, but also to the world.For that reason, I hope that the economic relations between the U.S. and China will continue to proceed well, despite the geopolitical developments. We also hope to contribute to creating a region in East Asia, in Southeast Asia, and especially in Asia-Pacific, to become a region that is stable and productive.That is my views in general on the regional architecture issues and the future cooperation in our region.Thank you very much.
+Label: Clear Reply
+Evasion subtype: Explicit
+
+Example 2:
+Question: Possibility of court battle over actions on immigration extending late into the term, what can be done for the people affected by the program and now in limbo, and the view on the possibility of ending the term without accomplishing goals on immigration.
+Answer: On Ukraine and Russia and Minsk, there is strong consensus that we need to keep pushing Russia to abide by the terms of the Minsk agreement; we need to continue to support and encourage Ukraine to meet its obligations under Minsk; that until that's completed, sanctions remain in place.There was discussion about additional steps that we might need to take if Russia, working through separatists, doubled down on aggression inside of Ukraine. We—those discussions are taking place at a technical level, not yet at a political level, because I think the first goal here going into a European Council meeting that's coming up is just rolling over the existing sanctions. But I think at a technical level, we want to be prepared.Our hope is, is that we don't have to take additional steps because the Minsk agreement is met. And I want to give enormous credit to Chancellor Merkel, along with President Hollande, who have shown extraordinary stick-to-itiveness and patience in trying to get that done.Ultimately, this is going to be an issue for Mr. Putin. He's got to make a decision: Does he continue to wreck his country's economy and continue Russia's isolation in pursuit of a wrongheaded desire ... e got to go through the process to challenge it. And until we get clarity there, I don't want to bring people in, have them apply and jump through a lot of hoops, only to have it deferred and delayed further.Of course, there's one really great way to solve this problem, and that would be Congress going ahead and acting, which would obviate the need for executive actions. The majority of the American people, I think, still want to see that happen. I suspect it will be a major topic of the next Presidential campaign.And so we will continue to push as hard as we can on all fronts to fix a broken immigration system. Administratively, we'll be prepared if and when we get the kind of ruling that I think we should have gotten in the first place about our authorities to go ahead and implement. But ultimately, this has never fully replaced the need for Congress to act. And my hope is, is that after a number of the other issues that we're working on currently get cleared, that there—some quiet conversations start up—back up again, particularly in the Republican Party, about the shortsighted approach that they're taking when it comes to immigration.Okay. Christi Parsons [Los Angeles Times].
+Label: Ambivalent
+Evasion subtype: General
+
+Example 3:
+Question: Reconciliation of commuting Manning's sentence with WikiLeaks' connection to Russia's hacking in the last year's election:
+Answer: Well, first of all, let's be clear: Chelsea Manning has served a tough prison sentence. So the notion that the average person who was thinking about disclosing vital, classified information would think that it goes unpunished I don't think would get that impression from the sentence that Chelsea Manning has served.It has been my view that given she went to trial, that due process was carried out, that she took responsibility for her crime, that the sentence that she received was very disproportional—disproportionate relative to what other leakers had received, and that she had served a significant amount of time, that it made it sense to commute and not pardon her sentence.And I feel very comfortable that justice has been served and that a message has still been sent that when it comes to our national security, that wherever possible, we need folks who may have legitimate concerns about the actions of Government or their superiors or the agencies in which they work, that they try to work through the established channels and avail themselves of the whistleblower protections that had been put in place.I recognize that there's some folks who think they're not enough, and I think al ... hat may come up with him.What I can say broadly is that, in this new cyber age, we're going to have to make sure that we continually work to find the right balance of accountability and openness and transparency that is the hallmark of our democracy, but also recognize that there are adversaries and bad actors out there who want to use that same openness in ways that hurt us, whether that's in trying to commit financial crimes or trying to commit acts of terrorism or folks who want to interfere with our elections.And we're going to have to continually build the kind of architecture that makes sure our—the best of our democracy is preserved; that our national security and intelligence agencies have the ability to carry out policy without advertising to our adversaries what it is that we're doing, but do so in a way that still keeps citizens up to speed on what their Government is doing on their behalf.But with respect to Chelsea Manning, I looked at the particulars of this case the same way I have for the other commutations and pardons that I've done, and I felt that in light of all the circumstances that commuting her sentence was entirely appropriate.Margaret Brennan [CBS News].
+Label: Clear Non-Reply
+Evasion subtype: Claims ignorance
+
+Instance to classify:
+Question: Request for clarity on the thinking about the Attorney General after the midterms.
+Answer: I'd rather answer that at a little bit different time. We're looking at a lot of different things, including Cabinet. I'm very happy with most of my Cabinet. We're looking at different people for different positions. You know, it's very common after the midterms. I didn't want to do anything before the midterms.But I will tell you that, for the most part, I'm extremely happy with my Cabinet. I think Mike Pompeo has fit in so beautifully. He's done an incredible job as——
+
+Decide the label from the answer's responsiveness to the question. Do not output explanations.
+
+Output constraints:
+- Your entire response must be exactly one of these labels: Clear Reply | Ambivalent | Clear Non-Reply.
+- Do not output JSON.
+- Do not output explanations, markdown, punctuation, or any extra text.

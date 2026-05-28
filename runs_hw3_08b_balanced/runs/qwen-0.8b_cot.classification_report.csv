@@ -1,0 +1,7 @@
+,precision,recall,f1-score,support
+Clear Reply,0.4,0.6,0.48,10.0
+Ambivalent,0.0,0.0,0.0,10.0
+Clear Non-Reply,0.4,0.6,0.48,10.0
+accuracy,0.4,0.4,0.4,0.4
+macro avg,0.26666666666666666,0.39999999999999997,0.32,30.0
+weighted avg,0.26666666666666666,0.4,0.32,30.0

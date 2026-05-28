@@ -1,0 +1,44 @@
+Classify how clearly the interview answer responds to the question.
+
+Use exactly one of these labels: Clear Reply, Ambivalent, Clear Non-Reply.
+
+Label definitions:
+- Clear Reply: The answer explicitly, directly, and specifically addresses the main question, even if it includes extra context.
+- Ambivalent: The answer is partly responsive but incomplete, implicit, vague, hedged, mixed, conditional, deflective, or mostly topic-adjacent rather than explicitly answering.
+- Clear Non-Reply: The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.
+
+Decision rules:
+- Judge the answer relative to the exact question, not by general topical relevance.
+- Choose Clear Reply only when the main question is answered explicitly, directly, and specifically.
+- Before choosing Clear Reply, rule out the Ambivalent subtypes; if the answer is implicit, partial, generic, deflective, or dodging, choose Ambivalent.
+- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.
+- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.
+- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.
+- Do not reward length: a long answer can still be Ambivalent or Clear Non-Reply.
+
+Fine-grained evasion taxonomy:
+- First judge whether the answer resembles one of these response/evasion subtypes, then map it to the parent clarity label.
+- Output only the parent clarity label, not the subtype.
+- Clear Reply:
+  - Explicit: Directly and explicitly answers the question.
+- Ambivalent:
+  - Deflection: Shifts emphasis toward another issue while keeping some connection to the question.
+  - Dodging: Moves around the question while still touching related material.
+  - General: Responds with broad or generic statements instead of the requested specific answer.
+  - Implicit: Gives an implied or indirect answer, but not a fully explicit one.
+  - Partial/half-answer: Answers only part of the question or gives a half-answer that leaves the requested point unresolved.
+- Clear Non-Reply:
+  - Claims ignorance: States lack of knowledge or inability to answer.
+  - Clarification: Asks for clarification or challenges the question instead of answering it.
+  - Declining to answer: Openly refuses or declines to answer.
+
+Instance to classify:
+Question: Request for clarity on the thinking about the Attorney General after the midterms.
+Answer: I'd rather answer that at a little bit different time. We're looking at a lot of different things, including Cabinet. I'm very happy with most of my Cabinet. We're looking at different people for different positions. You know, it's very common after the midterms. I didn't want to do anything before the midterms.But I will tell you that, for the most part, I'm extremely happy with my Cabinet. I think Mike Pompeo has fit in so beautifully. He's done an incredible job as——
+
+Decide the label from the answer's responsiveness to the question. Do not output explanations.
+
+Output constraints:
+- Your entire response must be exactly one of these labels: Clear Reply | Ambivalent | Clear Non-Reply.
+- Do not output JSON.
+- Do not output explanations, markdown, punctuation, or any extra text.
