@@ -5,6 +5,7 @@ from __future__ import annotations
 
 
 import argparse
+import dataclasses
 import datetime
 import itertools
 import json
@@ -62,23 +63,23 @@ PROMPT_CONFIGS: dict[str, PromptConfig] = {
 	"zero-shot": PromptConfig(
 		name = "zero-shot",
 		reasoning = "none",
-		use_json = True,
+		use_json = False,
 	),
 	"few-shot": PromptConfig(
 		name = "few-shot",
 		reasoning = "none",
-		use_json = True,
+		use_json = False,
 	),
 	"cot": PromptConfig(
 		name = "cot",
 		reasoning = "step_by_step",
-		use_json = True,
+		use_json = False,
 		include_example_rationales = False,
 	),
 	"self-check": PromptConfig(
 		name = "self-check",
 		reasoning = "self_check",
-		use_json = True,
+		use_json = False,
 	),
 }
 
@@ -102,6 +103,9 @@ BASE_OPTIONS: dict[str, typing.Any] = {
 	"k_shots": 3,
 	"k_per_label": 1,
 	"fewshot_strategy": "balanced",
+	"max_question_chars": 500,
+	"max_answer_chars": 2400,
+	"max_context_chars": 500,
 	"max_new_tokens": 48,
 	"do_sample": False,
 	"temperature": 0.0,
@@ -110,6 +114,7 @@ BASE_OPTIONS: dict[str, typing.Any] = {
 	"generator_backend": "auto",
 	"device_map": "auto",
 	"torch_dtype": "auto",
+	"enable_thinking": False,
 	"system_message": SYSTEM_MESSAGE,
 	"use_chat_template": True,
 	"save_prompts": True,
@@ -277,6 +282,9 @@ def preview_prompts(
 			k_shots = args.k_shots,
 			k_per_label = args.k_per_label,
 			fewshot_strategy = args.fewshot_strategy,
+			max_question_chars = args.max_question_chars,
+			max_answer_chars = args.max_answer_chars,
+			max_context_chars = args.max_context_chars,
 			evasion_specs = evasion_specs,
 		)
 		encoder.fit(train, train["clarity_label"])
@@ -324,15 +332,30 @@ def decoding_from_args(args: argparse.Namespace, /) -> DecodingConfig:
 	)
 
 
+def _none_if_non_positive(value: int | None, /) -> int | None:
+	if value is None or value <= 0:
+		return None
+
+	return value
+
+
 def make_prompt_encoder(
 	strategy: str,
 	k_shots: int = 0,
 	k_per_label: int | None = 1,
 	fewshot_strategy: typing.Literal["balanced", "random", "length_matched"] = "balanced",
+	max_question_chars: int | None = None,
+	max_answer_chars: int | None = None,
+	max_context_chars: int | None = None,
 	evasion_specs: tuple[EvasionSpec, ...] | None = None,
 ) -> PromptEncoder:
 	"""Build the prompt encoder for one prompting strategy."""
-	config = PROMPT_CONFIGS[strategy]
+	config = dataclasses.replace(
+		PROMPT_CONFIGS[strategy],
+		max_question_chars = _none_if_non_positive(max_question_chars),
+		max_answer_chars = _none_if_non_positive(max_answer_chars),
+		max_context_chars = _none_if_non_positive(max_context_chars),
+	)
 	sampler = None
 	if strategy in {"few-shot", "cot", "self-check"} and k_shots:
 		sampler = FewShotSampler(
@@ -366,6 +389,10 @@ def make_classifier(
 	device_map: str,
 	torch_dtype: str,
 	use_chat_template: bool,
+	enable_thinking: bool | None,
+	max_question_chars: int | None,
+	max_answer_chars: int | None,
+	max_context_chars: int | None,
 	system_message: str,
 	evasion_specs: tuple[EvasionSpec, ...],
 	smoke_test: bool = False,
@@ -375,6 +402,9 @@ def make_classifier(
 		k_shots = k_shots,
 		k_per_label = k_per_label,
 		fewshot_strategy = fewshot_strategy,
+		max_question_chars = max_question_chars,
+		max_answer_chars = max_answer_chars,
+		max_context_chars = max_context_chars,
 		evasion_specs = evasion_specs,
 	)
 	generator = (
@@ -389,6 +419,7 @@ def make_classifier(
 			use_chat_template = use_chat_template,
 			backend = generator_backend,
 			system_message = system_message,
+			enable_thinking = enable_thinking,
 		)
 	)
 
@@ -422,6 +453,10 @@ def run_experiment(
 		device_map = args.device_map,
 		torch_dtype = args.torch_dtype,
 		use_chat_template = args.use_chat_template,
+		enable_thinking = args.enable_thinking,
+		max_question_chars = args.max_question_chars,
+		max_answer_chars = args.max_answer_chars,
+		max_context_chars = args.max_context_chars,
 		system_message = args.system_message,
 		evasion_specs = evasion_specs,
 		smoke_test = args.smoke_test,
@@ -448,8 +483,18 @@ def run_experiment(
 		k_shots = args.k_shots,
 		k_per_label = args.k_per_label,
 		fewshot_strategy = args.fewshot_strategy,
+		max_question_chars = args.max_question_chars,
+		max_answer_chars = args.max_answer_chars,
+		max_context_chars = args.max_context_chars,
+		enable_thinking = args.enable_thinking,
 		generator_backend = args.generator_backend,
 	)
+	if "prompt" in joined:
+		prompt_chars = joined["prompt"].fillna("").astype(str).str.len()
+		row.update({
+			"prompt_chars_mean": float(prompt_chars.mean()),
+			"prompt_chars_max": int(prompt_chars.max()),
+		})
 
 	return row, joined
 
@@ -623,6 +668,10 @@ def run_final_submission(
 		device_map = args.device_map,
 		torch_dtype = args.torch_dtype,
 		use_chat_template = args.use_chat_template,
+		enable_thinking = args.enable_thinking,
+		max_question_chars = args.max_question_chars,
+		max_answer_chars = args.max_answer_chars,
+		max_context_chars = args.max_context_chars,
 		system_message = args.system_message,
 		evasion_specs = evasion_specs,
 		smoke_test = args.smoke_test,
@@ -657,6 +706,10 @@ def run_final_submission(
 				"k_shots": args.k_shots,
 				"k_per_label": args.k_per_label,
 				"fewshot_strategy": args.fewshot_strategy,
+				"max_question_chars": args.max_question_chars,
+				"max_answer_chars": args.max_answer_chars,
+				"max_context_chars": args.max_context_chars,
+				"enable_thinking": args.enable_thinking,
 				"generator_backend": args.generator_backend,
 				"preset": args.preset,
 			}),
@@ -760,6 +813,9 @@ def parse_args() -> argparse.Namespace:
 	prompt_group.add_argument("--k-shots", type = int, default = argparse.SUPPRESS)
 	prompt_group.add_argument("--k-per-label", type = int, default = argparse.SUPPRESS)
 	prompt_group.add_argument("--fewshot-strategy", default = argparse.SUPPRESS, choices = ["balanced", "random", "length_matched"])
+	prompt_group.add_argument("--max-question-chars", type = int, default = argparse.SUPPRESS, help = "Truncate questions in prompts. Use 0 to disable truncation.")
+	prompt_group.add_argument("--max-answer-chars", type = int, default = argparse.SUPPRESS, help = "Truncate answers in prompts using a head/tail excerpt. Use 0 to disable truncation.")
+	prompt_group.add_argument("--max-context-chars", type = int, default = argparse.SUPPRESS, help = "Truncate auxiliary context fields. Use 0 to disable truncation.")
 	prompt_group.add_argument("--max-new-tokens", type = int, default = argparse.SUPPRESS)
 	prompt_group.add_argument("--do-sample", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS)
 	prompt_group.add_argument("--temperature", type = float, default = argparse.SUPPRESS)
@@ -772,6 +828,7 @@ def parse_args() -> argparse.Namespace:
 	runtime.add_argument("--generator-backend", default = argparse.SUPPRESS, choices = ["auto", "causal-lm", "image-text-to-text"])
 	runtime.add_argument("--device-map", default = argparse.SUPPRESS)
 	runtime.add_argument("--torch-dtype", default = argparse.SUPPRESS)
+	runtime.add_argument("--thinking", dest = "enable_thinking", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS, help = "Enable Qwen thinking-mode chat templates when supported.")
 	runtime.add_argument("--chat-template", dest = "use_chat_template", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS)
 	runtime.add_argument("--save-prompts", dest = "save_prompts", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS)
 	runtime.add_argument("--plots", dest = "plots", action = argparse.BooleanOptionalAction, default = argparse.SUPPRESS)

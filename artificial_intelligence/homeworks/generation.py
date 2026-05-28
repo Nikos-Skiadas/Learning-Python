@@ -81,6 +81,7 @@ class HuggingFaceGenerator:
 		trust_remote_code: bool = True,
 		use_chat_template: bool = True,
 		system_message: str | None = None,
+		enable_thinking: bool | None = False,
 		backend: typing.Literal["auto", "causal-lm", "image-text-to-text"] = "auto",
 	) -> None:
 		self.model_name = model_name
@@ -91,6 +92,7 @@ class HuggingFaceGenerator:
 		self.trust_remote_code = trust_remote_code
 		self.use_chat_template = use_chat_template
 		self.system_message = system_message
+		self.enable_thinking = enable_thinking
 		self.backend = backend
 		self._tokenizer = None
 		self._processor = None
@@ -162,7 +164,8 @@ class HuggingFaceGenerator:
 				for prompt in prompts[start:start + self.batch_size]
 			]
 			batch_text = [
-				self._processor.apply_chat_template(
+				self._apply_chat_template(
+					self._processor,
 					messages,
 					tokenize = False,
 					add_generation_prompt = True,
@@ -253,11 +256,33 @@ class HuggingFaceGenerator:
 
 		messages = self._messages(prompt, structured_content = False)
 
-		return tokenizer.apply_chat_template(
+		return self._apply_chat_template(
+			tokenizer,
 			messages,
 			tokenize = False,
 			add_generation_prompt = True,
 		)
+
+	def _apply_chat_template(
+		self,
+		template_owner: typing.Any,
+		messages: list[dict[str, typing.Any]],
+		/,
+		**kwargs: typing.Any,
+	) -> typing.Any:
+		if self.enable_thinking is not None:
+			kwargs["enable_thinking"] = self.enable_thinking
+
+		try:
+			return template_owner.apply_chat_template(messages, **kwargs)
+		except TypeError as error:
+			if "enable_thinking" not in kwargs:
+				raise
+			if "enable_thinking" not in str(error) and "unexpected keyword" not in str(error):
+				raise
+
+			kwargs.pop("enable_thinking")
+			return template_owner.apply_chat_template(messages, **kwargs)
 
 	def _messages(self, prompt: str, /, structured_content: bool) -> list[dict[str, typing.Any]]:
 		messages: list[dict[str, typing.Any]] = []

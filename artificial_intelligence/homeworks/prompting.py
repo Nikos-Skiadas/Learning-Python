@@ -41,18 +41,18 @@ class EvasionSpec:
 DEFAULT_LABEL_SPECS: tuple[LabelSpec, ...] = (
 	LabelSpec(
 		name = "Clear Reply",
-		description = "The answer directly and specifically addresses the main question, even if it includes extra context.",
-		aliases = ("direct reply", "clear answer", "direct answer"),
+		description = "The answer explicitly, directly, and specifically addresses the main question, even if it includes extra context.",
+		aliases = ("direct reply", "clear answer", "direct answer", "explicit reply", "explicit answer", "explicit"),
 	),
 	LabelSpec(
 		name = "Ambivalent",
-		description = "The answer is partly responsive but incomplete, vague, hedged, mixed, conditional, or mostly topic-adjacent rather than directly answering.",
-		aliases = ("ambiguous", "partial reply", "unclear"),
+		description = "The answer is partly responsive but incomplete, implicit, vague, hedged, mixed, conditional, deflective, or mostly topic-adjacent rather than explicitly answering.",
+		aliases = ("ambivalent reply", "ambiguous", "partial reply", "unclear", "implicit", "dodging", "general", "deflection", "partial", "partial half answer", "half answer"),
 	),
 	LabelSpec(
 		name = "Clear Non-Reply",
 		description = "The answer clearly avoids, redirects, refuses, or otherwise provides no substantive answer to the main question.",
-		aliases = ("clear not reply", "non-reply", "non reply", "not reply", "evasion"),
+		aliases = ("clear not reply", "non-reply", "non reply", "not reply", "evasion", "declining", "declining to answer", "ignorance", "claims ignorance", "clarification"),
 	),
 )
 
@@ -64,8 +64,11 @@ EVASION_DESCRIPTIONS: dict[str, str] = {
 	"General": "Responds with broad or generic statements instead of the requested specific answer.",
 	"Deflection": "Shifts emphasis toward another issue while keeping some connection to the question.",
 	"Partial": "Answers only part of a multi-part or specific question.",
+	"Partial/half-answer": "Answers only part of the question or gives a half-answer that leaves the requested point unresolved.",
 	"Declining": "Openly refuses or declines to answer.",
+	"Declining to answer": "Openly refuses or declines to answer.",
 	"Ignorance": "States lack of knowledge or inability to answer.",
+	"Claims ignorance": "States lack of knowledge or inability to answer.",
 	"Clarification": "Asks for clarification or challenges the question instead of answering it.",
 }
 
@@ -252,7 +255,15 @@ def truncate_text(text: str, max_chars: int | None, /) -> str:
 	if max_chars <= 3:
 		return text[:max_chars]
 
-	return text[:max_chars - 3].rstrip() + "..."
+	marker = " ... "
+	available = max_chars - len(marker)
+	if available <= 0:
+		return text[:max_chars]
+
+	head = max(1, available // 2)
+	tail = max(1, available - head)
+
+	return text[:head].rstrip() + marker + text[-tail:].lstrip()
 
 
 class PromptBuilder:
@@ -340,7 +351,8 @@ class PromptBuilder:
 		return "\n".join([
 			"Decision rules:",
 			"- Judge the answer relative to the exact question, not by general topical relevance.",
-			"- Choose Clear Reply only when the main question is answered directly and specifically.",
+			"- Choose Clear Reply only when the main question is answered explicitly, directly, and specifically.",
+			"- Before choosing Clear Reply, rule out the Ambivalent subtypes; if the answer is implicit, partial, generic, deflective, or dodging, choose Ambivalent.",
 			"- Choose Clear Non-Reply only when the answer gives no substantive answer and mainly redirects, refuses, or evades.",
 			"- Choose Ambivalent for the middle cases: partial answer, mixed answer, hedging, conditional answer, broad/general answer, or answer that touches the topic but leaves the main question unresolved.",
 			"- If the answer contains both responsive material and substantial evasion or uncertainty, choose Ambivalent rather than Clear Reply.",
@@ -446,12 +458,23 @@ class PromptBuilder:
 		label_hint = " | ".join(self.label_names)
 
 		if not self.config.use_json:
-			return f"Final answer: one label only, chosen from [{label_hint}]."
+			return (
+				"Output constraints:\n"
+				f"- Your entire response must be exactly one of these labels: {label_hint}.\n"
+				"- Do not output JSON.\n"
+				"- Do not output explanations, markdown, punctuation, or any extra text."
+			)
 
 		if self.config.reasoning == "none":
-			return f'Return valid JSON only: {{"label": "<{label_hint}>"}}'
+			return (
+				f'Return valid JSON only: {{"label": "<{label_hint}>"}}. '
+				"Do not include markdown, comments, reasoning, or any extra keys."
+			)
 
-		return f'Return valid JSON only: {{"label": "<{label_hint}>", "rationale": "<brief justification>"}}'
+		return (
+			f'Return valid JSON only: {{"label": "<{label_hint}>", "rationale": "<brief justification>"}}. '
+			"Do not include markdown, comments, or any extra keys."
+		)
 
 
 class FewShotSampler(sklearn.base.BaseEstimator):
