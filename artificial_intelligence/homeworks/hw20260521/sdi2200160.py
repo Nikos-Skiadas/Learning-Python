@@ -770,7 +770,7 @@ def run_final_submission(
 	run_frame.to_csv(generations_path, index = True)
 	files["submission_generations"] = str(generations_path)
 
-	submission_path = submission_dir / "submission best prompting system.csv"
+	submission_path = submission_dir / "submission_best_prompting_system.csv"
 	save_submission(
 		run_frame["Predicted"],
 		submission_path,
@@ -990,6 +990,11 @@ def main() -> None:
 		print(row)
 
 	results = summarize_experiments(rows)
+	if not results.empty:
+		results = results.sort_values(
+			by = ["f1_macro", "accuracy"],
+			ascending = [False, False],
+		).reset_index(drop = True)
 	files.update(write_global_artifacts(results, run_frames, output_dir, skip_plots = not args.plots))
 	print(results.to_string(index = False))
 
