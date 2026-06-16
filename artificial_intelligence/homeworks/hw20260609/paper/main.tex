@@ -41,11 +41,11 @@
 
 \section{Abstract}
 
-This report draft documents the Homework 4 system for response clarity classification on QEvasion \cite{qevasion}. The target labels remain \CR, \AMB, and \CNR, but the method changes from the single-invocation prompting of Homework 3 to the required D3-Agentic Prompting architecture. D3 decomposes classification into four specialized Qwen agents: Question Intent, Answer Content, Gap and Evasion, and Decision.
+This report documents the Homework 4 system for response clarity classification on QEvasion \cite{qevasion}. The target labels remain \CR, \AMB, and \CNR, but the method changes from the single-invocation prompting of Homework 3 to the required D3-Agentic Prompting architecture. D3 decomposes classification into four specialized Qwen agents: Question Intent, Answer Content, Gap and Evasion, and Decision.
 
-The implementation uses \texttt{Qwen/Qwen3.5-0.8B} \cite{qwen} for the required core system and compares it with a same-model single-agent prompt. This keeps the experimental contrast focused on decomposition rather than model scale. The notebook and script select the final system by validation macro F1, using accuracy only as a tie-breaker.
+The implementation uses \texttt{Qwen/Qwen3.5-0.8B} \cite{qwen} for the required core system and compares it with a same-model single-agent prompt. This keeps the experimental contrast focused on decomposition rather than model scale. The notebook and script select the final submitted system by validation macro F1, using accuracy only as a tie-breaker.
 
-\textbf{Final metrics must be inserted after the real Kaggle/Qwen run completes.} The code writes the required tables under \texttt{runs\_hw4\_full/}, especially \texttt{experiment\_summary.csv}, \texttt{baseline\_comparison.csv}, and \texttt{errors\_all.csv}.
+The final local validation run is a negative result. The same-model single-agent comparator reaches 0.3667 accuracy and 0.3062 macro F1 on a balanced 30-example validation sample, while the required D3-agentic system reaches 0.2667 accuracy and 0.2213 macro F1. D3 exposes useful intermediate traces and recovers some \AMB{} cases, but the decomposition does not improve the final classifier under the fixed small-model setting.
 
 \section{Task and Prior Assignments}
 
@@ -67,10 +67,12 @@ HW2 & DistilBERT fine-tuning & official test & 0.5779 & 0.5066 & Smaller encoder
 HW2 & DeBERTa-v3 fine-tuning & official test & 0.6688 & 0.2672 & Collapsed to all \AMB{} predictions \\
 HW3 & Qwen 4B few-shot prompting & balanced validation & 0.4667 & 0.4667 & Best single-invocation prompting run \\
 HW3 & Qwen 0.8B few-shot prompting & balanced validation & 0.4667 & 0.4091 & Same model scale as HW4 core D3 \\
+HW4 & Qwen 0.8B single-agent & balanced validation & 0.3667 & 0.3062 & Selected by macro F1 for submission \\
+HW4 & Qwen 0.8B D3-agentic & balanced validation & 0.2667 & 0.2213 & Required four-agent D3 system \\
 \bottomrule
 \end{tabular}
 }
-\caption{Previous-assignment baselines used for HW4 comparison. HW3 validation numbers are diagnostic and not directly official-test comparable.}
+\caption{Cross-assignment comparison. HW1 and HW2 numbers are official-test results from the earlier reports; HW3 and HW4 numbers are balanced-validation diagnostic runs and are not directly official-test comparable.}
 \label{tab:previous}
 \end{table}
 
@@ -114,10 +116,7 @@ The Kaggle notebook is named:
 \begin{verbatim}
 sdi2200160 homework-4-d3-agentic.ipynb
 \end{verbatim}
-The expected private Kaggle notebook link is:
-\[
-\href{https://www.kaggle.com/code/nikosskiadas/sdi2200160-homework-4-d3-agentic}{\texttt{https://www.kaggle.com/code/nikosskiadas/sdi2200160-homework-4-d3-agentic}}.
-\]
+The private Kaggle notebook link will be inserted after upload.
 
 It writes:
 \begin{verbatim}
@@ -131,40 +130,77 @@ The full validation comparison should include:
     \item previous baselines from Table \ref{tab:previous}.
 \end{itemize}
 
-\section{Results To Fill After Execution}
+\section{Validation Results}
 
-After running the notebook or script, paste the metrics from \texttt{runs\_hw4\_full/experiment\_summary.csv} into Table \ref{tab:hw4-results}.
+Table \ref{tab:hw4-results} reports the completed full run. The validation set is balanced by construction: 10 examples from each of \CR, \AMB, and \CNR. The selected system is \texttt{qwen-0.8b\_single-agent}, because it has the higher macro F1. The required D3 system is retained in the analysis because it is the assigned method and because its intermediate traces are useful for diagnosing failure modes.
 
 \begin{table}[h]
 \centering
-\begin{tabular}{lrrrrr}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrr}
 \toprule
-System & Accuracy & Macro F1 & Macro Precision & Macro Recall & Invalid Rate \\
+System & Calls & Accuracy & Macro F1 & Precision & Recall & Invalid Rate \\
 \midrule
-D3-agentic Qwen 0.8B & TBD & TBD & TBD & TBD & TBD \\
-Single-agent Qwen 0.8B & TBD & TBD & TBD & TBD & TBD \\
+Single-agent Qwen 0.8B & 1 & 0.3667 & 0.3062 & 0.4400 & 0.3667 & 0.0000 \\
+D3-agentic Qwen 0.8B & 4 & 0.2667 & 0.2213 & 0.2164 & 0.2667 & 0.1667 \\
 \bottomrule
 \end{tabular}
-\caption{HW4 validation results. Fill from \texttt{runs\_hw4\_full/experiment\_summary.csv}.}
+}
+\caption{HW4 validation results from \texttt{runs\_hw4\_full/experiment\_summary.csv}.}
 \label{tab:hw4-results}
 \end{table}
 
-\section{Error Analysis Plan}
+\begin{table}[h]
+\centering
+\small
+\begin{minipage}{0.45\textwidth}
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrr}
+\toprule
+True $\backslash$ Pred. & \CR & \AMB & \CNR \\
+\midrule
+\CR & 8 & 2 & 0 \\
+\AMB & 10 & 0 & 0 \\
+\CNR & 7 & 0 & 3 \\
+\bottomrule
+\end{tabular}
+}
+\par\smallskip\textbf{Single-agent}
+\end{minipage}
+\hfill
+\begin{minipage}{0.50\textwidth}
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lrrrr}
+\toprule
+True $\backslash$ Pred. & \CR & \AMB & \CNR & Invalid \\
+\midrule
+\CR & 2 & 6 & 0 & 2 \\
+\AMB & 3 & 6 & 0 & 1 \\
+\CNR & 1 & 7 & 0 & 2 \\
+\bottomrule
+\end{tabular}
+}
+\par\smallskip\textbf{D3-agentic}
+\end{minipage}
+\caption{Validation confusion matrices. D3 recovers more \AMB{} examples than the direct prompt, but it never correctly predicts \CNR{} in this run and emits invalid labels on 5 of 30 cases.}
+\label{tab:confusion}
+\end{table}
 
-The error analysis should use:
-\begin{itemize}
-    \item \texttt{runs\_hw4\_full/errors\_all.csv};
-    \item \texttt{runs\_hw4\_full/runs/qwen-0.8b\_d3-agentic.agent\_outputs.csv};
-    \item the D3 confusion matrix and per-class report.
-\end{itemize}
+\section{Error Analysis}
 
-For every representative error, inspect the intermediate outputs. If the Question Intent Agent misunderstood the requested information, the error is upstream. If the Answer Content Agent omitted a key claim, the error is content extraction. If both are correct but the Gap and Evasion Agent misses a partial or evasive pattern, the error is relational. If all previous outputs are sound but the final label is wrong, the failure lies in label mapping.
+The direct prompt has the better aggregate score, but its behavior is still very poor. It predicts \CR{} 25 times, \AMB{} only twice, and \CNR{} three times. Its \AMB{} recall is exactly 0.0: every true \AMB{} example is mapped to \CR. This is the same middle-class failure pattern observed in the earlier Qwen prompting assignment, where the model had trouble preserving the distinction between an incomplete answer and a clearly answered question.
 
-The most important class to inspect remains \AMB. D3 is specifically motivated by the failure of single-prompt systems to preserve the middle category between clear reply and clear non-reply.
+The D3 system fails differently. It predicts \AMB{} 19 times, \CR{} six times, and produces five invalid labels. It correctly recovers six of the ten \AMB{} examples, so the decomposition does make the model more willing to use the middle class. However, that gain is overwhelmed by two costs: all ten \CNR{} examples are missed, and invalid Decision Agent outputs reduce the valid rate to 0.8333. The Gap and Evasion stage often recognizes that an answer is incomplete, but the final Decision Agent collapses many non-replies into \AMB{} rather than reserving \CNR{} for explicit refusal, ignorance, or clarification.
 
-\section{Conclusion Draft}
+Failure overlap is also limited. Only about 46\% of the two systems' errors overlap, so the agentic decomposition is not merely duplicating the direct prompt's mistakes. It creates a different error surface: more interpretable and more sensitive to partialness, but less reliable as a classifier.
 
-The completed system provides a reproducible D3-Agentic Prompting framework and records all intermediate agent outputs needed for interpretation. The final conclusion should be written after the real run: if D3 improves macro F1 over the single-agent comparator, the report should argue that decomposing the task helped the model preserve the relation between question intent and answer content. If D3 does not improve, the report should emphasize that decomposition made the reasoning trace more interpretable but did not overcome the small model's weakness on \AMB.
+\section{Conclusion}
+
+The completed system provides a reproducible D3-Agentic Prompting framework and records all intermediate agent outputs needed for interpretation. As a classifier, however, this HW4 run is substantially weaker than the earlier approaches. HW1's TF--IDF logistic regression reached about 0.45 macro F1, HW2's BERT-base fine-tuning reached 0.5561 macro F1, and HW3's best Qwen 4B few-shot prompting run reached 0.4667 macro F1 on the balanced-validation diagnostic setup. The HW4 single-agent comparator reaches only 0.3062 macro F1, and the required D3 system reaches 0.2213.
+
+The main conclusion is therefore negative but useful: linguistic decomposition alone does not solve response-clarity classification for a very small instruction model. D3 gives a clearer audit trail and increases \AMB{} usage, but it does not make the final decision rule robust. The middle label remains the central obstacle. The direct prompt effectively refuses to detect \AMB{}, while D3 overcorrects toward \AMB{} and loses \CNR{}. The final submission uses the macro-F1 selected system, but the report treats the D3 run as the core methodological result required by the assignment.
 
 \nocite{*}
 \bibliographystyle{plain}

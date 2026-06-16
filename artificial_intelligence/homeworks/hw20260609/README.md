@@ -1,6 +1,6 @@
 # Homework 4 - D3-Agentic Prompting
 
-This folder contains the Homework 4 solution scaffold for the CLARITY/QEvasion response-clarity task.
+This folder contains the Homework 4 solution for the CLARITY/QEvasion response-clarity task.
 
 ## Core Files
 
@@ -47,6 +47,15 @@ This writes outputs under `runs_hw4_full/`, including:
 - per-run generations, agent outputs, confusion matrices, reports, and errors
 - `submissions/submission_best_d3_agentic_system.csv`
 
+The completed local full run selected the same-model `single-agent` comparator by validation macro F1:
+
+| System | Accuracy | Macro F1 | Invalid rate |
+|---|---:|---:|---:|
+| `qwen-0.8b_single-agent` | 0.3667 | 0.3062 | 0.0000 |
+| `qwen-0.8b_d3-agentic` | 0.2667 | 0.2213 | 0.1667 |
+
+The required D3 system is still reported and analyzed. It recovered more `Ambivalent` cases than the direct prompt, but it failed on `Clear Non-Reply` and produced invalid decisions, so it was not selected for the final CSV.
+
 ## Kaggle
 
 Submit and run:
@@ -65,7 +74,7 @@ The first Kaggle cell upgrades the Hugging Face runtime stack and installs a cur
 
 ## Report
 
-The final PDF report should be filled after the real run completes, using:
+The PDF report uses:
 
 - `runs_hw4_full/experiment_summary.csv`
 - `runs_hw4_full/baseline_comparison.csv`
