@@ -1,0 +1,223 @@
+{
+  "created_at": "2026-06-16T11:22:20.202577+00:00",
+  "random_state": 42,
+  "args": {
+    "model": "qwen-0.8b",
+    "experiments": [
+      "d3-agentic",
+      "single-agent"
+    ],
+    "output_dir": "runs_hw4_full",
+    "train_csv": null,
+    "test_csv": null,
+    "synthetic_data": false,
+    "limit": 0,
+    "eval_size": 0,
+    "eval_per_label": 10,
+    "evaluation_split": "validation",
+    "sample_seed": 42,
+    "validation_fraction": 0.2,
+    "preview_prompts": 0,
+    "batch_size": 1,
+    "max_question_chars": 300,
+    "max_answer_chars": 900,
+    "max_intermediate_chars": 1200,
+    "include_evasion_taxonomy": true,
+    "max_new_tokens": 96,
+    "decision_max_new_tokens": 48,
+    "do_sample": false,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "repetition_penalty": 1.0,
+    "generator_backend": "auto",
+    "device_map": "auto",
+    "torch_dtype": "auto",
+    "enable_thinking": false,
+    "system_message": "You are a careful coordinator for response-clarity annotation agents.",
+    "use_chat_template": true,
+    "save_prompts": true,
+    "plots": true,
+    "error_examples": 20,
+    "smoke_test": false,
+    "make_submission": true,
+    "submission_source": "best",
+    "submission_limit": 0,
+    "final_experiment": "d3-agentic",
+    "preset": "full"
+  },
+  "dataset": {
+    "train_fit_examples": 2758,
+    "validation_examples": 690,
+    "test_examples": 308,
+    "evaluation_examples": 30,
+    "validation_fraction": 0.2,
+    "evaluation_split": "validation",
+    "eval_size": 0,
+    "eval_per_label": 10,
+    "sample_seed": 42
+  },
+  "models": {
+    "qwen-0.8b": "Qwen/Qwen3.5-0.8B",
+    "qwen-2b": "Qwen/Qwen3.5-2B",
+    "qwen-4b": "Qwen/Qwen3.5-4B"
+  },
+  "experiments": {
+    "d3-agentic": {
+      "description": "Required four-agent D3 pipeline.",
+      "calls_per_example": 4,
+      "required_core": true
+    },
+    "single-agent": {
+      "description": "Single-prompt comparator with the same model and label guidance.",
+      "calls_per_example": 1,
+      "required_core": false
+    }
+  },
+  "selection_metric": "f1_macro",
+  "selection_tie_breaker": "accuracy",
+  "previous_baselines": [
+    {
+      "homework": "HW1",
+      "system": "TF-IDF + Logistic Regression",
+      "evaluation": "official test",
+      "accuracy": 0.63,
+      "f1_macro": 0.45,
+      "note": "Best classical baseline; approximate values from HW1 report."
+    },
+    {
+      "homework": "HW1",
+      "system": "GloVe Wiki + Logistic Regression",
+      "evaluation": "official test",
+      "accuracy": null,
+      "f1_macro": 0.39,
+      "note": "Mean-pooled embedding baseline from HW1."
+    },
+    {
+      "homework": "HW1",
+      "system": "GloVe Twitter + Logistic Regression",
+      "evaluation": "official test",
+      "accuracy": null,
+      "f1_macro": 0.38,
+      "note": "Mean-pooled conversational embedding baseline from HW1."
+    },
+    {
+      "homework": "HW2",
+      "system": "BERT-base fine-tuning",
+      "evaluation": "official test",
+      "accuracy": 0.6299,
+      "f1_macro": 0.5561,
+      "note": "Best encoder-only transformer from HW2."
+    },
+    {
+      "homework": "HW2",
+      "system": "DistilBERT fine-tuning",
+      "evaluation": "official test",
+      "accuracy": 0.5779,
+      "f1_macro": 0.5066,
+      "note": "Smaller encoder-only transformer from HW2."
+    },
+    {
+      "homework": "HW2",
+      "system": "DeBERTa-v3 fine-tuning",
+      "evaluation": "official test",
+      "accuracy": 0.6688,
+      "f1_macro": 0.2672,
+      "note": "Unstable run; collapsed to all Ambivalent predictions."
+    },
+    {
+      "homework": "HW3",
+      "system": "Qwen 4B few-shot prompting",
+      "evaluation": "balanced validation",
+      "accuracy": 0.4667,
+      "f1_macro": 0.4667,
+      "note": "Best single-invocation prompting run by macro F1."
+    },
+    {
+      "homework": "HW3",
+      "system": "Qwen 0.8B few-shot prompting",
+      "evaluation": "balanced validation",
+      "accuracy": 0.4667,
+      "f1_macro": 0.4091,
+      "note": "Same model scale as the required HW4 D3 system."
+    }
+  ],
+  "evasion_taxonomy": [
+    {
+      "name": "Explicit",
+      "clarity_label": "Clear Reply",
+      "description": "Directly and explicitly answers the question."
+    },
+    {
+      "name": "Deflection",
+      "clarity_label": "Ambivalent",
+      "description": "Shifts emphasis toward another issue while keeping some connection to the question."
+    },
+    {
+      "name": "Dodging",
+      "clarity_label": "Ambivalent",
+      "description": "Moves around the question while still touching related material."
+    },
+    {
+      "name": "General",
+      "clarity_label": "Ambivalent",
+      "description": "Responds with broad or generic statements instead of the requested specific answer."
+    },
+    {
+      "name": "Implicit",
+      "clarity_label": "Ambivalent",
+      "description": "Gives an implied or indirect answer, but not a fully explicit one."
+    },
+    {
+      "name": "Partial/half-answer",
+      "clarity_label": "Ambivalent",
+      "description": "Answers only part of the question or gives a half-answer that leaves the requested point unresolved."
+    },
+    {
+      "name": "Claims ignorance",
+      "clarity_label": "Clear Non-Reply",
+      "description": "States lack of knowledge or inability to answer."
+    },
+    {
+      "name": "Clarification",
+      "clarity_label": "Clear Non-Reply",
+      "description": "Asks for clarification or challenges the question instead of answering it."
+    },
+    {
+      "name": "Declining to answer",
+      "clarity_label": "Clear Non-Reply",
+      "description": "Openly refuses or declines to answer."
+    }
+  ],
+  "artifacts": {
+    "qwen-0.8b_d3-agentic.generations": "runs_hw4_full/runs/qwen-0.8b_d3-agentic.generations.csv",
+    "qwen-0.8b_d3-agentic.agent_outputs": "runs_hw4_full/runs/qwen-0.8b_d3-agentic.agent_outputs.csv",
+    "qwen-0.8b_d3-agentic.classification_report": "runs_hw4_full/runs/qwen-0.8b_d3-agentic.classification_report.csv",
+    "qwen-0.8b_d3-agentic.confusion": "runs_hw4_full/runs/qwen-0.8b_d3-agentic.confusion.csv",
+    "qwen-0.8b_d3-agentic.prediction_counts": "runs_hw4_full/runs/qwen-0.8b_d3-agentic.prediction_counts.csv",
+    "qwen-0.8b_d3-agentic.confusion_plot": "runs_hw4_full/plots/qwen-0.8b_d3-agentic.confusion.png",
+    "qwen-0.8b_d3-agentic.length_subgroups": "runs_hw4_full/runs/qwen-0.8b_d3-agentic.length_subgroups.csv",
+    "qwen-0.8b_d3-agentic.errors": "runs_hw4_full/runs/qwen-0.8b_d3-agentic.errors.csv",
+    "qwen-0.8b_single-agent.generations": "runs_hw4_full/runs/qwen-0.8b_single-agent.generations.csv",
+    "qwen-0.8b_single-agent.agent_outputs": "runs_hw4_full/runs/qwen-0.8b_single-agent.agent_outputs.csv",
+    "qwen-0.8b_single-agent.classification_report": "runs_hw4_full/runs/qwen-0.8b_single-agent.classification_report.csv",
+    "qwen-0.8b_single-agent.confusion": "runs_hw4_full/runs/qwen-0.8b_single-agent.confusion.csv",
+    "qwen-0.8b_single-agent.prediction_counts": "runs_hw4_full/runs/qwen-0.8b_single-agent.prediction_counts.csv",
+    "qwen-0.8b_single-agent.confusion_plot": "runs_hw4_full/plots/qwen-0.8b_single-agent.confusion.png",
+    "qwen-0.8b_single-agent.length_subgroups": "runs_hw4_full/runs/qwen-0.8b_single-agent.length_subgroups.csv",
+    "qwen-0.8b_single-agent.errors": "runs_hw4_full/runs/qwen-0.8b_single-agent.errors.csv",
+    "experiment_summary": "runs_hw4_full/experiment_summary.csv",
+    "previous_assignment_baselines": "runs_hw4_full/previous_assignment_baselines.csv",
+    "baseline_comparison": "runs_hw4_full/baseline_comparison.csv",
+    "experiment_summary_latex": "runs_hw4_full/tables/experiment_summary.tex",
+    "f1_macro_plot": "runs_hw4_full/plots/f1_macro_by_experiment.png",
+    "invalid_rate_plot": "runs_hw4_full/plots/invalid_rate_by_experiment.png",
+    "length_subgroups_all": "runs_hw4_full/length_subgroups_all.csv",
+    "errors_all": "runs_hw4_full/errors_all.csv",
+    "failure_overlap": "runs_hw4_full/failure_overlap.csv",
+    "failure_overlap_matrix": "runs_hw4_full/failure_overlap_matrix.csv",
+    "best_validation_system": "runs_hw4_full/best_validation_system.json",
+    "submission_generations": "runs_hw4_full/submissions/best_d3_agentic_system.generations.csv",
+    "submission": "runs_hw4_full/submissions/submission_best_d3_agentic_system.csv",
+    "submission_system": "runs_hw4_full/submissions/best_d3_agentic_system.json"
+  }
+}

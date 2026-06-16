@@ -1,0 +1,29 @@
+{
+  "model_key": "qwen-0.8b",
+  "model": "Qwen/Qwen3.5-0.8B",
+  "experiment": "single-agent",
+  "selection": "best",
+  "selection_metric": "f1_macro",
+  "selection_tie_breaker": "accuracy",
+  "decoding": {
+    "max_new_tokens": 96,
+    "do_sample": false,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "repetition_penalty": 1.0
+  },
+  "decision_decoding": {
+    "max_new_tokens": 48,
+    "do_sample": false,
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "repetition_penalty": 1.0
+  },
+  "max_question_chars": 300,
+  "max_answer_chars": 900,
+  "max_intermediate_chars": 1200,
+  "include_evasion_taxonomy": true,
+  "enable_thinking": false,
+  "generator_backend": "auto",
+  "preset": "full"
+}
