@@ -45,7 +45,7 @@ This report documents the Homework 4 system for response clarity classification 
 
 The implementation uses \texttt{Qwen/Qwen3.5-0.8B} \cite{qwen} for the required core system and compares it with a same-model single-agent prompt. This keeps the experimental contrast focused on decomposition rather than model scale. The notebook and script select the final submitted system by validation macro F1, using accuracy only as a tie-breaker.
 
-The final local validation run is a negative result. The same-model single-agent comparator reaches 0.3667 accuracy and 0.3062 macro F1 on a balanced 30-example validation sample, while the required D3-agentic system reaches 0.2667 accuracy and 0.2213 macro F1. D3 exposes useful intermediate traces and recovers some \AMB{} cases, but the decomposition does not improve the final classifier under the fixed small-model setting.
+The final local validation run is a negative result, but with an interesting change in error behavior. The same-model single-agent comparator reaches 0.3667 accuracy and 0.3062 macro F1 on a balanced 30-example validation sample, while the required D3-agentic system reaches 0.3000 accuracy and 0.2206 macro F1 after hardened label parsing. Earlier Qwen prompting runs had a very hard time detecting \AMB{}; D3 detects \AMB{}, but detects it too often.
 
 \section{Task and Prior Assignments}
 
@@ -68,7 +68,7 @@ HW2 & DeBERTa-v3 fine-tuning & official test & 0.6688 & 0.2672 & Collapsed to al
 HW3 & Qwen 4B few-shot prompting & balanced validation & 0.4667 & 0.4667 & Best single-invocation prompting run \\
 HW3 & Qwen 0.8B few-shot prompting & balanced validation & 0.4667 & 0.4091 & Same model scale as HW4 core D3 \\
 HW4 & Qwen 0.8B single-agent & balanced validation & 0.3667 & 0.3062 & Selected by macro F1 for submission \\
-HW4 & Qwen 0.8B D3-agentic & balanced validation & 0.2667 & 0.2213 & Required four-agent D3 system \\
+HW4 & Qwen 0.8B D3-agentic & balanced validation & 0.3000 & 0.2206 & Required four-agent D3 system \\
 \bottomrule
 \end{tabular}
 }
@@ -142,7 +142,7 @@ Table \ref{tab:hw4-results} reports the completed full run. The validation set i
 System & Calls & Accuracy & Macro F1 & Precision & Recall & Invalid Rate \\
 \midrule
 Single-agent Qwen 0.8B & 1 & 0.3667 & 0.3062 & 0.4400 & 0.3667 & 0.0000 \\
-D3-agentic Qwen 0.8B & 4 & 0.2667 & 0.2213 & 0.2164 & 0.2667 & 0.1667 \\
+D3-agentic Qwen 0.8B & 4 & 0.3000 & 0.2206 & 0.2083 & 0.3000 & 0.0000 \\
 \bottomrule
 \end{tabular}
 }
@@ -169,22 +169,22 @@ True $\backslash$ Pred. & \CR & \AMB & \CNR \\
 \par\smallskip\textbf{Single-agent}
 \end{minipage}
 \hfill
-\begin{minipage}{0.50\textwidth}
+\begin{minipage}{0.45\textwidth}
 \centering
 \resizebox{\linewidth}{!}{%
-\begin{tabular}{lrrrr}
+\begin{tabular}{lrrr}
 \toprule
-True $\backslash$ Pred. & \CR & \AMB & \CNR & Invalid \\
+True $\backslash$ Pred. & \CR & \AMB & \CNR \\
 \midrule
-\CR & 2 & 6 & 0 & 2 \\
-\AMB & 3 & 6 & 0 & 1 \\
-\CNR & 1 & 7 & 0 & 2 \\
+\CR & 2 & 8 & 0 \\
+\AMB & 3 & 7 & 0 \\
+\CNR & 1 & 9 & 0 \\
 \bottomrule
 \end{tabular}
 }
 \par\smallskip\textbf{D3-agentic}
 \end{minipage}
-\caption{Validation confusion matrices. D3 recovers more \AMB{} examples than the direct prompt, but it never correctly predicts \CNR{} in this run and emits invalid labels on 5 of 30 cases.}
+\caption{Validation confusion matrices after hardened parsing. D3 recovers more \AMB{} examples than the direct prompt, but it overuses \AMB{} and never correctly predicts \CNR{} in this run.}
 \label{tab:confusion}
 \end{table}
 
@@ -192,15 +192,15 @@ True $\backslash$ Pred. & \CR & \AMB & \CNR & Invalid \\
 
 The direct prompt has the better aggregate score, but its behavior is still very poor. It predicts \CR{} 25 times, \AMB{} only twice, and \CNR{} three times. Its \AMB{} recall is exactly 0.0: every true \AMB{} example is mapped to \CR. This is the same middle-class failure pattern observed in the earlier Qwen prompting assignment, where the model had trouble preserving the distinction between an incomplete answer and a clearly answered question.
 
-The D3 system fails differently. It predicts \AMB{} 19 times, \CR{} six times, and produces five invalid labels. It correctly recovers six of the ten \AMB{} examples, so the decomposition does make the model more willing to use the middle class. However, that gain is overwhelmed by two costs: all ten \CNR{} examples are missed, and invalid Decision Agent outputs reduce the valid rate to 0.8333. The Gap and Evasion stage often recognizes that an answer is incomplete, but the final Decision Agent collapses many non-replies into \AMB{} rather than reserving \CNR{} for explicit refusal, ignorance, or clarification.
+The D3 system fails differently. After recovering truncated JSON label fields, it produces no invalid decisions. It predicts \AMB{} 24 times, \CR{} six times, and \CNR{} zero times. It correctly recovers seven of the ten \AMB{} examples, so the decomposition does make the model willing to use the middle class. The cost is that \AMB{} becomes too broad: all ten \CNR{} examples are missed, and most \CR{} errors are also absorbed into \AMB{}. The Gap and Evasion stage often recognizes that an answer is incomplete, but the final Decision Agent collapses many non-replies into \AMB{} rather than reserving \CNR{} for explicit refusal, ignorance, or clarification.
 
-Failure overlap is also limited. Only about 46\% of the two systems' errors overlap, so the agentic decomposition is not merely duplicating the direct prompt's mistakes. It creates a different error surface: more interpretable and more sensitive to partialness, but less reliable as a classifier.
+Failure overlap is also limited. Only about 43\% of the two systems' errors overlap, so the agentic decomposition is not merely duplicating the direct prompt's mistakes. It creates a different error surface: more interpretable and more sensitive to partialness, but less reliable as a classifier.
 
 \section{Conclusion}
 
-The completed system provides a reproducible D3-Agentic Prompting framework and records all intermediate agent outputs needed for interpretation. As a classifier, however, this HW4 run is substantially weaker than the earlier approaches. HW1's TF--IDF logistic regression reached about 0.45 macro F1, HW2's BERT-base fine-tuning reached 0.5561 macro F1, and HW3's best Qwen 4B few-shot prompting run reached 0.4667 macro F1 on the balanced-validation diagnostic setup. The HW4 single-agent comparator reaches only 0.3062 macro F1, and the required D3 system reaches 0.2213.
+The completed system provides a reproducible D3-Agentic Prompting framework and records all intermediate agent outputs needed for interpretation. As a classifier, however, this HW4 run is substantially weaker than the earlier approaches. HW1's TF--IDF logistic regression reached about 0.45 macro F1, HW2's BERT-base fine-tuning reached 0.5561 macro F1, and HW3's best Qwen 4B few-shot prompting run reached 0.4667 macro F1 on the balanced-validation diagnostic setup. The HW4 single-agent comparator reaches only 0.3062 macro F1, and the required D3 system reaches 0.2206.
 
-The main conclusion is therefore negative but useful: linguistic decomposition alone does not solve response-clarity classification for a very small instruction model. D3 gives a clearer audit trail and increases \AMB{} usage, but it does not make the final decision rule robust. The middle label remains the central obstacle. The direct prompt effectively refuses to detect \AMB{}, while D3 overcorrects toward \AMB{} and loses \CNR{}. The final submission uses the macro-F1 selected system, but the report treats the D3 run as the core methodological result required by the assignment.
+The main conclusion is therefore negative but useful: linguistic decomposition alone does not solve response-clarity classification for a very small instruction model. The interesting result is that the D3 setup reverses the earlier LLM failure mode. Previous Qwen prompting systems had a very hard time detecting \AMB{}; here, D3 detects \AMB{}, but too much. The middle label remains the central obstacle. The direct prompt effectively refuses to detect \AMB{}, while D3 overcorrects toward \AMB{} and loses \CNR{}. The final submission uses the macro-F1 selected system, but the report treats the D3 run as the core methodological result required by the assignment.
 
 \nocite{*}
 \bibliographystyle{plain}

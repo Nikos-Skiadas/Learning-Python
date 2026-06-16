@@ -7,5 +7,5 @@ HW2,DistilBERT fine-tuning,official test,0.5779,0.5066,Smaller encoder-only tran
 HW2,DeBERTa-v3 fine-tuning,official test,0.6688,0.2672,Unstable run; collapsed to all Ambivalent predictions.
 HW3,Qwen 4B few-shot prompting,balanced validation,0.4667,0.4667,Best single-invocation prompting run by macro F1.
 HW3,Qwen 0.8B few-shot prompting,balanced validation,0.4667,0.4091,Same model scale as the required HW4 D3 system.
-HW4,qwen-0.8b single-agent,balanced validation,0.36666666666666664,0.30622710622710625,Current D3-agentic assignment run.
-HW4,qwen-0.8b d3-agentic,balanced validation,0.26666666666666666,0.22126436781609193,Current D3-agentic assignment run.
+HW4,qwen-0.8b single-agent,balanced validation,0.3666666666666666,0.3062271062271062,Current D3-agentic assignment run; D3 metrics reparsed with hardened label recovery.
+HW4,qwen-0.8b d3-agentic,balanced validation,0.3,0.22058823529411764,Current D3-agentic assignment run; D3 metrics reparsed with hardened label recovery.

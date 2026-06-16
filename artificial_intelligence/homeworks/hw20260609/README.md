@@ -39,7 +39,13 @@ The intended full diagnostic run is:
 python -m artificial_intelligence.homeworks.hw20260609.sdi2200160 --preset full --eval-per-label 10
 ```
 
-This writes outputs under `runs_hw4_full/`, including:
+After the first full run, the final-decision step was hardened to avoid invalid labels from truncated JSON rationales. The parser now recovers explicit `"label": "..."` fields from incomplete JSON-like generations, and the final decision prompts request label-only JSON. The existing `runs_hw4_full/` artifacts have been reparsed with this hardened parser, so no model rerun is required for the corrected metrics. A fresh run is only needed to measure whether the shorter label-only prompt changes generations:
+
+```bash
+python -m artificial_intelligence.homeworks.hw20260609.sdi2200160 --preset full --eval-per-label 10 --output-dir runs_hw4_hardened
+```
+
+The original full run writes outputs under `runs_hw4_full/`; the optional hardened rerun command above writes the same artifact set under `runs_hw4_hardened/`, including:
 
 - `experiment_summary.csv`
 - `previous_assignment_baselines.csv`
@@ -52,9 +58,9 @@ The completed local full run selected the same-model `single-agent` comparator b
 | System | Accuracy | Macro F1 | Invalid rate |
 |---|---:|---:|---:|
 | `qwen-0.8b_single-agent` | 0.3667 | 0.3062 | 0.0000 |
-| `qwen-0.8b_d3-agentic` | 0.2667 | 0.2213 | 0.1667 |
+| `qwen-0.8b_d3-agentic` | 0.3000 | 0.2206 | 0.0000 |
 
-The required D3 system is still reported and analyzed. It recovered more `Ambivalent` cases than the direct prompt, but it failed on `Clear Non-Reply` and produced invalid decisions, so it was not selected for the final CSV.
+The required D3 system is still reported and analyzed. Its interesting failure mode is the reverse of the earlier Qwen prompting runs: it detects `Ambivalent`, but too broadly. It recovers 7/10 true `Ambivalent` examples while predicting `Ambivalent` 24/30 times and missing every `Clear Non-Reply`, so it is not selected for the final CSV.
 
 ## Kaggle
 

@@ -71,7 +71,9 @@ Answer Content Agent output:
 Gap and Evasion Agent output:
 {""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
+Output exactly one compact JSON object on one line. Do not include rationale, markdown, or extra keys.
+
+Return only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
 1,Will you sign the bill?,"Yes, I will sign it tomorrow.",Clear Reply,Explicit,"You are the Question Intent Agent in a D3 response-clarity pipeline.
 
 Your task is to identify what the journalist is asking for. Do not classify the answer.
@@ -144,7 +146,9 @@ Answer Content Agent output:
 Gap and Evasion Agent output:
 {""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
+Output exactly one compact JSON object on one line. Do not include rationale, markdown, or extra keys.
+
+Return only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
 2,Why did prices rise?,There are several complex factors we are studying.,Ambivalent,General,"You are the Question Intent Agent in a D3 response-clarity pipeline.
 
 Your task is to identify what the journalist is asking for. Do not classify the answer.
@@ -217,4 +221,6 @@ Answer Content Agent output:
 Gap and Evasion Agent output:
 {""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
 
-Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
+Output exactly one compact JSON object on one line. Do not include rationale, markdown, or extra keys.
+
+Return only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output

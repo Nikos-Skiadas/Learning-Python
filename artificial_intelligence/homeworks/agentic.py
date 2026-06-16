@@ -135,7 +135,8 @@ class D3PromptBuilder:
 			"Question Intent Agent output:\n" + self._intermediate(question_intent),
 			"Answer Content Agent output:\n" + self._intermediate(answer_content),
 			"Gap and Evasion Agent output:\n" + self._intermediate(gap_evasion),
-			f'Return valid JSON only: {{"label": "<{labels}>", "rationale": "<brief evidence-based reason>"}}.',
+			"Output exactly one compact JSON object on one line. Do not include rationale, markdown, or extra keys.",
+			f'Return only: {{"label": "<{labels}>"}}.',
 		]
 		return AgentPrompt(agent = "decision", prompt = "\n\n".join(part for part in parts if part))
 
@@ -154,7 +155,8 @@ class D3PromptBuilder:
 			"- Clear Non-Reply for refusals, redirections, clarification requests, ignorance claims, or no substantive answer.",
 			f"Question:\n{question}",
 			f"Answer:\n{answer}",
-			f'Return valid JSON only: {{"label": "<{labels}>", "rationale": "<brief evidence-based reason>"}}.',
+			"Output exactly one compact JSON object on one line. Do not include rationale, markdown, or extra keys.",
+			f'Return only: {{"label": "<{labels}>"}}.',
 		]
 		return AgentPrompt(agent = "direct_decision", prompt = "\n\n".join(part for part in parts if part))
 

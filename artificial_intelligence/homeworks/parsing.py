@@ -108,6 +108,10 @@ class GenerationParser:
 			if parsed.valid:
 				return parsed
 
+		parsed = self._parse_json_field_fragment(raw_text)
+		if parsed.valid:
+			return parsed
+
 		parsed = self._parse_labeled_lines(raw_text)
 		if parsed.valid:
 			return parsed
@@ -181,6 +185,30 @@ class GenerationParser:
 			parse_method = "json",
 			rationale = rationale,
 		)
+
+	def _parse_json_field_fragment(self, raw_text: str, /) -> ParsedGeneration:
+		"""Recover labels from truncated JSON-like generations.
+
+		Small models often emit a correct leading ``"label": "..."`` field and then
+		run out of tokens while writing the rationale. Treat that as a valid parse
+		because the classification decision itself is already explicit.
+		"""
+		field_names = "|".join(re.escape(name) for name in LABEL_FIELD_NAMES)
+		pattern = re.compile(
+			rf"""(?is)["']?(?:{field_names})["']?\s*:\s*["']([^"'\n\r}}]+)["']"""
+		)
+		for match in reversed(list(pattern.finditer(raw_text))):
+			label = self.normalizer.normalize(match.group(1))
+			if label is not None:
+				return ParsedGeneration(
+					raw_text = raw_text,
+					label = label,
+					valid = True,
+					parse_method = "json_field_fragment",
+					message = "Recovered label from a JSON-like field in a truncated generation.",
+				)
+
+		return ParsedGeneration(raw_text, None, False, "json_field_fragment", message = "No JSON-like label field found.")
 
 	def _parse_labeled_lines(self, raw_text: str, /) -> ParsedGeneration:
 		pattern = re.compile(
