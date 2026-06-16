@@ -1,0 +1,31 @@
+,true,qwen-0.8b_d3-agentic_pred,qwen-0.8b_d3-agentic_wrong,qwen-0.8b_single-agent_pred,qwen-0.8b_single-agent_wrong,failure_count,failed_by
+0,Clear Non-Reply,Ambivalent,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+1,Clear Reply,Ambivalent,True,Clear Reply,False,1,qwen-0.8b_d3-agentic
+2,Clear Non-Reply,Ambivalent,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+3,Clear Reply,Ambivalent,True,Clear Reply,False,1,qwen-0.8b_d3-agentic
+4,Clear Reply,Clear Reply,False,Clear Reply,False,0,
+5,Ambivalent,Ambivalent,False,Clear Reply,True,1,qwen-0.8b_single-agent
+6,Clear Non-Reply,Ambivalent,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+7,Clear Reply,Ambivalent,True,Clear Reply,False,1,qwen-0.8b_d3-agentic
+8,Ambivalent,Ambivalent,False,Clear Reply,True,1,qwen-0.8b_single-agent
+9,Clear Reply,Clear Reply,False,Clear Reply,False,0,
+10,Clear Non-Reply,Ambivalent,True,Clear Non-Reply,False,1,qwen-0.8b_d3-agentic
+11,Ambivalent,Ambivalent,False,Clear Reply,True,1,qwen-0.8b_single-agent
+12,Clear Non-Reply,,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+13,Ambivalent,Clear Reply,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+14,Ambivalent,Clear Reply,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+15,Ambivalent,,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+16,Clear Reply,,True,Clear Reply,False,1,qwen-0.8b_d3-agentic
+17,Ambivalent,Clear Reply,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+18,Clear Reply,Ambivalent,True,Ambivalent,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+19,Clear Non-Reply,Ambivalent,True,Clear Non-Reply,False,1,qwen-0.8b_d3-agentic
+20,Clear Non-Reply,,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+21,Clear Non-Reply,Ambivalent,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+22,Ambivalent,Ambivalent,False,Clear Reply,True,1,qwen-0.8b_single-agent
+23,Clear Reply,Ambivalent,True,Ambivalent,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+24,Clear Reply,,True,Clear Reply,False,1,qwen-0.8b_d3-agentic
+25,Clear Non-Reply,Clear Reply,True,Clear Reply,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+26,Ambivalent,Ambivalent,False,Clear Reply,True,1,qwen-0.8b_single-agent
+27,Clear Reply,Ambivalent,True,Clear Reply,False,1,qwen-0.8b_d3-agentic
+28,Clear Non-Reply,Ambivalent,True,Clear Non-Reply,False,1,qwen-0.8b_d3-agentic
+29,Ambivalent,Ambivalent,False,Clear Reply,True,1,qwen-0.8b_single-agent
