@@ -1,0 +1,4 @@
+,true,qwen-0.8b_d3-agentic_pred,qwen-0.8b_d3-agentic_wrong,qwen-0.8b_single-agent_pred,qwen-0.8b_single-agent_wrong,failure_count,failed_by
+0,Clear Non-Reply,Ambivalent,True,Ambivalent,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+1,Clear Reply,Ambivalent,True,Ambivalent,True,2,"qwen-0.8b_d3-agentic, qwen-0.8b_single-agent"
+2,Ambivalent,Ambivalent,False,Ambivalent,False,0,

@@ -1,0 +1,5 @@
+run_id,model_key,experiment,question,interview_answer,clarity_label,Predicted,question_words,answer_words,combined_words,correct
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,Where did the funds go?,The important issue is our future agenda.,Clear Non-Reply,Ambivalent,5,7,12,False
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,Will you sign the bill?,"Yes, I will sign it tomorrow.",Clear Reply,Ambivalent,5,6,11,False
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,Where did the funds go?,The important issue is our future agenda.,Clear Non-Reply,Ambivalent,5,7,12,False
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,Will you sign the bill?,"Yes, I will sign it tomorrow.",Clear Reply,Ambivalent,5,6,11,False

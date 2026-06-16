@@ -1,0 +1,15 @@
+run_id,model_key,experiment,group,group_col,n,accuracy,precision_macro,recall_macro,f1_macro,f1_weighted,f1_micro,invalid_rate
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,"(3.999, 4.667]",question_words_bin,1,1.0,0.3333333333333333,0.3333333333333333,0.3333333333333333,1.0,1.0,0.0
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,"(4.667, 5.0]",question_words_bin,2,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,"(5.999, 6.667]",answer_words_bin,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,"(6.667, 7.333]",answer_words_bin,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,"(7.333, 8.0]",answer_words_bin,1,1.0,0.3333333333333333,0.3333333333333333,0.3333333333333333,1.0,1.0,0.0
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,"(10.999, 11.667]",combined_words_bin,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_d3-agentic,qwen-0.8b,d3-agentic,"(11.667, 12.0]",combined_words_bin,2,0.5,0.16666666666666666,0.3333333333333333,0.2222222222222222,0.3333333333333333,0.5,0.0
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,"(3.999, 4.667]",question_words_bin,1,1.0,0.3333333333333333,0.3333333333333333,0.3333333333333333,1.0,1.0,0.0
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,"(4.667, 5.0]",question_words_bin,2,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,"(5.999, 6.667]",answer_words_bin,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,"(6.667, 7.333]",answer_words_bin,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,"(7.333, 8.0]",answer_words_bin,1,1.0,0.3333333333333333,0.3333333333333333,0.3333333333333333,1.0,1.0,0.0
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,"(10.999, 11.667]",combined_words_bin,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+qwen-0.8b_single-agent,qwen-0.8b,single-agent,"(11.667, 12.0]",combined_words_bin,2,0.5,0.16666666666666666,0.3333333333333333,0.2222222222222222,0.3333333333333333,0.5,0.0

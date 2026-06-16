@@ -1,0 +1,73 @@
+Id,question,interview_answer,clarity_label,evasion_label,decision_prompt,decision_generation,Predicted,valid,parse_method,parse_message,rationale
+0,Where did the funds go?,The important issue is our future agenda.,Clear Non-Reply,Clarification,"Classify the interview answer's responsiveness to the question.
+
+Use exactly one label: Clear Reply | Ambivalent | Clear Non-Reply.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Decision rules:
+
+- Clear Reply only if the answer explicitly and specifically answers the main question.
+
+- Ambivalent for partial, implicit, generic, hedged, deflective, or partly responsive answers.
+
+- Clear Non-Reply for refusals, redirections, clarification requests, ignorance claims, or no substantive answer.
+
+Question:
+Where did the funds go?
+
+Answer:
+The important issue is our future agenda.
+
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
+1,Will you sign the bill?,"Yes, I will sign it tomorrow.",Clear Reply,Explicit,"Classify the interview answer's responsiveness to the question.
+
+Use exactly one label: Clear Reply | Ambivalent | Clear Non-Reply.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Decision rules:
+
+- Clear Reply only if the answer explicitly and specifically answers the main question.
+
+- Ambivalent for partial, implicit, generic, hedged, deflective, or partly responsive answers.
+
+- Clear Non-Reply for refusals, redirections, clarification requests, ignorance claims, or no substantive answer.
+
+Question:
+Will you sign the bill?
+
+Answer:
+Yes, I will sign it tomorrow.
+
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
+2,Why did prices rise?,There are several complex factors we are studying.,Ambivalent,General,"Classify the interview answer's responsiveness to the question.
+
+Use exactly one label: Clear Reply | Ambivalent | Clear Non-Reply.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Decision rules:
+
+- Clear Reply only if the answer explicitly and specifically answers the main question.
+
+- Ambivalent for partial, implicit, generic, hedged, deflective, or partly responsive answers.
+
+- Clear Non-Reply for refusals, redirections, clarification requests, ignorance claims, or no substantive answer.
+
+Question:
+Why did prices rise?
+
+Answer:
+There are several complex factors we are studying.
+
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output

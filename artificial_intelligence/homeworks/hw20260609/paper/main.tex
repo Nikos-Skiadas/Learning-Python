@@ -1,0 +1,173 @@
+\documentclass[12pt]{fphw}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{mathpazo}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage[section]{placeins}
+\usepackage{hyperref}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+\urlstyle{same}
+\setlength{\emergencystretch}{3em}
+
+\title{Deep Learning for NLP}
+\author{sdi2200160}
+\date{Spring Semester 2025-2026}
+\institute{National and Kapodistrian University of Athens \\ Department of Informatics and Telecommunications}
+\class{Artificial Intelligence II (YS19 M226 M262 M325 M405)}
+
+\newcommand{\CR}{Clear Reply}
+\newcommand{\AMB}{Ambivalent}
+\newcommand{\CNR}{Clear Non-Reply}
+
+\begin{document}
+\maketitle
+
+{
+  \hypersetup{linkcolor=black}
+  \tableofcontents
+}
+\newpage
+
+\section{Abstract}
+
+This report draft documents the Homework 4 system for response clarity classification on QEvasion \cite{qevasion}. The target labels remain \CR, \AMB, and \CNR, but the method changes from the single-invocation prompting of Homework 3 to the required D3-Agentic Prompting architecture. D3 decomposes classification into four specialized Qwen agents: Question Intent, Answer Content, Gap and Evasion, and Decision.
+
+The implementation uses \texttt{Qwen/Qwen3.5-0.8B} \cite{qwen} for the required core system and compares it with a same-model single-agent prompt. This keeps the experimental contrast focused on decomposition rather than model scale. The notebook and script select the final system by validation macro F1, using accuracy only as a tie-breaker.
+
+\textbf{Final metrics must be inserted after the real Kaggle/Qwen run completes.} The code writes the required tables under \texttt{runs\_hw4\_full/}, especially \texttt{experiment\_summary.csv}, \texttt{baseline\_comparison.csv}, and \texttt{errors\_all.csv}.
+
+\section{Task and Prior Assignments}
+
+All four assignments solve the same three-way response clarity task. Homework 1 used classical vector-based classifiers, Homework 2 used encoder-only transformer fine-tuning, Homework 3 used single-invocation Qwen prompting, and Homework 4 uses a lightweight multi-agent Qwen pipeline.
+
+\begin{table}[h]
+\centering
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lllrrl}
+\toprule
+Homework & System & Evaluation & Accuracy & Macro F1 & Note \\
+\midrule
+HW1 & TF--IDF + Logistic Regression & official test & $\sim$0.63 & $\sim$0.45 & Best classical baseline \\
+HW1 & GloVe Wiki + Logistic Regression & official test & -- & $\sim$0.39 & Mean-pooled embedding baseline \\
+HW1 & GloVe Twitter + Logistic Regression & official test & -- & $\sim$0.38 & Conversational embedding baseline \\
+HW2 & BERT-base fine-tuning & official test & 0.6299 & 0.5561 & Best encoder-only transformer \\
+HW2 & DistilBERT fine-tuning & official test & 0.5779 & 0.5066 & Smaller encoder-only transformer \\
+HW2 & DeBERTa-v3 fine-tuning & official test & 0.6688 & 0.2672 & Collapsed to all \AMB{} predictions \\
+HW3 & Qwen 4B few-shot prompting & balanced validation & 0.4667 & 0.4667 & Best single-invocation prompting run \\
+HW3 & Qwen 0.8B few-shot prompting & balanced validation & 0.4667 & 0.4091 & Same model scale as HW4 core D3 \\
+\bottomrule
+\end{tabular}
+}
+\caption{Previous-assignment baselines used for HW4 comparison. HW3 validation numbers are diagnostic and not directly official-test comparable.}
+\label{tab:previous}
+\end{table}
+
+The central recurring difficulty is \AMB. Classical methods confuse it with both endpoint classes, single-prompt Qwen systems often fail to use it, and unstable fine-tuning can collapse into predicting only \AMB. This motivates macro F1 and concrete error analysis.
+
+\section{D3-Agentic Prompting Design}
+
+The D3 pipeline is not repeated voting. Each agent performs a distinct linguistic subtask and passes its output to later stages.
+
+\begin{enumerate}
+    \item \textbf{Question Intent Agent}: identifies what the journalist asks for and what information a clear answer would need.
+    \item \textbf{Answer Content Agent}: extracts what the answer actually says, including explicit claims, relevant details, hedges, and omissions.
+    \item \textbf{Gap and Evasion Agent}: compares expected information with actual answer content and identifies missing requirements or evasion patterns.
+    \item \textbf{Decision Agent}: maps the previous agents' outputs to exactly one final clarity label.
+\end{enumerate}
+
+All core agents use \texttt{Qwen/Qwen3.5-0.8B}. This is the required model in the specification and avoids a confound where one agent performs better merely because it uses a larger model. The single-agent comparator also uses the same model and taxonomy so that the comparison measures the effect of decomposition.
+
+\section{Prompt Format}
+
+The prompts include the original question and answer, the dataset label taxonomy, and compact JSON output constraints. The taxonomy is:
+\[
+\begin{aligned}
+\text{\CR} &\leftarrow \text{Explicit}, \\
+\text{\AMB} &\leftarrow \text{Implicit, Dodging, General, Deflection, Partial/half-answer}, \\
+\text{\CNR} &\leftarrow \text{Declining to answer, Claims ignorance, Clarification}.
+\end{aligned}
+\]
+
+The first three agents are instructed not to emit a final label. Only the Decision Agent may output \CR, \AMB, or \CNR. This design supports analysis: the generated \texttt{agent\_outputs.csv} files expose whether an error originates from misunderstanding the question, missing answer content, weak gap analysis, or the final mapping step.
+
+\section{Experimental Protocol}
+
+The implementation uses deterministic decoding, a fixed random seed, and a balanced validation sample of 10 examples per class by default. The main command is:
+\begin{verbatim}
+python -m artificial_intelligence.homeworks.hw20260609.sdi2200160 \
+  --preset full --eval-per-label 10
+\end{verbatim}
+
+The Kaggle notebook is named:
+\begin{verbatim}
+sdi2200160 homework-4-d3-agentic.ipynb
+\end{verbatim}
+The expected private Kaggle notebook link is:
+\[
+\href{https://www.kaggle.com/code/nikosskiadas/sdi2200160-homework-4-d3-agentic}{\texttt{https://www.kaggle.com/code/nikosskiadas/sdi2200160-homework-4-d3-agentic}}.
+\]
+
+It writes:
+\begin{verbatim}
+submission_best_d3_agentic_system.csv
+\end{verbatim}
+
+The full validation comparison should include:
+\begin{itemize}
+    \item \texttt{d3-agentic}: required four-agent system;
+    \item \texttt{single-agent}: same-model direct prompt comparator;
+    \item previous baselines from Table \ref{tab:previous}.
+\end{itemize}
+
+\section{Results To Fill After Execution}
+
+After running the notebook or script, paste the metrics from \texttt{runs\_hw4\_full/experiment\_summary.csv} into Table \ref{tab:hw4-results}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lrrrrr}
+\toprule
+System & Accuracy & Macro F1 & Macro Precision & Macro Recall & Invalid Rate \\
+\midrule
+D3-agentic Qwen 0.8B & TBD & TBD & TBD & TBD & TBD \\
+Single-agent Qwen 0.8B & TBD & TBD & TBD & TBD & TBD \\
+\bottomrule
+\end{tabular}
+\caption{HW4 validation results. Fill from \texttt{runs\_hw4\_full/experiment\_summary.csv}.}
+\label{tab:hw4-results}
+\end{table}
+
+\section{Error Analysis Plan}
+
+The error analysis should use:
+\begin{itemize}
+    \item \texttt{runs\_hw4\_full/errors\_all.csv};
+    \item \texttt{runs\_hw4\_full/runs/qwen-0.8b\_d3-agentic.agent\_outputs.csv};
+    \item the D3 confusion matrix and per-class report.
+\end{itemize}
+
+For every representative error, inspect the intermediate outputs. If the Question Intent Agent misunderstood the requested information, the error is upstream. If the Answer Content Agent omitted a key claim, the error is content extraction. If both are correct but the Gap and Evasion Agent misses a partial or evasive pattern, the error is relational. If all previous outputs are sound but the final label is wrong, the failure lies in label mapping.
+
+The most important class to inspect remains \AMB. D3 is specifically motivated by the failure of single-prompt systems to preserve the middle category between clear reply and clear non-reply.
+
+\section{Conclusion Draft}
+
+The completed system provides a reproducible D3-Agentic Prompting framework and records all intermediate agent outputs needed for interpretation. The final conclusion should be written after the real run: if D3 improves macro F1 over the single-agent comparator, the report should argue that decomposing the task helped the model preserve the relation between question intent and answer content. If D3 does not improve, the report should emphasize that decomposition made the reasoning trace more interpretable but did not overcome the small model's weakness on \AMB.
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\end{document}

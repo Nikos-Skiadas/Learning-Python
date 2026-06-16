@@ -1,0 +1,220 @@
+,question,interview_answer,clarity_label,evasion_label,question_intent_prompt,question_intent_generation,answer_content_prompt,answer_content_generation,gap_evasion_prompt,gap_evasion_generation,decision_prompt,decision_generation,Predicted,valid,parse_method,parse_message,rationale
+0,Where did the funds go?,The important issue is our future agenda.,Clear Non-Reply,Clarification,"You are the Question Intent Agent in a D3 response-clarity pipeline.
+
+Your task is to identify what the journalist is asking for. Do not classify the answer.
+
+Question:
+Where did the funds go?
+
+Return valid JSON only with these keys: ""asked_for"", ""required_information"", ""question_focus"". Keep each value brief and concrete.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Answer Content Agent in a D3 response-clarity pipeline.
+
+Your task is to extract what the answer actually says. Do not classify the answer.
+
+Question:
+Where did the funds go?
+
+Answer:
+The important issue is our future agenda.
+
+Return valid JSON only with these keys: ""explicit_claims"", ""relevant_details"", ""hedges_or_qualifiers"", ""omitted_points"". Use short phrases or compact lists.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Gap and Evasion Agent in a D3 response-clarity pipeline.
+
+Compare the question intent with the answer content. Do not output the final clarity label.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Question:
+Where did the funds go?
+
+Answer:
+The important issue is our future agenda.
+
+Question Intent Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Answer Content Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Return valid JSON only with these keys: ""matched_requirements"", ""missing_requirements"", ""evasion_patterns"", ""responsiveness_summary"", ""likely_subtype"".","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Decision Agent in a D3 response-clarity pipeline.
+
+Use the previous agents' outputs to assign exactly one final clarity label.
+
+Decision rules:
+
+- Clear Reply: the answer explicitly and specifically answers the main question.
+
+- Ambivalent: the answer is partial, implicit, generic, hedged, deflective, or only partly responsive.
+
+- Clear Non-Reply: the answer clearly refuses, redirects, asks for clarification, claims ignorance, or gives no substantive answer.
+
+- Judge the answer relative to the exact question. Do not reward length or topical fluency.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Question:
+Where did the funds go?
+
+Answer:
+The important issue is our future agenda.
+
+Question Intent Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Answer Content Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Gap and Evasion Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
+1,Will you sign the bill?,"Yes, I will sign it tomorrow.",Clear Reply,Explicit,"You are the Question Intent Agent in a D3 response-clarity pipeline.
+
+Your task is to identify what the journalist is asking for. Do not classify the answer.
+
+Question:
+Will you sign the bill?
+
+Return valid JSON only with these keys: ""asked_for"", ""required_information"", ""question_focus"". Keep each value brief and concrete.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Answer Content Agent in a D3 response-clarity pipeline.
+
+Your task is to extract what the answer actually says. Do not classify the answer.
+
+Question:
+Will you sign the bill?
+
+Answer:
+Yes, I will sign it tomorrow.
+
+Return valid JSON only with these keys: ""explicit_claims"", ""relevant_details"", ""hedges_or_qualifiers"", ""omitted_points"". Use short phrases or compact lists.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Gap and Evasion Agent in a D3 response-clarity pipeline.
+
+Compare the question intent with the answer content. Do not output the final clarity label.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Question:
+Will you sign the bill?
+
+Answer:
+Yes, I will sign it tomorrow.
+
+Question Intent Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Answer Content Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Return valid JSON only with these keys: ""matched_requirements"", ""missing_requirements"", ""evasion_patterns"", ""responsiveness_summary"", ""likely_subtype"".","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Decision Agent in a D3 response-clarity pipeline.
+
+Use the previous agents' outputs to assign exactly one final clarity label.
+
+Decision rules:
+
+- Clear Reply: the answer explicitly and specifically answers the main question.
+
+- Ambivalent: the answer is partial, implicit, generic, hedged, deflective, or only partly responsive.
+
+- Clear Non-Reply: the answer clearly refuses, redirects, asks for clarification, claims ignorance, or gives no substantive answer.
+
+- Judge the answer relative to the exact question. Do not reward length or topical fluency.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Question:
+Will you sign the bill?
+
+Answer:
+Yes, I will sign it tomorrow.
+
+Question Intent Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Answer Content Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Gap and Evasion Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output
+2,Why did prices rise?,There are several complex factors we are studying.,Ambivalent,General,"You are the Question Intent Agent in a D3 response-clarity pipeline.
+
+Your task is to identify what the journalist is asking for. Do not classify the answer.
+
+Question:
+Why did prices rise?
+
+Return valid JSON only with these keys: ""asked_for"", ""required_information"", ""question_focus"". Keep each value brief and concrete.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Answer Content Agent in a D3 response-clarity pipeline.
+
+Your task is to extract what the answer actually says. Do not classify the answer.
+
+Question:
+Why did prices rise?
+
+Answer:
+There are several complex factors we are studying.
+
+Return valid JSON only with these keys: ""explicit_claims"", ""relevant_details"", ""hedges_or_qualifiers"", ""omitted_points"". Use short phrases or compact lists.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Gap and Evasion Agent in a D3 response-clarity pipeline.
+
+Compare the question intent with the answer content. Do not output the final clarity label.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Question:
+Why did prices rise?
+
+Answer:
+There are several complex factors we are studying.
+
+Question Intent Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Answer Content Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Return valid JSON only with these keys: ""matched_requirements"", ""missing_requirements"", ""evasion_patterns"", ""responsiveness_summary"", ""likely_subtype"".","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}","You are the Decision Agent in a D3 response-clarity pipeline.
+
+Use the previous agents' outputs to assign exactly one final clarity label.
+
+Decision rules:
+
+- Clear Reply: the answer explicitly and specifically answers the main question.
+
+- Ambivalent: the answer is partial, implicit, generic, hedged, deflective, or only partly responsive.
+
+- Clear Non-Reply: the answer clearly refuses, redirects, asks for clarification, claims ignorance, or gives no substantive answer.
+
+- Judge the answer relative to the exact question. Do not reward length or topical fluency.
+
+Dataset label taxonomy:
+- Clear Reply: Explicit
+- Ambivalent: General, Implicit
+- Clear Non-Reply: Clarification, Declining
+
+Question:
+Why did prices rise?
+
+Answer:
+There are several complex factors we are studying.
+
+Question Intent Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Answer Content Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Gap and Evasion Agent output:
+{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}
+
+Return valid JSON only: {""label"": ""<Clear Reply | Ambivalent | Clear Non-Reply>"", ""rationale"": ""<brief evidence-based reason>""}.","{""label"": ""Ambivalent"", ""rationale"": ""static smoke-test output""}",Ambivalent,True,json,,static smoke-test output

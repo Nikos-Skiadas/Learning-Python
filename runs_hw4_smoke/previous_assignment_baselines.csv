@@ -1,0 +1,9 @@
+homework,system,evaluation,accuracy,f1_macro,note
+HW1,TF-IDF + Logistic Regression,official test,0.63,0.45,Best classical baseline; approximate values from HW1 report.
+HW1,GloVe Wiki + Logistic Regression,official test,,0.39,Mean-pooled embedding baseline from HW1.
+HW1,GloVe Twitter + Logistic Regression,official test,,0.38,Mean-pooled conversational embedding baseline from HW1.
+HW2,BERT-base fine-tuning,official test,0.6299,0.5561,Best encoder-only transformer from HW2.
+HW2,DistilBERT fine-tuning,official test,0.5779,0.5066,Smaller encoder-only transformer from HW2.
+HW2,DeBERTa-v3 fine-tuning,official test,0.6688,0.2672,Unstable run; collapsed to all Ambivalent predictions.
+HW3,Qwen 4B few-shot prompting,balanced validation,0.4667,0.4667,Best single-invocation prompting run by macro F1.
+HW3,Qwen 0.8B few-shot prompting,balanced validation,0.4667,0.4091,Same model scale as the required HW4 D3 system.
