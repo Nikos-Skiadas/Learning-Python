@@ -1,0 +1,1137 @@
+#LyX 2.5 created this file. For more info see https://www.lyx.org/
+\lyxformat 643
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass scrartcl
+\begin_preamble
+%\usepackage{bm}
+\usepackage{bbm}
+\usepackage{xcolor}
+\usepackage{cleveref}
+%\usepackage{csquotes}
+%\usepackage{textcomp}
+%\usepackage{textgreek}
+%\usepackage{pdflscape}
+\usepackage[most]{tcolorbox}
+
+\definecolor{red}{rgb}{0.8,0.0,0.0}
+\definecolor{green}{rgb}{0.2,0.6,0.0}
+\definecolor{blue}{rgb}{0.2,0.4,1.0}
+\definecolor{magenta}{rgb}{0.6,0.2,8.0}
+\addtokomafont{disposition}{\rmfamily}
+\addtokomafont{descriptionlabel}{\rmfamily}
+%\setlength{\columnseprule}{0.4pt}
+\renewcommand{\arraystretch}{1.5}
+\relpenalty=10000
+\binoppenalty=10000
+% Float policy: at most one figure/table per text page, and avoid small float-only pages.
+\setcounter{topnumber}{1}
+\setcounter{bottomnumber}{0}
+\setcounter{totalnumber}{1}
+\renewcommand{\topfraction}{0.85}
+\renewcommand{\bottomfraction}{0}
+\renewcommand{\textfraction}{0.10}
+\renewcommand{\floatpagefraction}{0.75}
+
+\newcommand{\codetag}[1]{%
+  \tcbox[
+    on line,
+    colback=gray!10,
+    colframe=black!10,
+    boxrule=0.5pt,
+    arc=2pt,
+    left=2pt,
+    right=2pt,
+    top=0pt,
+    bottom=0pt,
+    boxsep=0pt
+  ]{\ttfamily\strut\smash{\detokenize{#1}}}%
+}
+\end_preamble
+\use_default_options true
+\begin_modules
+fix-cm
+fixme
+theorems-bytype
+theorems-sec-bytype
+eqs-within-sections
+\end_modules
+\maintain_unincluded_children no
+\language english
+\language_package default
+\inputencoding utf8
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 1
+\bibtex_command biber
+\index_command default
+\float_placement class
+\float_alignment class
+\paperfontsize 9
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize letter
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine biblatex
+\cite_engine_type authoryear
+\biblio_style plain
+\biblio_options maxbibnames=99
+\biblatex_bibstyle numeric
+\biblatex_citestyle numeric
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date true
+\justification false
+\crossref_package refstyle
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\backgroundcolor none
+\fontcolor none
+\notefontcolor lightgray
+\boxbgcolor red
+\table_border_color default
+\table_odd_row_color default
+\table_even_row_color default
+\table_alt_row_colors_start 1
+\index Index
+\shortcut idx
+\color #006600
+\end_index
+\leftmargin 0.5in
+\topmargin 1in
+\rightmargin 0.5in
+\bottommargin 1in
+\headheight 0.5in
+\headsep 0.5in
+\footskip 0.5in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip halfline
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 1
+\papercolumns 1
+\papersides 1
+\paperpagestyle headings
+\tablestyle No_Borders
+\bullet 1 0 9 -1
+\bullet 3 0 7 -1
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\docbook_mathml_version 0
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Introduction
+\end_layout
+
+\begin_layout Subsection
+Standard sets
+\end_layout
+
+\begin_layout Itemize
+Natural numbers 
+\begin_inset Formula $\mathbb{N}=\{0,1,2,3,...\}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Integer numbers 
+\begin_inset Formula $\mathbb{Z}=\{...,-3,-2,-1,0,1,2,3,...\}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Rational numbers 
+\begin_inset Formula $\mathbb{Q}=\{a/b:\forall a,b\in\mathbb{Z}\}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Real numbers 
+\begin_inset Formula $\mathbb{R}$
+\end_inset
+
+ include all rational numbers 
+\begin_inset Quotes xld
+\end_inset
+
+densly
+\begin_inset Quotes xrd
+\end_inset
+
+ plus all irrational numbers devoid of fractional (or decimal) representation.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+ and 
+\begin_inset Formula $\forall a\in\mathbb{R}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+a^{n}=\underset{n}{\underbrace{a\cdot a\cdot\ldots\cdot a}}
+\]
+
+\end_inset
+
+This is sibling to multiplication by 
+\begin_inset Formula $n$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+na=\underset{n}{\underbrace{a+a+\ldots+a}}
+\]
+
+\end_inset
+
+Much like 
+\begin_inset Formula $\forall b\in\mathbb{R}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $ba$
+\end_inset
+
+ makes sense,
+ the same holds for powers 
+\begin_inset Formula $a^{b}$
+\end_inset
+
+ also called an exponential with base 
+\begin_inset Formula $a$
+\end_inset
+
+.
+ Some examples:
+\begin_inset Formula 
+\[
+a^{1}=a
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+a^{0}=1
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+a^{-1}=1/a
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+a^{-n}=1/a^{n}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+a^{1/2}=\sqrt{a}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+a^{1/n}=\sqrt[n]{a}
+\]
+
+\end_inset
+
+
+\begin_inset Formula $x=\sqrt[n]{a}$
+\end_inset
+
+ is such that 
+\begin_inset Formula $x^{n}=a$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The logarithm 
+\begin_inset Formula $x=\log_{b}a$
+\end_inset
+
+ of 
+\begin_inset Formula $a$
+\end_inset
+
+ with base 
+\begin_inset Formula $b$
+\end_inset
+
+ is such that 
+\begin_inset Formula $b^{x}=a$
+\end_inset
+
+.
+ Examples:
+\begin_inset Formula 
+\[
+\log_{10}1000=3
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Properties
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+exp
+\family default
+:
+ 
+\begin_inset Formula $\forall a,b,c\in\mathbb{R}$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+a^{b}a^{c}=a^{b+c}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+(a^{b})^{c}=a^{bc}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+log
+\family default
+:
+ 
+\begin_inset Formula $\forall a,b,c\in\mathbb{R}$
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\log_{a}(bc)=\log_{a}b+\log_{a}c
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\log_{a}b^{c}=c\log_{a}b
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Special
+\end_layout
+
+\begin_layout Standard
+For the special constant 
+\begin_inset Formula $e=2.78....$
+\end_inset
+
+ (similar to 
+\begin_inset Formula $\pi=3.14...$
+\end_inset
+
+),
+ we define 
+\begin_inset Formula $\forall x\in\mathbb{R}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+e^{x}=\exp x\text{ and }\log_{e}x=\log x
+\]
+
+\end_inset
+
+The are inverse to each other:
+\begin_inset Formula 
+\[
+\exp(\log x)=x\text{ and }\log(\exp x)=x
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Notation
+\end_layout
+
+\begin_layout Minisec
+Sum
+\begin_inset Formula 
+\[
+\sum^{n}_{i=1}a_{i}=a_{1}+a_{2}+\ldots a_{n}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Product
+\begin_inset Formula 
+\[
+\prod^{n}_{i=1}a_{i}=a_{1}\cdot a_{2}\cdot\ldots\cdot a_{n}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Examples
+\end_layout
+
+\begin_layout Standard
+Factorial,
+ for 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+n!=1\cdot2\cdot\ldots\cdot n=\prod^{n}_{i=1}i
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Properties
+\end_layout
+
+\begin_layout Standard
+Distributive:
+\begin_inset Formula 
+\[
+(a_{1}+a_{2})(b_{1}+b_{2})=a_{1}(b_{1}+b_{2})+a_{2}(b_{1}+b_{2})=a_{1}b_{1}+a_{1}b_{2}+a_{2}b_{1}+a_{2}b_{2}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\Bigg(\sum^{n}_{i=1}a_{i}\Bigg)\Bigg(\sum^{m}_{j=1}b_{j}\Bigg)=\sum^{n}_{i=1}a_{i}\sum^{m}_{j=1}b_{j}=\sum^{n}_{i=1}\sum^{m}_{j=1}a_{i}b_{j}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\family typewriter
+exp
+\family default
+/
+\family typewriter
+log
+\family default
+:
+\begin_inset Formula 
+\[
+\prod^{n}_{i=1}\exp a_{i}=\exp a_{1}\cdot\exp a_{2}\cdot\ldots\cdot\exp a_{n}=\exp(a_{1}+a_{2}+\ldots+a_{n})=\exp\sum^{n}_{i=1}a_{i}
+\]
+
+\end_inset
+
+
+\begin_inset Formula 
+\[
+\log\prod^{n}_{i=1}a_{i}=\log(a_{1}\cdot a_{2}\cdot\ldots\cdot a_{n})=\log a_{1}+\log a_{2}+\ldots+\log a_{n}=\sum^{n}_{i=1}\log a_{i}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Calculus
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $A,B$
+\end_inset
+
+ be sets.
+ A function 
+\begin_inset Formula $f$
+\end_inset
+
+ from 
+\begin_inset Formula $A$
+\end_inset
+
+ to 
+\begin_inset Formula $B$
+\end_inset
+
+ is an object that maps each 
+\begin_inset Formula $x\in A$
+\end_inset
+
+ to a 
+\begin_inset Formula $y\in B$
+\end_inset
+
+.
+ We write
+\begin_inset Formula 
+\[
+f:A\to B\text{ and }y=f(x)
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+A special case of functions on (subsets of) the real numbers 
+\begin_inset Formula $\mathbb{R}$
+\end_inset
+
+ are interesting because we can see them in figures.
+ Because 
+\begin_inset Formula $\mathbb{R}$
+\end_inset
+
+ is 
+\begin_inset Quotes xld
+\end_inset
+
+dense
+\begin_inset Quotes xrd
+\end_inset
+
+ and 
+\begin_inset Quotes xld
+\end_inset
+
+complete
+\begin_inset Quotes xrd
+\end_inset
+
+ (no gaps and continuous) functions defined on 
+\begin_inset Formula $\mathbb{R}$
+\end_inset
+
+ can have what we call limits.
+\end_layout
+
+\begin_layout Standard
+To undestand limits though,
+ we have to first examine another special class of functions:
+ sequences.
+\end_layout
+
+\begin_layout Subsection
+Sequences
+\end_layout
+
+\begin_layout Standard
+A sequence 
+\begin_inset Formula $a$
+\end_inset
+
+ is a function from the natural numbers to the real numbers,
+ therefore we can write
+\begin_inset Formula 
+\[
+a:\mathbb{N}\to\mathbb{R}
+\]
+
+\end_inset
+
+By convention,
+ for sequences in particular,
+ 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+ we write 
+\begin_inset Formula $a(n)=a_{n}$
+\end_inset
+
+.
+ The essense of a sequence is that it is a progression of values starting from 
+\begin_inset Formula $a_{0}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{1}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{2}$
+\end_inset
+
+,
+ ...
+\end_layout
+
+\begin_layout Standard
+A sequence 
+\begin_inset Formula $a$
+\end_inset
+
+,
+ going towards larger 
+\begin_inset Formula $n$
+\end_inset
+
+ (
+\begin_inset Formula $n\to\infty$
+\end_inset
+
+),
+ may converge to a value 
+\begin_inset Formula $a_{*}\in\mathbb{R}$
+\end_inset
+
+.
+ In that case we write:
+\begin_inset Formula 
+\[
+\lim_{n\to\infty}a_{n}=a_{*}
+\]
+
+\end_inset
+
+We read this as the 
+\emph on
+limit of a as 
+\begin_inset Formula $n$
+\end_inset
+
+ goes to 
+\begin_inset Formula $\infty$
+\end_inset
+
+ equals to 
+\begin_inset Formula $a_{*}$
+\end_inset
+
+
+\emph default
+.
+ The most typical example is that of 
+\begin_inset Formula $a_{n}=1/n$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\lim_{n\to\infty}\dfrac{1}{n}=0
+\]
+
+\end_inset
+
+Not all sequences converge.
+ The ones that do not:
+\end_layout
+
+\begin_layout Itemize
+Either diverge,
+ meaning they go to either infinity.
+ For example
+\begin_inset Formula 
+\[
+a_{n}=n
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\lim_{n\to\infty}a_{n}=\infty$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Or simply not converging.
+ For example
+\begin_inset Formula 
+\[
+a_{n}=\begin{cases}
+1 & \forall n\text{ odd}\\
+0 & \forall n\text{ even}
+\end{cases}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Real functions
+\end_layout
+
+\begin_layout Standard
+A real function 
+\begin_inset Formula $f$
+\end_inset
+
+ is simply 
+\begin_inset Formula $f:A\to\mathbb{R}$
+\end_inset
+
+ where 
+\begin_inset Formula $A\subseteq\mathbb{R}$
+\end_inset
+
+.
+ As far as subsets of reals go,
+ there is a special class of subsets called intervals.
+ An interval 
+\begin_inset Formula $I\subseteq\mathbb{R}$
+\end_inset
+
+ is a 
+\begin_inset Quotes xld
+\end_inset
+
+contiguous
+\begin_inset Quotes xrd
+\end_inset
+
+ subset of reals and is thus defined by two endpoints 
+\begin_inset Formula $a,b\in\mathbb{R}$
+\end_inset
+
+.
+ There are two fundamental types of intervals.
+ Let 
+\begin_inset Formula $a,b\in\mathbb{R}$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Itemize
+Open intervals 
+\begin_inset Formula $(a,b)\subseteq\mathbb{R}$
+\end_inset
+
+ which contain all 
+\begin_inset Formula $x\in\mathbb{R}$
+\end_inset
+
+ such that 
+\begin_inset Formula $a<x<b$
+\end_inset
+
+,
+ therefore 
+\begin_inset Formula $a\notin(a,b)$
+\end_inset
+
+ and 
+\begin_inset Formula $b\notin(a,b)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Closed intervals 
+\begin_inset Formula $[a,b]\subseteq\mathbb{R}$
+\end_inset
+
+ which contain all 
+\begin_inset Formula $x\in\mathbb{R}$
+\end_inset
+
+ such that 
+\begin_inset Formula $a\leq x\leq b$
+\end_inset
+
+,
+ therefore 
+\begin_inset Formula $a\in(a,b)$
+\end_inset
+
+ and 
+\begin_inset Formula $b\in(a,b)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Mixed intervals,
+ like 
+\begin_inset Formula $[a,b)$
+\end_inset
+
+ or 
+\begin_inset Formula $(a,b]$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+An interesting more advanced example is of an interval 
+\begin_inset Formula $[a,b]$
+\end_inset
+
+ (assume closed) that is missing a value 
+\begin_inset Formula $c$
+\end_inset
+
+ somewhere in it.
+ That subset is 
+\begin_inset Formula $[a,c)\cup(c,b]$
+\end_inset
+
+.
+ A function defined on such a subset is said to be missing a value.
+ In fact it misses several values left to 
+\begin_inset Formula $a$
+\end_inset
+
+ and right to 
+\begin_inset Formula $b$
+\end_inset
+
+ but here we emphasise on the 
+\begin_inset Quotes xld
+\end_inset
+
+hole
+\begin_inset Quotes xrd
+\end_inset
+
+ 
+\begin_inset Formula $c$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Limits
+\end_layout
+
+\begin_layout Standard
+We can understand limits now using the machinery developed in sequences.
+ For a function 
+\begin_inset Formula $f$
+\end_inset
+
+ we ask what is the value 
+\begin_inset Formula $f(x)$
+\end_inset
+
+ approach as 
+\begin_inset Formula $x$
+\end_inset
+
+ approaches a value 
+\begin_inset Formula $x_{0}\in\mathbb{R}$
+\end_inset
+
+.
+ We write
+\begin_inset Formula 
+\[
+\lim_{x\to x_{0}}f(x)
+\]
+
+\end_inset
+
+What is a good way to calculate this?
+ Using limits of sequences.
+ First of all this limit does not always exist.
+ For every converging sequence 
+\begin_inset Formula $a:\mathbb{N}\to A\setminus\{x_{0}\}$
+\end_inset
+
+ with 
+\begin_inset Formula $\lim_{n\to\infty}a_{n}=x_{0}$
+\end_inset
+
+,
+ if the limit 
+\begin_inset Formula $\lim_{n\to\infty}f(a_{n})$
+\end_inset
+
+ exists and is the same,
+ them the limit of 
+\begin_inset Formula $f$
+\end_inset
+
+ towards 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+ exists and is
+\begin_inset Formula 
+\[
+\lim_{x\to x_{0}}f(x)=\lim_{n\to\infty}f(a_{n})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Continuity
+\end_layout
+
+\begin_layout Standard
+A function 
+\begin_inset Formula $f:A\to\mathbb{R}$
+\end_inset
+
+ is continuous on 
+\begin_inset Formula $x_{0}\in A$
+\end_inset
+
+ if and only if
+\begin_inset Formula 
+\[
+\lim_{x\to x_{0}}f(x)=f(x_{0})
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Derivatives
+\end_layout
+
+\begin_layout Standard
+For continuous (only) functions,
+ a 
+\begin_inset Quotes xld
+\end_inset
+
+differential
+\begin_inset Quotes xrd
+\end_inset
+
+ pace of change makes sense.
+ Let 
+\begin_inset Formula $f:A\to\mathbb{R}$
+\end_inset
+
+ be a (real) function and 
+\begin_inset Formula $x_{0}\in A$
+\end_inset
+
+ such that 
+\begin_inset Formula $f$
+\end_inset
+
+ is continuous on 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+,
+ meaning
+\begin_inset Formula 
+\[
+\lim_{x\to x_{0}}f(x)=f(x_{0})
+\]
+
+\end_inset
+
+We ask how much 
+\begin_inset Formula $f$
+\end_inset
+
+ changes if we move slightly away from 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $x\in A\setminus\{x_{0}\}$
+\end_inset
+
+.
+ The two points 
+\begin_inset Formula $(x_{0},f(x_{0}))$
+\end_inset
+
+ and 
+\begin_inset Formula $(x,f(x))$
+\end_inset
+
+ define a line with slope
+\begin_inset Formula 
+\[
+\dfrac{f(x)-f(x_{0})}{x-x_{0}}
+\]
+
+\end_inset
+
+As we approach 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+ with 
+\begin_inset Formula $x$
+\end_inset
+
+ (
+\begin_inset Formula $x\rightarrow x_{0})$
+\end_inset
+
+ we arrive at the slope of the tangent to 
+\begin_inset Formula $f$
+\end_inset
+
+ on 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+ line:
+\begin_inset Formula 
+\[
+\lim_{x\to x_{0}}\dfrac{f(x)-f(x_{0})}{x-x_{0}}
+\]
+
+\end_inset
+
+So if a function is not continuous on 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+ it cannot be differentiable on 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+ either.
+ The converse is not true,
+ a continuous on 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+ function mey still be not differentiable on 
+\begin_inset Formula $x_{0}$
+\end_inset
+
+.
+\end_layout
+
+\end_body
+\end_document
