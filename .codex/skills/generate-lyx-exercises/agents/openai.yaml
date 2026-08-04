@@ -1,0 +1,4 @@
+interface:
+  display_name: "Generate LyX Exercises"
+  short_description: "Turn LyX theory into rigorous exercises"
+  default_prompt: "Use $generate-lyx-exercises to create a comprehensive practical exercise from this LyX theory file."

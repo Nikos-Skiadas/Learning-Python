@@ -31,7 +31,6 @@ fix-cm
 fixltx2e
 fixme
 theorems-bytype
-theorems-sec-bytype
 \end_modules
 \maintain_unincluded_children no
 \language english
@@ -728,6 +727,12 @@ The empy set is a subset of every set:
 \end_layout
 
 \begin_layout Subsubsection
+\begin_inset CommandInset label
+LatexCommand label
+name "subsec:Basic-operations"
+
+\end_inset
+
 Basic operations
 \end_layout
 
@@ -1004,6 +1009,1286 @@ Example:
 \end_inset
 
 
+\end_layout
+
+\begin_layout Minisec
+Set difference
+\end_layout
+
+\begin_layout Standard
+The 
+\emph on
+set difference
+\emph default
+ of two sets 
+\begin_inset Formula $A$
+\end_inset
+
+ and 
+\begin_inset Formula $B$
+\end_inset
+
+,
+ is a set,
+ denoted 
+\begin_inset Formula $A\setminus B$
+\end_inset
+
+ or 
+\begin_inset Formula $A-B$
+\end_inset
+
+,
+ whose elements are those elements that belong to 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ but not to 
+\begin_inset Formula $B$
+\end_inset
+
+.
+ That is,
+\begin_inset Formula 
+\[
+A\setminus B=\{x|x\in A\wedge x\notin B\}.
+\]
+
+\end_inset
+
+Note that 
+\begin_inset Formula $A\setminus B=A\setminus(A\cap B)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+When 
+\begin_inset Formula $B\subseteq A$
+\end_inset
+
+ the difference 
+\begin_inset Formula $A\setminus B=\neg_{A}B$
+\end_inset
+
+ is also called the 
+\emph on
+complement
+\emph default
+ of 
+\begin_inset Formula $B$
+\end_inset
+
+ in 
+\begin_inset Formula $A$
+\end_inset
+
+.
+ Naively speaking,
+\begin_inset Formula 
+\[
+\neg B=\{x|x\notin B\},
+\]
+
+\end_inset
+
+but this does not lead to a set as is.
+ When all sets that are considered are subsets of a fixed 
+\emph on
+universal set
+\emph default
+ 
+\begin_inset Formula $U$
+\end_inset
+
+,
+ the complement 
+\begin_inset Formula $\neg_{U}A$
+\end_inset
+
+ is often called the absolute complement of 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ and is denoted simply as 
+\begin_inset Formula $\neg A$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The 
+\emph on
+symmetric difference
+\emph default
+ of two sets 
+\begin_inset Formula $A$
+\end_inset
+
+ and 
+\begin_inset Formula $B$
+\end_inset
+
+,
+ denoted 
+\begin_inset Formula $A\bigtriangleup B$
+\end_inset
+
+,
+ is the set of those elements that belong to 
+\begin_inset Formula $A$
+\end_inset
+
+ or 
+\begin_inset Formula $B$
+\end_inset
+
+ but not on both:
+\begin_inset Formula 
+\[
+A\bigtriangleup B=(A\setminus B)\cup(B\setminus A)=(A\cup B)\setminus(A\cap B).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Comprehensive practical exercises
+\end_layout
+
+\begin_layout Standard
+A training team is auditing the prerequisites completed by twelve learners in 
+\begin_inset Formula $U$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $\mathcal{F}=\{P,L,S\},$
+\end_inset
+
+ record completion of 
+\family typewriter
+python
+\family default
+ (
+\begin_inset Formula $P)$
+\end_inset
+
+,
+ linear algebra (
+\begin_inset Formula $L$
+\end_inset
+
+),
+ and statistics (
+\begin_inset Formula $S$
+\end_inset
+
+),
+ respectively.
+ Let
+\begin_inset Formula 
+\begin{gather*}
+U=\{1,2,3,\ldots,12\},\\
+P=\{1,2,4,5,7,9,11\},\\
+L=\{2,3,5,6,9,10\},\\
+S=\{1,3,5,7,8,10,12\},\\
+R=\{10,1,5,3,12,8,3,7,5\}.
+\end{gather*}
+
+\end_inset
+
+All sets are considered relative to 
+\begin_inset Formula $U$
+\end_inset
+
+ unless stated otherwise.
+ Show your reasoning whenever a justification is requested.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Newpage newpage
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+Representations and membership (20 points).
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Rewrite 
+\begin_inset Formula $R$
+\end_inset
+
+ without repetitions and in increasing order.
+ Decide whether 
+\begin_inset Formula $R=S$
+\end_inset
+
+ and justify the decision using extensionality.
+\end_layout
+
+\begin_layout Enumerate
+Expand 
+\begin_inset Formula $U$
+\end_inset
+
+ without an ellipsis.
+ List 
+\begin_inset Formula $E=\{x\in U\mid x\text{ is even}\}$
+\end_inset
+
+;
+ describe 
+\begin_inset Formula $H=\{2,3,5,7,11\}$
+\end_inset
+
+ in set-builder notation.
+\end_layout
+
+\begin_layout Enumerate
+Mark each statement true or false and justify briefly:
+ 
+\begin_inset Formula $5\in P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\{5\}\in P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\{5\}\subseteq P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\emptyset\in P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\emptyset\subseteq P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $P\in\mathcal{F}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $5\in\mathcal{F}$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $\{P,L\}\subset\mathcal{F}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Explain why 
+\begin_inset Formula $\emptyset$
+\end_inset
+
+ and 
+\begin_inset Formula $\{\emptyset\}$
+\end_inset
+
+ are different sets.
+\end_layout
+
+\end_deeper
+\begin_layout Solution
+_
+\end_layout
+
+\begin_layout Exercise
+Relations between sets (25 points).
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Classify each statement as true or false:
+ 
+\begin_inset Formula $P\cap L\subset P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $P\subseteq P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $P\subset P$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $S\subseteq P\cup L$
+\end_inset
+
+.
+ For every false statement,
+ provide a counterexample or the corrected relation.
+\end_layout
+
+\begin_layout Enumerate
+For each pair among 
+\begin_inset Formula $P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $L$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $S$
+\end_inset
+
+,
+ decide whether either set contains the other;
+ give a counterexample for each non-containment claim.
+\end_layout
+
+\begin_layout Enumerate
+Verify both 
+\begin_inset Formula $R\subseteq S$
+\end_inset
+
+ and 
+\begin_inset Formula $S\subseteq R$
+\end_inset
+
+,
+ and state what follows.
+\end_layout
+
+\begin_layout Enumerate
+Rewrite the true relations 
+\begin_inset Formula $P\cap L\subset P$
+\end_inset
+
+ and 
+\begin_inset Formula $\{P,L\}\subset\mathcal{F}$
+\end_inset
+
+ using superset notation.
+ Explain why 
+\begin_inset Formula $\emptyset\subseteq A$
+\end_inset
+
+ for every set 
+\begin_inset Formula $A$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Solution
+_
+\end_layout
+
+\begin_layout Exercise
+Operations on sets (35 points).
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Compute in roster notation:
+ 
+\begin_inset Formula $P\cap L$
+\end_inset
+
+,
+ 
+\begin_inset Formula $P\cup L$
+\end_inset
+
+,
+ 
+\begin_inset Formula $P\setminus L$
+\end_inset
+
+,
+ 
+\begin_inset Formula $L\setminus P$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $P\bigtriangleup L$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Compute the family operations 
+\begin_inset Formula $\bigcap\mathcal{F}$
+\end_inset
+
+ and 
+\begin_inset Formula $\bigcup\mathcal{F}$
+\end_inset
+
+.
+ Name which result is a singleton and decide whether either result is empty.
+\end_layout
+
+\begin_layout Enumerate
+Use rosters to verify commutativity for 
+\begin_inset Formula $P\cap L$
+\end_inset
+
+ and 
+\begin_inset Formula $P\cup L$
+\end_inset
+
+ and verify associativity by comparing both sides of
+\begin_inset Formula 
+\[
+(P\cap L)\cap S=P\cap(L\cap S)\quad\text{and}\quad(P\cup L)\cup S=P\cup(L\cup S).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Verify from the computed rosters that 
+\begin_inset Formula $P\setminus L=P\setminus(P\cap L)$
+\end_inset
+
+,
+ and that both 
+\begin_inset Formula $(P\setminus L)\cup(L\setminus P)$
+\end_inset
+
+ and 
+\begin_inset Formula $(P\cup L)\setminus(P\cap L)$
+\end_inset
+
+ produce 
+\begin_inset Formula $P\bigtriangleup L$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Compute the complement of 
+\begin_inset Formula $P$
+\end_inset
+
+ in 
+\begin_inset Formula $U$
+\end_inset
+
+,
+ written 
+\begin_inset Formula $\neg_{U}P=U\setminus P$
+\end_inset
+
+.
+ Explain why the unrestricted expression 
+\begin_inset Formula $\{x\mid x\notin P\}$
+\end_inset
+
+ does not specify a set unless a containing set is supplied.
+\end_layout
+
+\end_deeper
+\begin_layout Solution
+_
+\end_layout
+
+\begin_layout Exercise
+Decision rules (20 points).
+ Translate each rule into a set expression or set-builder formula,
+ then give its roster.
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+Learners who completed Python and linear algebra but not statistics.
+\end_layout
+
+\begin_layout Enumerate
+Learners who completed exactly one of Python and linear algebra.
+\end_layout
+
+\begin_layout Enumerate
+Learners who completed all three prerequisites.
+\end_layout
+
+\begin_layout Enumerate
+At least one prerequisite;
+ none.
+ How are these two sets related in 
+\begin_inset Formula $U$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Solution
+_
+\end_layout
+
+\begin_layout Subsection
+Functions
+\end_layout
+
+\begin_layout Standard
+A 
+\emph on
+function
+\emph default
+ 
+\begin_inset Formula $f$
+\end_inset
+
+ from a set 
+\begin_inset Formula $A$
+\end_inset
+
+ to a set 
+\begin_inset Formula $B$
+\end_inset
+
+ is a rule that assigns to each element of 
+\begin_inset Formula $A$
+\end_inset
+
+ a unique element of 
+\begin_inset Formula $B$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The notation 
+\begin_inset Formula $f:A\to B$
+\end_inset
+
+ denotes a function 
+\begin_inset Formula $f$
+\end_inset
+
+ from 
+\begin_inset Formula $A$
+\end_inset
+
+ to 
+\begin_inset Formula $B$
+\end_inset
+
+.
+ The result of applying 
+\begin_inset Formula $f$
+\end_inset
+
+ to an element 
+\begin_inset Formula $a\in A$
+\end_inset
+
+ is denoted 
+\begin_inset Formula $f(a)$
+\end_inset
+
+;
+ it is called the 
+\emph on
+value
+\emph default
+ of 
+\begin_inset Formula $f$
+\end_inset
+
+ at 
+\begin_inset Formula $a$
+\end_inset
+
+,
+ or the 
+\emph on
+image
+\emph default
+ of 
+\begin_inset Formula $a$
+\end_inset
+
+ under 
+\begin_inset Formula $f$
+\end_inset
+
+.
+ The set 
+\begin_inset Formula $A$
+\end_inset
+
+ is called the 
+\emph on
+domain
+\emph default
+ of 
+\begin_inset Formula $f$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $B$
+\end_inset
+
+ is called the 
+\emph on
+codomain
+\emph default
+ of 
+\begin_inset Formula $f$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The graph of a function 
+\begin_inset Formula $f:A\to B$
+\end_inset
+
+ is the set of all ordered pairs 
+\begin_inset Formula $(a,f(a))$
+\end_inset
+
+ as 
+\begin_inset Formula $a$
+\end_inset
+
+ ranged over all elements of 
+\begin_inset Formula $A$
+\end_inset
+
+.
+ It is a subset of the Cartesian product 
+\begin_inset Formula $A\times B$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Minisec
+Indexed family
+\end_layout
+
+\begin_layout Standard
+Intuitively,
+ an indexed family is a set whose elements are labelled with the elements of another (index) set 
+\begin_inset Formula $I\subseteq\mathbb{N}$
+\end_inset
+
+.
+ These labels allow the same element to occure several times in the family.
+\end_layout
+
+\begin_layout Standard
+An indexed family is a function that has an index set 
+\begin_inset Formula $I$
+\end_inset
+
+ as its domain.
+ Generally,
+ the usual functional notation is not used for indexed families.
+ Instead,
+ the element 
+\begin_inset Formula $i$
+\end_inset
+
+ of the index set 
+\begin_inset Formula $I$
+\end_inset
+
+ is written as a subscript of the same name of the family,
+ such as in 
+\begin_inset Formula $a_{i}$
+\end_inset
+
+.
+ For
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $I=\{0,1\}$
+\end_inset
+
+,
+ we have an ordered pair.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $I=\{0,...,n-1\}$
+\end_inset
+
+ with 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+,
+ we have an 
+\begin_inset Formula $n$
+\end_inset
+
+-tuple.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $I=\mathbb{N}$
+\end_inset
+
+,
+ we have a sequence.
+\end_layout
+
+\begin_layout Standard
+The above notations
+\begin_inset Formula 
+\[
+\bigcup\nolimits_{A\in\mathcal{S}}A\text{ and }\bigcap\nolimits_{A\in\mathcal{S}}
+\]
+
+\end_inset
+
+are commonly replaced with a notation involving indexed families,
+ namely
+\begin_inset Formula 
+\[
+\bigcup\nolimits_{i\in I}A_{i}=\{x|(\exists i\in I\}x\in A_{i})\text{ and }\bigcap\nolimits_{i\in I}A_{i}=\{x|(\forall i\in I\}x\in A_{i}).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+External operations
+\end_layout
+
+\begin_layout Standard
+In 
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "subsec:Basic-operations"
+plural "false"
+caps "false"
+noprefix "false"
+nolink "false"
+tuple "list"
+
+\end_inset
+
+,
+ all elements of sets produced by set operations belong to previously defined sets.
+ In this section,
+ other set operations are considered,
+ which produce sets whose elements can be outside all previously considered sets.
+ These include:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset CommandInset ref
+LatexCommand formatted
+reference "minisec:Cartesian-product"
+plural "false"
+caps "false"
+noprefix "false"
+nolink "false"
+tuple "list"
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+disjoint union
+\end_layout
+
+\begin_layout Itemize
+set exponentiation
+\end_layout
+
+\begin_layout Itemize
+power set
+\end_layout
+
+\begin_layout Minisec
+\begin_inset CommandInset label
+LatexCommand label
+name "minisec:Cartesian-product"
+
+\end_inset
+
+Cartesian product
+\end_layout
+
+\begin_layout Standard
+Given sets 
+\begin_inset Formula $A$
+\end_inset
+
+ and 
+\begin_inset Formula $B$
+\end_inset
+
+,
+ their 
+\emph on
+Cartesian product
+\emph default
+ (or simply 
+\emph on
+product
+\emph default
+),
+ denoted 
+\begin_inset Formula $A\times B$
+\end_inset
+
+,
+ is the set of all ordered pairs 
+\begin_inset Formula $(a,b)$
+\end_inset
+
+ such that 
+\begin_inset Formula $a\in A$
+\end_inset
+
+ and 
+\begin_inset Formula $b\in B$
+\end_inset
+
+;
+ that is,
+\begin_inset Formula 
+\[
+A\times B=\{(a,b)|a\in A\wedge b\in B\}.
+\]
+
+\end_inset
+
+The definition makes sense even if 
+\begin_inset Formula $A=B$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+Given an (ordered) indexed family of sets 
+\begin_inset Formula $(A_{i})_{i\in I}$
+\end_inset
+
+,
+ the product
+\begin_inset Formula 
+\[
+\prod\nolimits_{i\in I}A_{i}
+\]
+
+\end_inset
+
+is the set of all indexed families of elements 
+\begin_inset Formula $(a_{i})_{i\in I}$
+\end_inset
+
+ such that 
+\begin_inset Formula $a_{i}\in A_{i}$
+\end_inset
+
+,
+ for each 
+\begin_inset Formula $i\in I$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Minisec
+Set exponentiation
+\end_layout
+
+\begin_layout Standard
+Given two sets 
+\begin_inset Formula $A$
+\end_inset
+
+ and 
+\begin_inset Formula $B$
+\end_inset
+
+,
+ the 
+\emph on
+set exponentiation
+\emph default
+,
+ denoted 
+\begin_inset Formula $B^{A}$
+\end_inset
+
+,
+ is the set that has as elements all functions 
+\begin_inset Formula $A\rightarrow B$
+\end_inset
+
+,
+ i.e.:
+\begin_inset Formula 
+\[
+B^{A}=\{f|f:A\rightarrow B\}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Equivalently,
+ 
+\begin_inset Formula $B^{A}$
+\end_inset
+
+ can be viewed as the Cartesian product of a family,
+ indexed by 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ of sets that are all equal to 
+\begin_inset Formula $F$
+\end_inset
+
+.
+ This explains the terminology and the notation,
+ since exponentiation with integer exponents is a product where all factors are equal to the base:
+\begin_inset Formula 
+\[
+B^{A}=\prod\nolimits_{a\in A}B=\{(b_{a})_{a\in A}|(\forall a\in A)b_{a}\in B\}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection*
+Comprehensive practical exercises
+\end_layout
+
+\begin_layout Exercise
+Functions and graphs (30 points).
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+A training lab assigns each model run to a compute device.
+ Let the run set,
+ device set,
+ and three candidate assignment graphs be
+\begin_inset Formula 
+\begin{gather*}
+R=\{0,1,2\},\\
+D=\{\mathrm{cpu},\mathrm{gpu}\},\\
+F=\{(0,\mathrm{cpu}),(1,\mathrm{gpu}),(2,\mathrm{cpu})\},\\
+G=\{(0,\mathrm{cpu}),(1,\mathrm{gpu})\},\\
+H=\{(0,\mathrm{cpu}),(0,\mathrm{gpu}),(1,\mathrm{cpu}),(2,\mathrm{gpu})\}.
+\end{gather*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Determine which of 
+\begin_inset Formula $F$
+\end_inset
+
+,
+ 
+\begin_inset Formula $G$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $H$
+\end_inset
+
+ is the graph of a function from 
+\begin_inset Formula $R$
+\end_inset
+
+ to 
+\begin_inset Formula $D$
+\end_inset
+
+.
+ For each invalid candidate,
+ identify whether existence or uniqueness fails and where.
+\end_layout
+
+\begin_layout Enumerate
+Let 
+\begin_inset Formula $f$
+\end_inset
+
+ be the function represented by the valid graph.
+ Write its declaration,
+ state its domain and codomain,
+ compute 
+\begin_inset Formula $f(0)$
+\end_inset
+
+,
+ 
+\begin_inset Formula $f(1)$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $f(2)$
+\end_inset
+
+,
+ and name the image of 
+\begin_inset Formula $1$
+\end_inset
+
+ under 
+\begin_inset Formula $f$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Construct 
+\begin_inset Formula $R\times D$
+\end_inset
+
+ in roster notation and verify directly that the graph of 
+\begin_inset Formula $f$
+\end_inset
+
+ is a proper subset of it.
+\end_layout
+
+\end_deeper
+\begin_layout Solution
+_
+\end_layout
+
+\begin_layout Exercise
+Indexed families (30 points).
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Consider an indexed family of status labels and an indexed family of sets:
+\begin_inset Formula 
+\begin{gather*}
+I=\{0,1,2,3\},\\
+C=\{\mathrm{red},\mathrm{blue},\mathrm{green}\},\\
+(a_{i})_{i\in I}=(\mathrm{red},\mathrm{blue},\mathrm{red},\mathrm{green}),\\
+J=\{0,1,2\},\\
+A_{0}=\{1,2,4\},\\
+A_{1}=\{2,3,4\},\\
+A_{2}=\{2,4,5\}.
+\end{gather*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+View 
+\begin_inset Formula $(a_{i})_{i\in I}$
+\end_inset
+
+ as a function 
+\begin_inset Formula $a:I\to C$
+\end_inset
+
+ and list its four values.
+ Explain why 
+\begin_inset Formula $\mathrm{red}$
+\end_inset
+
+ may occur twice in the indexed family even though a set does not contain repeated elements.
+\end_layout
+
+\begin_layout Enumerate
+Classify 
+\begin_inset Formula $(a_{i})_{i\in I}$
+\end_inset
+
+ as an ordered pair,
+ an 
+\begin_inset Formula $n$
+\end_inset
+
+-tuple,
+ or a sequence.
+ State what the corresponding family would be called if its index set were instead 
+\begin_inset Formula $\{0,1\}$
+\end_inset
+
+ or 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Compute 
+\begin_inset Formula $\bigcup_{i\in J}A_{i}$
+\end_inset
+
+ and 
+\begin_inset Formula $\bigcap_{i\in J}A_{i}$
+\end_inset
+
+ in roster notation.
+ Also write each operation as a set-builder condition using the appropriate existential or universal quantifier.
+\end_layout
+
+\begin_layout Enumerate
+Use the quantifier meanings to explain why 
+\begin_inset Formula $3$
+\end_inset
+
+ belongs only to the indexed union,
+ while 
+\begin_inset Formula $2$
+\end_inset
+
+ belongs to both.
+\end_layout
+
+\end_deeper
+\begin_layout Solution
+_
+\end_layout
+
+\begin_layout Exercise
+Cartesian products and set exponentiation (40 points).
+\end_layout
+
+\begin_deeper
+\begin_layout Standard
+Let
+\begin_inset Formula 
+\begin{gather*}
+X=\{a,b\},\\
+Y=\{0,1\},\\
+K=\{0,1,2\},\\
+(C_{i})_{i\in K}=(\{a,b\},\{0,1\},\{\ast\}).
+\end{gather*}
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Compute 
+\begin_inset Formula $X\times Y$
+\end_inset
+
+,
+ 
+\begin_inset Formula $Y\times X$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $X\times X$
+\end_inset
+
+ in roster notation.
+ Decide whether the first two products are equal and explain the role of coordinate order.
+\end_layout
+
+\begin_layout Enumerate
+Compute the indexed product 
+\begin_inset Formula $\prod_{i\in K}C_{i}$
+\end_inset
+
+ by listing every indexed triple 
+\begin_inset Formula $(c_{0},c_{1},c_{2})$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+List all elements of 
+\begin_inset Formula $Y^{X}$
+\end_inset
+
+ by representing each function 
+\begin_inset Formula $X\to Y$
+\end_inset
+
+ first by its graph and then by the indexed pair 
+\begin_inset Formula $(f(a),f(b))$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Verify concretely that 
+\begin_inset Formula $Y^{X}=\prod_{x\in X}Y$
+\end_inset
+
+.
+ Explain which set supplies the domain,
+ which supplies the codomain,
+ and why this example contains four functions.
+\end_layout
+
+\begin_layout Enumerate
+Why are Cartesian product and set exponentiation external operations?
+\end_layout
+
+\end_deeper
+\begin_layout Solution
+_
 \end_layout
 
 \end_body
