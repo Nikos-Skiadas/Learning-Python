@@ -1220,7 +1220,7 @@ All sets are considered relative to
 \end_layout
 
 \begin_layout Exercise
-Representations and membership (20 points).
+Representations and membership (19/20 points).
 \end_layout
 
 \begin_deeper
@@ -1256,7 +1256,15 @@ Expand
 \end_layout
 
 \begin_layout Enumerate
-Mark each statement true or false and justify briefly:
+Mark each statement 
+\family typewriter
+true
+\family default
+ or 
+\family typewriter
+false
+\family default
+ and justify briefly:
  
 \begin_inset Formula $5\in P$
 \end_inset
@@ -1316,8 +1324,95 @@ Explain why
 _
 \end_layout
 
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $R=\{1,3,5,7,8,10,12\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $S=\{1,3,5,7,8,10,12\}=R$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $U=\{1,2,3,4,5,6,7,8,9,10,11,12\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $E=\{2,4,6,8,10,12\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $H=\{x\in U|x\text{ is prime}\}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+true
+\family default
+,
+ 
+\family typewriter
+false
+\family default
+,
+ 
+\family typewriter
+true
+\family default
+,
+ 
+\family typewriter
+false
+\family default
+,
+ 
+\family typewriter
+true
+\family default
+,
+ 
+\family typewriter
+true
+\family default
+,
+ 
+\family typewriter
+false
+\family default
+,
+ and 
+\family typewriter
+true
+\family default
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\{\emptyset\}$
+\end_inset
+
+ is a set of sets with 1 element,
+ the empty set,
+ whilst 
+\begin_inset Formula $\emptyset$
+\end_inset
+
+ has no elements at all.
+\end_layout
+
+\end_deeper
 \begin_layout Exercise
-Relations between sets (25 points).
+Relations between sets (23/25 points).
 \end_layout
 
 \begin_deeper
@@ -1406,8 +1501,126 @@ Rewrite the true relations
 _
 \end_layout
 
+\begin_deeper
+\begin_layout Enumerate
+_
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $P\cap L=\{2,5,9\}\subset\{1,2,4,5,7,9,11\}=P$
+\end_inset
+
+ thus true.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $P\subseteq P$
+\end_inset
+
+ is true.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $P\subset P$
+\end_inset
+
+ would mean 
+\begin_inset Formula $P\subseteq P$
+\end_inset
+
+ and 
+\begin_inset Formula $P\neq P$
+\end_inset
+
+,
+ but the latter is false,
+ hence all false.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $S=\{1,3,5,7,8,10,12\}$
+\end_inset
+
+ while 
+\begin_inset Formula $P\cup L=\{1,2,3,4,5,6,7,9,10,11\}$
+\end_inset
+
+,
+ thus 
+\begin_inset Formula $S\neq P\cup L$
+\end_inset
+
+,
+ thus false.
+\end_layout
+
+\end_deeper
+\begin_layout Enumerate
+\begin_inset Formula $P\neq L$
+\end_inset
+
+,
+ 
+\begin_inset Formula $P\neq S$
+\end_inset
+
+,
+ 
+\begin_inset Formula $L\neq S$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $R\subseteq S$
+\end_inset
+
+ and 
+\begin_inset Formula $S\subseteq R$
+\end_inset
+
+ because 
+\begin_inset Formula $S=R$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $P\supset P\cap L$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathcal{F}\supset\{P,L\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\forall x(x\in\emptyset\Longrightarrow x\in A)$
+\end_inset
+
+ is true.
+ In practice every set 
+\begin_inset Formula $A\neq\emptyset$
+\end_inset
+
+ has elements that 
+\begin_inset Formula $\emptyset$
+\end_inset
+
+ has not,
+ while 
+\begin_inset Formula $\emptyset\subseteq\emptyset$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
 \begin_layout Exercise
-Operations on sets (35 points).
+Operations on sets (35/35 points).
 \end_layout
 
 \begin_deeper
@@ -1521,6 +1734,75 @@ Compute the complement of
 _
 \end_layout
 
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $P\cap L=\{2,5,9\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $P\cup L=\{1,2,3,4,5,6,7,9,10,11\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $P\setminus L=\{1,4,7,11\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $L\setminus P=\{3,6,10\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $P\bigtriangleup L=\{1,3,4,6,7,10,11\}$
+\end_inset
+
+.
+ 
+\begin_inset Formula $(P\bigtriangleup L)\cap(P\cap L)=\emptyset$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula 
+\[
+\bigcap\mathcal{F}=\bigcap\nolimits_{A\in\mathcal{F}}A=\{5\}\text{ and }\bigcup\mathcal{F}=\bigcup\nolimits_{A\in\mathcal{F}}A=U.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+
+\family typewriter
+skip
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $(P\setminus L)\cup(L\setminus P)=\{1,3,4,6,7,10,11\}=P\bigtriangleup L$
+\end_inset
+
+ while 
+\begin_inset Formula $(P\cup L)\setminus(P\cap L)=\{1,3,4,6,7,10,11\}=P\bigtriangleup L$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\neg_{U}P=U\setminus P=\{3,6,8,12\}$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
 \begin_layout Exercise
 Decision rules (20 points).
  Translate each rule into a set expression or set-builder formula,
@@ -1555,6 +1837,44 @@ At least one prerequisite;
 _
 \end_layout
 
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $(P\cap L)\setminus S$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $P\bigtriangleup L$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula 
+\[
+P\cap L\cap S=\bigcap\mathcal{F}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula 
+\[
+P\cup L\cup S=\bigcup\mathcal{F}=U\text{ and }\neg_{U}\bigcup\mathcal{F}=\neg_{U}\bigcup\nolimits_{A\in\mathcal{F}}A=\bigcap\nolimits_{A\in\mathcal{F}}\neg_{U}A=\emptyset
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_deeper
 \begin_layout Subsection
 Functions
 \end_layout
@@ -1901,7 +2221,12 @@ The definition makes sense even if
 \begin_inset Formula $A=B$
 \end_inset
 
-.
+,
+ in which case we write 
+\begin_inset Formula $A\times A=A^{2}$
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -2001,6 +2326,162 @@ B^{A}=\prod\nolimits_{a\in A}B=\{(b_{a})_{a\in A}|(\forall a\in A)b_{a}\in B\}.
 \end_inset
 
 
+\end_layout
+
+\begin_layout Minisec
+Power Set
+\end_layout
+
+\begin_layout Standard
+The power set of a set 
+\begin_inset Formula $E$
+\end_inset
+
+ is the set that has all subsets of 
+\begin_inset Formula $E$
+\end_inset
+
+ as elements,
+ including 
+\begin_inset Formula $\emptyset$
+\end_inset
+
+ and 
+\begin_inset Formula $E$
+\end_inset
+
+.
+ It is often denoted 
+\begin_inset Formula $\mathcal{P}(E)$
+\end_inset
+
+.
+ For example:
+\begin_inset Formula 
+\[
+\mathcal{P}(\{0,1,2\})=\{\emptyset,\{0\},\{1\},\{2\},\{0,1\},\{0,2\},\{1,2\},\{0,1,2\}\}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+There is a natural one-to one correspondence between the subsets of 
+\begin_inset Formula $E$
+\end_inset
+
+ and the functions from 
+\begin_inset Formula $E$
+\end_inset
+
+ to 
+\begin_inset Formula $\{0,1\}$
+\end_inset
+
+;
+ this correspondence associates to each subset the function that takes the value 
+\begin_inset Formula $1$
+\end_inset
+
+ on the subset an 
+\begin_inset Formula $0$
+\end_inset
+
+ everywhere else.
+ Because of the correspondence,
+ the power set of 
+\begin_inset Formula $E$
+\end_inset
+
+ is commonly identified with set exponentiation:
+\begin_inset Formula 
+\[
+\mathcal{P}(E)=\{0,1\}^{E}=2^{E}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In particular,
+ if 
+\begin_inset Formula $E$
+\end_inset
+
+ has 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+ elements,
+ then 
+\begin_inset Formula $2^{E}$
+\end_inset
+
+ has 
+\begin_inset Formula $2^{n}$
+\end_inset
+
+ elements:
+\begin_inset Formula 
+\[
+\vert2^{E}\vert=2^{\vert E\vert}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+Cardinality
+\end_layout
+
+\begin_layout Standard
+Informally,
+ the cardinality of a set 
+\begin_inset Formula $S$
+\end_inset
+
+,
+ often denoted 
+\begin_inset Formula $|S|$
+\end_inset
+
+,
+ is the number of its members.
+ This number is the natural number 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+ when there is a one-to-one correspondence between the set 
+\begin_inset Formula $S$
+\end_inset
+
+ and the set 
+\begin_inset Formula $\mathbb{N}_{n}=\{1,2,...,n\}$
+\end_inset
+
+ of the first 
+\begin_inset Formula $n$
+\end_inset
+
+ natural numbers.
+ Also,
+\begin_inset Formula 
+\[
+\vert\emptyset\vert=0.
+\]
+
+\end_inset
+
+A set with the cardinality of a natural number is called a finite set,
+ which applies in both cases.
+ Otherwise,
+ one has an infinite set.
 \end_layout
 
 \begin_layout Subsection*
