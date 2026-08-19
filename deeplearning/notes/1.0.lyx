@@ -3500,7 +3500,7 @@ multiplication Analogously,
 
 ,
  
-\begin_inset Formula $a\cdot\sigma(b)=a\cdot b+a$
+\begin_inset Formula $a\cdot\sigma(b)=a+a\cdot b$
 \end_inset
 
 .
@@ -3509,7 +3509,7 @@ multiplication Analogously,
 \begin_layout Enumerate
 Interestingly,
  
-\begin_inset Formula $a\cdot1=a\cdot\sigma(0)=a\cdot0+a=0+a=a$
+\begin_inset Formula $a\cdot1=a\cdot\sigma(0)=a+a\cdot0=a+0=a$
 \end_inset
 
 ,
@@ -3602,6 +3602,27 @@ next
 \end_inset
 
  that acts as the successor.
+ Careful,
+ as you may need to implement 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+prev
+\end_layout
+
+\end_inset
+
+ as well.
+ As we said the successor 
+\begin_inset Formula $\sigma$
+\end_inset
+
+ is injective,
+ meaning that the predecessor is unique,
+ and it exists for all apart from 0.
  Optionally define 
 \begin_inset listings
 lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
