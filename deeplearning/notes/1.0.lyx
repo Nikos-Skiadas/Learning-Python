@@ -3558,13 +3558,12 @@ inline true
 status open
 
 \begin_layout Plain Layout
-set
+frozenset
 \end_layout
 
 \end_inset
 
- type.
- Write code that represents the natural numbers using the 
+ type (
 \begin_inset listings
 lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
 inline true
@@ -3572,6 +3571,19 @@ status open
 
 \begin_layout Plain Layout
 set
+\end_layout
+
+\end_inset
+
+ cannot be used because it is mutable).
+ Write code that represents the natural numbers using the 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+frozenset
 \end_layout
 
 \end_inset
