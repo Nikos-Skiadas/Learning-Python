@@ -1990,6 +1990,28 @@ codomain
 \end_inset
 
 .
+ The set 
+\begin_inset Formula $f(A)\subseteq B$
+\end_inset
+
+ called the image set of 
+\begin_inset Formula $f$
+\end_inset
+
+,
+ is the subset of the codomain which is a mapped element from 
+\begin_inset Formula $A$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+f(A)=\{y\in B|\exists x\in A,y=f(x)\}
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -2015,6 +2037,60 @@ The graph of a function
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Standard
+Special types of a function 
+\begin_inset Formula $f:A\to B$
+\end_inset
+
+:
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $f$
+\end_inset
+
+ is 
+\emph on
+injective
+\emph default
+ iff 
+\begin_inset Formula $\forall x,y\in A$
+\end_inset
+
+,
+ 
+\begin_inset Formula $f(x)=f(y)\Rightarrow x=y$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $f$
+\end_inset
+
+ is 
+\emph on
+surjective
+\emph default
+ iff 
+\begin_inset Formula $f(A)=B$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $f$
+\end_inset
+
+ is 
+\emph on
+bijective
+\emph default
+ iff is is both injective and surjective.
 \end_layout
 
 \begin_layout Minisec
@@ -2725,11 +2801,15 @@ Compute
 \end_layout
 
 \begin_layout Enumerate
-Compute the indexed product 
-\begin_inset Formula $\prod_{i\in K}C_{i}$
+Compute the indexed product
+\begin_inset Formula 
+\[
+\prod\nolimits_{i\in K}C_{i}
+\]
+
 \end_inset
 
- by listing every indexed triple 
+by listing every indexed triple 
 \begin_inset Formula $(c_{0},c_{1},c_{2})$
 \end_inset
 
@@ -2753,12 +2833,15 @@ List all elements of
 \end_layout
 
 \begin_layout Enumerate
-Verify concretely that 
-\begin_inset Formula $Y^{X}=\prod_{x\in X}Y$
+Verify concretely that
+\begin_inset Formula 
+\[
+Y^{X}=\prod\nolimits_{x\in X}Y.
+\]
+
 \end_inset
 
-.
- Explain which set supplies the domain,
+Explain which set supplies the domain,
  which supplies the codomain,
  and why this example contains four functions.
 \end_layout
@@ -2770,6 +2853,818 @@ Why are Cartesian product and set exponentiation external operations?
 \end_deeper
 \begin_layout Solution
 _
+\end_layout
+
+\begin_layout Subsection
+Number systems
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Formula $\boldsymbol{\mathbb{N}}$
+\end_inset
+
+:
+ the natural numbers
+\end_layout
+
+\begin_layout Standard
+The 5 Peano axioms for defining the set 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+ of natural numbers by contract are:
+\end_layout
+
+\begin_layout Enumerate
+0 is a natural number:
+ 
+\begin_inset Formula $0\in\mathbb{N}$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+Every natural number 
+\begin_inset Formula $x$
+\end_inset
+
+ has a successor 
+\begin_inset Formula $\sigma(x)$
+\end_inset
+
+ which is also a natural number.
+ 
+\end_layout
+
+\begin_layout Enumerate
+0 is not the successor of any natural number:
+ 
+\begin_inset Formula $\forall x\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\sigma(x)\neq0$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+If the successor of 
+\begin_inset Formula $x$
+\end_inset
+
+ equals the successor of 
+\begin_inset Formula $y$
+\end_inset
+
+,
+ then 
+\begin_inset Formula $x$
+\end_inset
+
+ equals 
+\begin_inset Formula $y$
+\end_inset
+
+ :
+ 
+\begin_inset Formula $\forall x,y\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\sigma(x)=\sigma(y)\Rightarrow x=y$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+(axiom of induction) If a statement is true of 
+\begin_inset Formula $0$
+\end_inset
+
+,
+ and if the truth of that statement for a number 
+\begin_inset Formula $x$
+\end_inset
+
+ implies its truth for the successor 
+\begin_inset Formula $\sigma(x)$
+\end_inset
+
+ of that number,
+ then the statement is true for every natural number:
+\begin_inset Formula 
+\[
+(P_{0}\wedge(\forall x\in\mathbb{N})P_{x}\Rightarrow P_{\sigma(x)})\Rightarrow(\forall x\in\mathbb{N})P_{x}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+2 and 3 imply that the successor is a map:
+\begin_inset Formula 
+\[
+\sigma:\mathbb{N}\to\mathbb{N}^{*}
+\]
+
+\end_inset
+
+where 
+\begin_inset Formula $\mathbb{N}^{*}=\mathbb{N}\setminus\{0\}$
+\end_inset
+
+.
+ 4 implies that the successor map 
+\begin_inset Formula $\sigma$
+\end_inset
+
+ is injective.
+\end_layout
+
+\begin_layout Example
+\begin_inset Argument 1
+status open
+
+\begin_layout Plain Layout
+induction
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\sum\nolimits^{n}_{i=0}i=n(n+1)/2
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Proof
+Holds for 
+\begin_inset Formula $n=0$
+\end_inset
+
+.
+ If it holds for 
+\begin_inset Formula $n$
+\end_inset
+
+ then:
+\begin_inset Formula 
+\[
+\sum\nolimits^{n+1}_{i=0}i=n+1+\sum\nolimits^{n}_{i=0}i=n+1+\dfrac{n(n+1)}{2}=\dfrac{2(n+1)+n(n+1)}{2}=\dfrac{(n+2)(n+1)}{2}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Set-theoretic definition
+\end_layout
+
+\begin_layout Standard
+In set theory each natural number 
+\begin_inset Formula $n$
+\end_inset
+
+ is defined as a specific set.
+ A variety of constructions have been proposed,
+ however the standard solution (due to John von Neumann) is:
+\end_layout
+
+\begin_layout Itemize
+Call 
+\begin_inset Formula $0=\{\}$
+\end_inset
+
+,
+ the empty set.
+\end_layout
+
+\begin_layout Itemize
+Define the successor 
+\begin_inset Formula $\sigma(n)$
+\end_inset
+
+ of any set 
+\begin_inset Formula $n$
+\end_inset
+
+ by 
+\begin_inset Formula $\sigma(n)=n\cup\{n\}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+By the axiom of infinity,
+ there exist sets which contain 0 and are closed under the successor function.
+ Such sets are set to be 
+\emph on
+inductive
+\emph default
+.
+ The intersection of all inductive sets is still an inductive set.
+ This intersection is the set of the natural numbers.
+ In layman terms,
+ the natural numbers is the smallest possible (it exists) inductive set.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float table
+placement document
+alignment center
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\begin_inset Tabular
+<lyxtabular version="3" rows="5" columns="4">
+<features tabularvalignment="middle">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<column alignment="center" valignment="top">
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $n$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\sigma$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+inductive
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+unrolled
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+0
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $0\cup\{0\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+1
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $1\cup\{1\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{0\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{\{\}\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+2
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $2\cup\{2\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{0,1\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{\{\},\{\{\}\}\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+<row>
+<cell alignment="center" valignment="top" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+3
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $3\cup\{3\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{0,1,2\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+<cell alignment="center" valignment="top" color="default" usebox="none">
+\begin_inset Text
+
+\begin_layout Plain Layout
+\begin_inset Formula $\{\{\},\{\{\}\},\{\{\},\{\{\}\}\}\}$
+\end_inset
+
+
+\end_layout
+
+\end_inset
+</cell>
+</row>
+</lyxtabular>
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption Standard
+
+\begin_layout Plain Layout
+The first 4 natural numbers and their constructive representations.
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+In this construction,
+ every natural number 
+\begin_inset Formula $n$
+\end_inset
+
+ is a set containing 
+\begin_inset Formula $n$
+\end_inset
+
+ elements,
+ where each element is a natural number less than 
+\begin_inset Formula $n$
+\end_inset
+
+.
+ From this,
+ the intuitive concepts of cardinality and order can be formally defined as:
+\end_layout
+
+\begin_layout Description
+cardinality a set 
+\begin_inset Formula $A$
+\end_inset
+
+ has 
+\begin_inset Formula $|A|\in\mathbb{N}$
+\end_inset
+
+ elements if there exists a bijection 
+\begin_inset Formula $f:|A|\leftrightarrow A$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+order 
+\begin_inset Formula $\forall n,m\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $n\geq m$
+\end_inset
+
+ iff 
+\begin_inset Formula $n\supseteq m$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Minisec
+Properties
+\end_layout
+
+\begin_layout Description
+addition Given the set 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+ of natural numbers and the successor function 
+\begin_inset Formula $\sigma:\mathbb{N}\to\mathbb{N}^{*}$
+\end_inset
+
+ sending each natural number to the next one,
+ addition 
+\begin_inset Formula $+:\mathbb{N}\times\mathbb{N}\to\mathbb{N}:(a,b)\mapsto a+b$
+\end_inset
+
+ is defined by:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $\forall a\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a+0=a$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\forall(a,b)\in\mathbb{N}\times\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a+\sigma(b)=\sigma(a+b)$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Enumerate
+0 is the additive identity.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+multiplication Analogously,
+ given that addition that been defined,
+ a multiplication operator 
+\begin_inset Formula $\cdot:\mathbb{N}\times\mathbb{N}\to\mathbb{N}:(a,b)\mapsto a\cdot b$
+\end_inset
+
+ can be defined via:
+\end_layout
+
+\begin_deeper
+\begin_layout Enumerate
+\begin_inset Formula $\forall a\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\cdot0=0$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Enumerate
+\begin_inset Formula $\forall(a,b)\in\mathbb{N}\times\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\cdot\sigma(b)=a\cdot b+a$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Enumerate
+Interestingly,
+ 
+\begin_inset Formula $a\cdot1=a\cdot\sigma(0)=a\cdot0+a=0+a=a$
+\end_inset
+
+,
+ therefore 
+\begin_inset Formula $1$
+\end_inset
+
+ is the multiplicative identity.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+order A total order on the natural numbers is defined by letting 
+\begin_inset Formula $a\leq b$
+\end_inset
+
+ if and only if there exists another natural number 
+\begin_inset Formula $c$
+\end_inset
+
+ where 
+\begin_inset Formula $a+c=b$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Exercise
+In 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+python
+\end_layout
+
+\end_inset
+
+,
+ sets are represented by the 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+set
+\end_layout
+
+\end_inset
+
+ type.
+ Write code that represents the natural numbers using the 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+set
+\end_layout
+
+\end_inset
+
+ type.
+ Make sure to implement at the very least a (property) method 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+next
+\end_layout
+
+\end_inset
+
+ that acts as the successor.
+ Optionally define 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+__add__
+\end_layout
+
+\end_inset
+
+ and 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+__mul__
+\end_layout
+
+\end_inset
+
+ so that your custom class supports 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
++
+\end_layout
+
+\end_inset
+
+ and 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+*
+\end_layout
+
+\end_inset
+
+ respectively.
+ Optionally define 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+__repr__
+\end_layout
+
+\end_inset
+
+,
+ which is a magic method that defines how your custom type appears on 
+\begin_inset listings
+lstparams "basicstyle={\footnotesize},showstringspaces=false,tabsize=4,language=Python,basicstyle={\ttfamily\small},keywordstyle={\color{blue}},commentstyle={\color{gray}},stringstyle={\color{green!50!black}},showstringspaces=false"
+inline true
+status open
+
+\begin_layout Plain Layout
+print
+\end_layout
+
+\end_inset
+
+ statements.
 \end_layout
 
 \end_body
