@@ -315,9 +315,7 @@ class N(frozenset):
 		>>> 3 + N(2)
 		5
 		"""
-		cls = type(self)
-
-		return self.__add__(cls(other))
+		return self + other
 
 	def __rmul__(self, other: int) -> Self:
 		"""Return `other * self`, per the multiplication axioms of §1.4.1.
@@ -332,9 +330,7 @@ class N(frozenset):
 		>>> 3 * N(2)
 		6
 		"""
-		cls = type(self)
-
-		return self.__mul__(cls(other))
+		return self * other
 
 	@property
 	def next(self) -> Self:
