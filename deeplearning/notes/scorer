@@ -6,8 +6,13 @@ list of axioms from the notes. This script turns that claim into a score: it qua
 every applicable law over a small sample of values and reports what holds, what fails, and
 with which counterexample.
 
-Three kinds of law are scored separately, because failing them means different things:
+Four kinds of law are scored separately, because failing them means different things:
 
+* **sanity** — the preconditions everything else assumes: that a value can be constructed
+  at all, that `repr` returns a string, that the operators hand back values of the type
+  rather than `None`. An unfinished implementation, one whose method bodies are still
+  `...`, satisfies none of that. These run first so a half-written class scores near zero
+  and says why, instead of taking the scorer down with a traceback.
 * **axioms** — the definitions the type is *built* from (§1.4.1). A failure here means the
   implementation does not define the object it claims to define.
 * **theorems** — consequences that must follow if the axioms are right (commutativity,
@@ -21,7 +26,7 @@ Usage:
 
 	./scorer                       # score every registered type
 	./scorer N                     # score one
-	./scorer -v                    # show a counterexample for every failure
+	./scorer -v                    # several counterexamples per failure, not just the first
 	./scorer --help                # the full option list
 
 Exit status is 0 only when every law passes, so this drops straight into a pre-commit hook
@@ -72,6 +77,10 @@ BOLD, DIM, GREEN, RED = "1", "2", "32", "31"
 
 COLOUR = True
 
+VERBOSE = False
+
+COUNTEREXAMPLES = 5
+
 
 def paint(text: str, *codes: str) -> str:
 	"""Wrap `text` in ANSI codes, unless colour has been switched off for this run."""
@@ -79,6 +88,14 @@ def paint(text: str, *codes: str) -> str:
 		return text
 
 	return "".join(f"\033[{code}m" for code in codes) + text + "\033[0m"
+
+
+def show(value: Any) -> str:
+	"""`repr`, but never raising, so a malformed `__repr__` cannot derail the report."""
+	try:
+		return repr(value)
+	except Exception as exc:
+		return f"<{type(value).__name__} with a broken repr: {type(exc).__name__}>"
 
 
 def load(filename: str, name: str | None = None) -> Any:
@@ -121,12 +138,32 @@ class Spec:
 	succ: Callable[[Any], Any] | None = None
 	pred: Callable[[Any], Any] | None = None
 	normalize: Callable[[Any], Any] | None = None    # operand reader; defaults to `cls`
+	spelling: Callable[[Any], str] = repr        # how the type's own repr should read
 	bad_operands: Sequence[Any] = ()            # values the operators must refuse
 	domain_errors: Sequence[tuple[str, Callable[[], Any], type[BaseException]]] = ()
 	order: Callable[[Any, Any], bool] = operator.le
 
+	reflected: bool = False                          # does `int + value` work as well?
+
 	def values(self) -> list[Any]:
 		return [self.embed(k) for k in self.sample]
+
+	def smalls(self) -> list[Any]:
+		return [self.embed(k) for k in self.small]
+
+	def alike(self, left: Any, right: Any) -> bool:
+		"""`same`, except that a value which is not of the type equals nothing at all.
+
+		Every law of the shape "these two expressions agree" would otherwise pass on a
+		malformed implementation, because the two sides agree on being `None`. Requiring
+		both to be instances first means garbage cannot satisfy an axiom by symmetry. The
+		`oracle` family deliberately bypasses this and calls `same` directly, since its job
+		is to audit the equality oracle rather than to trust it.
+		"""
+		if not isinstance(left, self.cls) or not isinstance(right, self.cls):
+			return False
+
+		return self.same(left, right)
 
 
 REGISTRY: dict[str, Callable[[], Spec]] = {}
@@ -156,15 +193,39 @@ def check(family: str, law: str, probe: Callable[[], Any], kind: str = "axiom") 
 
 
 def forall(cases: Iterable[tuple], predicate: Callable[..., bool]) -> tuple[bool, str]:
-	"""True iff `predicate` holds for every case; otherwise the first counterexample."""
-	for case in cases:
-		try:
-			if not predicate(*case):
-				return False, f"first counterexample: {', '.join(map(repr, case))}"
-		except Exception as exc:
-			return False, f"{type(exc).__name__} at {', '.join(map(repr, case))}: {exc}"
+	"""True iff `predicate` holds for every case; otherwise where it failed.
 
-	return True, ""
+	One counterexample is enough to sink a law, so the search stops at the first by default.
+	Under `--verbose` it keeps looking and reports up to `COUNTEREXAMPLES`, which is what
+	tells "one odd case" apart from "this law simply does not hold here".
+	"""
+	failures: list[str] = []
+	capped = False
+
+	for case in cases:
+		where = ", ".join(map(show, case))
+
+		try:
+			detail = "" if predicate(*case) else f"at {where}"
+		except Exception as exc:
+			detail = f"at {where}: {type(exc).__name__}: {exc}"
+
+		if not detail:
+			continue
+
+		failures.append(detail)
+
+		if not VERBOSE:
+			break
+
+		if len(failures) >= COUNTEREXAMPLES:
+			capped = True
+			break
+
+	if not failures:
+		return True, ""
+
+	return False, "fails " + "; ".join(failures) + ("; ..." if capped else "")
 
 
 def pairs(seq: Sequence[Any]) -> Iterator[tuple[Any, Any]]:
@@ -186,28 +247,63 @@ def oracle(s: Spec) -> Iterator[Result]:
 		pairs(s.sample), lambda j, k: s.same(s.embed(j), s.embed(k)) == (j == k)))
 	yield check("oracle", "unembed inverts embed", lambda: forall(
 		((k,) for k in s.sample), lambda k: s.unembed(s.embed(k)) == k))
+	yield check("oracle", "repr spells the value it embeds", lambda: forall(
+		((k,) for k in s.sample), lambda k: repr(s.embed(k)) == s.spelling(k)))
+
+
+def sanity(s: Spec) -> Iterator[Result]:
+	"""Is the implementation even well formed? Checked first, because everything assumes it.
+
+	None of these is a law about numbers. They are the preconditions the actual laws rely
+	on, and they exist so that an unfinished class is scored rather than fatal: a method
+	body of `...` returns `None`, and `None` propagates into every subsequent law as a
+	baffling AttributeError. Failing here means the failures further down are downstream
+	noise, so read this section first.
+	"""
+	kind = "sanity"
+
+	yield check(kind, "zero can be constructed", lambda: (
+		isinstance(s.embed(0), s.cls), f"got {type(s.embed(0)).__name__}"), kind)
+	yield check(kind, "every sampled value is an instance of the type", lambda: forall(
+		((k,) for k in s.sample), lambda k: isinstance(s.embed(k), s.cls)), kind)
+	yield check(kind, "repr returns a string", lambda: (
+		isinstance(repr(s.embed(0)), str), "repr did not return a str"), kind)
+	yield check(kind, "+ returns an instance of the type", lambda: (
+		isinstance(s.embed(1) + s.embed(1), s.cls),
+		f"got {type(s.embed(1) + s.embed(1)).__name__}"), kind)
+	yield check(kind, "· returns an instance of the type", lambda: (
+		isinstance(s.embed(1) * s.embed(1), s.cls),
+		f"got {type(s.embed(1) * s.embed(1)).__name__}"), kind)
+
+	if (succ := s.succ) is not None:
+		yield check(kind, "the successor returns an instance of the type", lambda: (
+			isinstance(succ(s.embed(0)), s.cls),
+			f"got {type(succ(s.embed(0))).__name__}"), kind)
+
+	if (pred := s.pred) is not None:
+		yield check(kind, "the predecessor returns an instance of the type", lambda: (
+			isinstance(pred(s.embed(1)), s.cls),
+			f"got {type(pred(s.embed(1))).__name__}"), kind)
 
 
 def peano(s: Spec) -> Iterator[Result]:
 	"""The five Peano axioms of §1.4.1."""
-	zero, succ = s.embed(0), s.succ
-	assert succ is not None
+	if (succ := s.succ) is not None:
+		yield check("peano", "1. 0 is a natural number", lambda: (
+			isinstance(s.embed(0), s.cls), f"type is {type(s.embed(0)).__name__}"))
+		yield check("peano", "2. σ is closed on the type", lambda: forall(
+			((v,) for v in s.values()), lambda v: isinstance(succ(v), s.cls)))
+		yield check("peano", "3. 0 is no one's successor", lambda: forall(
+			((v,) for v in s.values()), lambda v: not s.alike(succ(v), s.embed(0))))
+		yield check("peano", "4. σ is injective", lambda: forall(
+			pairs(s.values()), lambda a, b: s.alike(succ(a), succ(b)) == s.alike(a, b)))
+		yield check("peano", "5. σ-chain from 0 enumerates the sample (surrogate)", lambda: (
+			[s.unembed(v) for v in walk(s.embed(0), succ, len(s.sample))] == list(range(len(s.sample))),
+			"iterating σ from 0 does not reproduce 0, 1, 2, ..."))
 
-	yield check("peano", "1. 0 is a natural number", lambda: (
-		isinstance(zero, s.cls), f"type is {type(zero).__name__}"))
-	yield check("peano", "2. σ is closed on the type", lambda: forall(
-		((v,) for v in s.values()), lambda v: isinstance(succ(v), s.cls)))
-	yield check("peano", "3. 0 is no one's successor", lambda: forall(
-		((v,) for v in s.values()), lambda v: not s.same(succ(v), zero)))
-	yield check("peano", "4. σ is injective", lambda: forall(
-		pairs(s.values()), lambda a, b: s.same(succ(a), succ(b)) == s.same(a, b)))
-	yield check("peano", "5. σ-chain from 0 enumerates the sample (surrogate)", lambda: (
-		[s.unembed(v) for v in walk(zero, succ, len(s.sample))] == list(range(len(s.sample))),
-		"iterating σ from 0 does not reproduce 0, 1, 2, ..."))
-
-	if (pred := s.pred) is not None:
-		yield check("peano", "σ and its inverse round-trip", lambda: forall(
-			((v,) for v in s.values()), lambda v: s.same(pred(succ(v)), v)))
+		if (pred := s.pred) is not None:
+			yield check("peano", "σ and its inverse round-trip", lambda: forall(
+				((v,) for v in s.values()), lambda v: s.alike(pred(succ(v)), v)))
 
 
 def walk(start: Any, step: Callable[[Any], Any], count: int) -> list[Any]:
@@ -233,105 +329,118 @@ def cardinality(s: Spec) -> Iterator[Result]:
 
 
 def addition(s: Spec) -> Iterator[Result]:
-	"""The addition axioms of §1.4.1, plus agreement with python's own +."""
-	succ = s.succ
-	assert succ is not None
+	"""The addition axioms of §1.4.1, plus agreement with python's own +.
 
+	Only axiom 2 needs a successor. Guarding the whole family on `s.succ` would make a
+	successor-less type score *nothing* here rather than failing, which quietly shrinks the
+	denominator and inflates the percentage.
+	"""
 	yield check("addition", "1. a + 0 = a", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(v + s.embed(0), v)))
-	yield check("addition", "2. a + σ(b) = σ(a + b)", lambda: forall(
-		pairs(s.values()), lambda a, b: s.same(a + succ(b), succ(a + b))))
+		((v,) for v in s.values()), lambda v: s.alike(v + s.embed(0), v)))
+
+	if (succ := s.succ) is not None:
+		yield check("addition", "2. a + σ(b) = σ(a + b)", lambda: forall(
+			pairs(s.values()), lambda a, b: s.alike(a + succ(b), succ(a + b))))
+
 	yield check("addition", "agrees with python's +", lambda: forall(
 		pairs(s.sample),
 		lambda j, k: s.unembed(s.embed(j) + s.embed(k)) == j + k))
 	yield check("addition", "0 + a = a  (needs its own induction)", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(s.embed(0) + v, v)), "theorem")
+		((v,) for v in s.values()), lambda v: s.alike(s.embed(0) + v, v)), "theorem")
 
 
 def multiplication(s: Spec) -> Iterator[Result]:
-	"""The multiplication axioms of §1.4.1, plus agreement with python's own *."""
-	succ = s.succ
-	assert succ is not None
+	"""The multiplication axioms of §1.4.1, plus agreement with python's own *.
 
+	As in `addition`, only axiom 2 is guarded on the successor; see the note there.
+	"""
 	yield check("multiplication", "1. a · 0 = 0", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(v * s.embed(0), s.embed(0))))
-	yield check("multiplication", "2. a · σ(b) = a + a · b", lambda: forall(
-		pairs(s.values()), lambda a, b: s.same(a * succ(b), a + a * b)))
+		((v,) for v in s.values()), lambda v: s.alike(v * s.embed(0), s.embed(0))))
+
+	if (succ := s.succ) is not None:
+		yield check("multiplication", "2. a · σ(b) = a + a · b", lambda: forall(
+			pairs(s.values()), lambda a, b: s.alike(a * succ(b), a + a * b)))
+
 	yield check("multiplication", "agrees with python's *", lambda: forall(
 		pairs(s.sample),
 		lambda j, k: s.unembed(s.embed(j) * s.embed(k)) == j * k))
 	yield check("multiplication", "a · 1 = a  (unfolds from the axioms)", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(v * s.embed(1), v)))
+		((v,) for v in s.values()), lambda v: s.alike(v * s.embed(1), v)), "theorem")
 	yield check("multiplication", "1 · a = a  (needs its own induction)", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(s.embed(1) * v, v)), "theorem")
+		((v,) for v in s.values()), lambda v: s.alike(s.embed(1) * v, v)), "theorem")
 
 
 def algebra(s: Spec) -> Iterator[Result]:
 	"""Consequences that must follow if the axioms above were transcribed correctly."""
-	small = [s.embed(k) for k in s.small]
 
 	yield check("algebra", "+ is associative", lambda: forall(
-		triples(small), lambda a, b, c: s.same((a + b) + c, a + (b + c))), "theorem")
+		triples(s.smalls()), lambda a, b, c: s.alike((a + b) + c, a + (b + c))), "theorem")
 	yield check("algebra", "+ is commutative", lambda: forall(
-		pairs(s.values()), lambda a, b: s.same(a + b, b + a)), "theorem")
+		pairs(s.values()), lambda a, b: s.alike(a + b, b + a)), "theorem")
 	yield check("algebra", "· is associative", lambda: forall(
-		triples(small), lambda a, b, c: s.same((a * b) * c, a * (b * c))), "theorem")
+		triples(s.smalls()), lambda a, b, c: s.alike((a * b) * c, a * (b * c))), "theorem")
 	yield check("algebra", "· is commutative", lambda: forall(
-		pairs(s.values()), lambda a, b: s.same(a * b, b * a)), "theorem")
+		pairs(s.values()), lambda a, b: s.alike(a * b, b * a)), "theorem")
 	yield check("algebra", "· distributes over +", lambda: forall(
-		triples(small), lambda a, b, c: s.same(a * (b + c), a * b + a * c)), "theorem")
-	yield check("algebra", "a · 0 = 0 annihilates", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(v * s.embed(0), s.embed(0))), "theorem")
+		triples(s.smalls()), lambda a, b, c: s.alike(a * (b + c), a * b + a * c)), "theorem")
+	yield check("algebra", "0 · a = 0  (the left annihilator)", lambda: forall(
+		((v,) for v in s.values()), lambda v: s.alike(s.embed(0) * v, s.embed(0))), "theorem")
 
 
 def order(s: Spec) -> Iterator[Result]:
 	"""§1.4.1: a ≤ b iff some c has a + c = b, and that relation is a total order."""
-	le, values = s.order, s.values()
+	le = s.order
 
 	yield check("order", "reflexive", lambda: forall(
-		((v,) for v in values), lambda v: le(v, v)))
+		((v,) for v in s.values()), lambda v: le(v, v)))
 	yield check("order", "antisymmetric", lambda: forall(
-		pairs(values), lambda a, b: not (le(a, b) and le(b, a)) or s.same(a, b)))
+		pairs(s.values()), lambda a, b: not (le(a, b) and le(b, a)) or s.alike(a, b)))
 	yield check("order", "transitive", lambda: forall(
-		triples([s.embed(k) for k in s.small]),
+		triples(s.smalls()),
 		lambda a, b, c: not (le(a, b) and le(b, c)) or le(a, c)))
 	yield check("order", "total", lambda: forall(
-		pairs(values), lambda a, b: le(a, b) or le(b, a)))
+		pairs(s.values()), lambda a, b: le(a, b) or le(b, a)))
 	yield check("order", "a ≤ b iff ∃c, a + c = b", lambda: forall(
-		pairs(values),
-		lambda a, b: le(a, b) == any(s.same(a + c, b) for c in values)))
+		pairs(s.values()),
+		lambda a, b: le(a, b) == any(s.alike(a + c, b) for c in s.values())))
 
 	if (succ := s.succ) is not None:
 		yield check("order", "σ is strictly increasing", lambda: forall(
-			((v,) for v in values), lambda v: le(v, succ(v)) and not s.same(v, succ(v))))
+			((v,) for v in s.values()), lambda v: le(v, succ(v)) and not s.alike(v, succ(v))))
 
 
 def coercion(s: Spec) -> Iterator[Result]:
 	"""A python int on the right of an operator must behave as its embedding."""
 	yield check("coercion", "a + int(k) = a + embed(k)", lambda: forall(
 		pairs(s.sample),
-		lambda j, k: s.same(s.embed(j) + k, s.embed(j) + s.embed(k))), "contract")
+		lambda j, k: s.alike(s.embed(j) + k, s.embed(j) + s.embed(k))), "contract")
 	yield check("coercion", "a · int(k) = a · embed(k)", lambda: forall(
 		pairs(s.sample),
-		lambda j, k: s.same(s.embed(j) * k, s.embed(j) * s.embed(k))), "contract")
+		lambda j, k: s.alike(s.embed(j) * k, s.embed(j) * s.embed(k))), "contract")
 	read = s.normalize or s.cls
 
 	yield check("coercion", "reading an existing value is the identity", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(read(v), v)), "contract")
+		((v,) for v in s.values()), lambda v: s.alike(read(v), v)), "contract")
 	yield check("coercion", "reading is idempotent", lambda: forall(
-		((v,) for v in s.values()), lambda v: s.same(read(read(v)), read(v))), "contract")
+		((v,) for v in s.values()), lambda v: s.alike(read(read(v)), read(v))), "contract")
+
+	if s.reflected:
+		yield check("coercion", "int(k) + a = embed(k) + a", lambda: forall(
+			pairs(s.sample),
+			lambda j, k: s.alike(j + s.embed(k), s.embed(j) + s.embed(k))), "contract")
+		yield check("coercion", "int(k) · a = embed(k) · a", lambda: forall(
+			pairs(s.sample),
+			lambda j, k: s.alike(j * s.embed(k), s.embed(j) * s.embed(k))), "contract")
 
 
 def contracts(s: Spec) -> Iterator[Result]:
 	"""Operand typing and declared errors: the promises the class makes to callers."""
-	one = s.embed(1)
-
 	for bad in s.bad_operands:
 		for label, op in (("+", operator.add), ("·", operator.mul)):
 			yield check(
 				"contracts",
 				f"a {label} {bad!r} is refused",
-				lambda bad=bad, op=op: refuses(op, one, bad, s.source),
+				lambda bad=bad, op=op: refuses(op, s.embed(1), bad, s),
 				"contract",
 			)
 
@@ -344,7 +453,7 @@ def contracts(s: Spec) -> Iterator[Result]:
 		)
 
 
-def refuses(op: Callable[[Any, Any], Any], value: Any, bad: Any, source: str) -> tuple[bool, str]:
+def refuses(op: Callable[[Any, Any], Any], value: Any, bad: Any, spec: Spec) -> tuple[bool, str]:
 	"""An unsupported operand must be refused by python's dispatch, not by a leaked error.
 
 	Returning `NotImplemented` hands the decision back to the interpreter, which then either
@@ -353,15 +462,27 @@ def refuses(op: Callable[[Any, Any], Any], value: Any, bad: Any, source: str) ->
 	complains about multiplying a sequence. What must *not* happen is an error escaping from
 	inside the type's own code, so the test is where the traceback has been rather than what
 	it says.
+
+	The left operand is validated before anything is attempted, because otherwise this check
+	passes for the wrong reason. A malformed implementation whose constructor hands back
+	`None` makes `None + "x"` raise a TypeError from nowhere near the type under test, which
+	looks exactly like a correct refusal. A law that cannot be tested is a failure, not a
+	pass.
 	"""
+	if not isinstance(value, spec.cls):
+		return False, (
+			f"cannot be tested: the left operand came back as {type(value).__name__}, "
+			f"not {spec.cls.__name__}"
+		)
+
 	try:
 		outcome = op(value, bad)
 	except TypeError as exc:
 		trace = exc.__traceback__
 
 		while trace is not None:
-			if trace.tb_frame.f_code.co_filename == source:
-				return False, f"error leaked from {source.rsplit('/', 1)[-1]}: {exc}"
+			if trace.tb_frame.f_code.co_filename == spec.source:
+				return False, f"error leaked from {spec.source.rsplit('/', 1)[-1]}: {exc}"
 
 			trace = trace.tb_next
 
@@ -369,7 +490,7 @@ def refuses(op: Callable[[Any, Any], Any], value: Any, bad: Any, source: str) ->
 	except Exception as exc:
 		return False, f"{type(exc).__name__} instead of TypeError: {exc}"
 
-	return False, f"no error at all, returned {outcome!r}"
+	return False, f"no error at all, returned {show(outcome)}"
 
 
 def raises(thunk: Callable[[], Any], expected: type[BaseException]) -> tuple[bool, str]:
@@ -384,6 +505,7 @@ def raises(thunk: Callable[[], Any], expected: type[BaseException]) -> tuple[boo
 
 
 FAMILIES: dict[str, Callable[[Spec], Iterator[Result]]] = {
+	"sanity": sanity,
 	"oracle": oracle,
 	"peano": peano,
 	"cardinality": cardinality,
@@ -417,6 +539,7 @@ def naturals() -> Spec:
 		small=range(4),
 		succ=lambda v: v.next,
 		pred=lambda v: v.prev,
+		reflected=True,
 		bad_operands=("x", 2.0, 0.0, None, []),
 		domain_errors=(
 			("N(-1) rejects a negative int", lambda: N(-1), ValueError),
@@ -429,20 +552,46 @@ def naturals() -> Spec:
 
 
 def score(spec: Spec) -> list[Result]:
+	"""Run every applicable family, surviving a family that cannot run at all.
+
+	`check` already turns a failing law into a `Result`, but a family is a generator and its
+	setup code runs on first iteration — outside any `check`. A malformed implementation used
+	to abort the whole run from there. Now the family's own collapse is recorded as a failure
+	and the remaining families still get scored.
+	"""
 	results: list[Result] = []
 
 	for key, family in FAMILIES.items():
-		if key in spec.features:
-			results.extend(family(spec))
+		if key not in spec.features:
+			continue
+
+		try:
+			for result in family(spec):
+				results.append(result)
+		except Exception as exc:
+			results.append(Result(
+				key,
+				f"the {key} family could not be scored",
+				False,
+				"sanity",
+				f"{type(exc).__name__}: {exc}",
+			))
 
 	return results
 
 
-def report(spec: Spec, results: list[Result], verbose: bool) -> bool:
+def report(spec: Spec, results: list[Result]) -> bool:
 	width = max(len(r.law) for r in results) + 2
 
 	print(f"\n{paint(spec.name, BOLD)}   ({spec.origin})")
 	print(f"  sample: {list(spec.sample)}   ternary sample: {list(spec.small)}")
+
+	if malformed := [r for r in results if r.kind == "sanity" and not r.ok]:
+		print(
+			f"  {paint('malformed', RED)}: {len(malformed)} sanity check(s) failed, so this "
+			f"implementation is\n  incomplete or ill-typed and most failures below follow "
+			f"from that rather than\n  from the mathematics. Read the sanity section first."
+		)
 
 	shown = ""
 	for result in results:
@@ -454,12 +603,13 @@ def report(spec: Spec, results: list[Result], verbose: bool) -> bool:
 		tag = "" if result.kind == "axiom" else paint(f"[{result.kind}]", DIM)
 		print(f"    {mark} {result.law:<{width}} {tag}".rstrip())
 
-		if not result.ok and (verbose or result.detail):
+		if not result.ok and result.detail:
 			print(f"        {paint(result.detail, RED)}")
 
 	print()
 	total_ok = 0
-	for kind in ("axiom", "theorem", "contract"):
+	for kind, label in (("sanity", "sanity"), ("axiom", "axioms"),
+	                    ("theorem", "theorems"), ("contract", "contracts")):
 		group = [r for r in results if r.kind == kind]
 
 		if not group:
@@ -468,7 +618,7 @@ def report(spec: Spec, results: list[Result], verbose: bool) -> bool:
 		ok = sum(r.ok for r in group)
 		total_ok += ok
 		mark = paint("✔", GREEN) if ok == len(group) else paint("✗", RED)
-		print(f"  {kind + 's':<12} {ok:>3}/{len(group):<3} {100 * ok // len(group):>3}%  {mark}")
+		print(f"  {label:<12} {ok:>3}/{len(group):<3} {100 * ok // len(group):>3}%  {mark}")
 
 	pct = 100 * total_ok // len(results)
 	perfect = total_ok == len(results)
@@ -495,7 +645,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 		"-v",
 		"--verbose",
 		action="store_true",
-		help="show a counterexample for every failing law",
+		help=f"report up to {COUNTEREXAMPLES} counterexamples per failing law, not just the first",
 	)
 	parser.add_argument(
 		"--colour",
@@ -507,13 +657,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 	args = parser.parse_args(argv)
 
-	global COLOUR
+	global COLOUR, VERBOSE
 	COLOUR = args.colour == "always" or (args.colour == "auto" and sys.stdout.isatty())
+	VERBOSE = args.verbose
 
 	perfect = True
 	for key in args.types or REGISTRY:
 		spec = REGISTRY[key]()
-		perfect &= report(spec, score(spec), args.verbose)
+		perfect &= report(spec, score(spec))
 
 	return 0 if perfect else 1
 

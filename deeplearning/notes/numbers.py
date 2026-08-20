@@ -53,10 +53,12 @@ Two gotchas:
 
 Working through this: five members carry the exercise, and each one states what it must
 return, which axioms it discharges, the errors it owes the caller, and hints — plus
-doctests that serve as its specification. `__new__` and `set` are provided rather than
-assigned, and say so in their own docstrings: the first because plumbing a python int into
-this construction is a chore rather than a lesson, the second because it is a viewer, not
-part of the mathematics. Implement in the order the class docstring suggests, and treat
+doctests that serve as its specification. Four more are provided rather than assigned, and
+say so in their own docstrings: `__new__`, because plumbing a python int into this
+construction is a chore rather than a lesson; `set`, because it is a viewer rather than part
+of the mathematics; and `__radd__` and `__rmul__`, because they buy their convenience by
+assuming commutativity, which is a theorem here — asking for them as exercises would invite
+proving it by assuming it. Implement in the order the class docstring suggests, and treat
 `python3 -m doctest numbers.py` as the progress bar: silence means done.
 
 References:
@@ -87,7 +89,8 @@ class N(frozenset):
 
 	Five members to implement, in the order they are easiest to get right: `__repr__`
 	first, so that you can see anything at all, then `next`, `prev`, `__add__`, and finally
-	`__mul__`, which cannot work before `__add__` does. `__new__` and `set` are provided.
+	`__mul__`, which cannot work before `__add__` does. `__new__`, `__radd__`, `__rmul__`
+	and `set` are provided.
 
 	>>> N()
 	0
@@ -234,10 +237,9 @@ class N(frozenset):
 		  every step of the recursion.
 		* Neither axiom mentions int, len, or python's own `+`. Past the coercion, if int
 		  arithmetic shows up in the body, the exercise has been short-circuited.
-		* Only the right operand is coerced, so `N(2) + 3` works while `3 + N(2)` raises
-		  TypeError. Fixing that needs `__radd__`, which for this operator would have to
-		  lean on commutativity of + — a theorem here, not an axiom — so it is left out on
-		  purpose. Adding it is a fair extension, provided you notice the debt.
+		* Coerce the right operand only. `3 + N(2)` is not this method's business: python
+		  routes that to the provided `__radd__`, which pays for the convenience with an
+		  appeal to commutativity that this method must not make.
 		* Depth: this recurses as deep as `other` is large, so it will hit python's
 		  recursion limit somewhere in the low thousands. That is a property of writing
 		  down a definition rather than an implementation, not a bug to fix.
@@ -275,8 +277,8 @@ class N(frozenset):
 		* Lay these two axioms beside the two for `+` and notice how close the recursive
 		  step is to a transcription; most of the work was already done next door.
 		* The operand handling is the same as in `__add__`, and for the same reason:
-		  `other.prev` in the recursive step needs an N. `1 * N(3)` still raises TypeError,
-		  as only the right operand is coerced.
+		  `other.prev` in the recursive step needs an N. As there, only the right operand is
+		  this method's concern — `1 * N(3)` is routed to the provided `__rmul__`.
 		* The operand order in axiom 2 is deliberate, not cosmetic. With the recursive
 		  call to the *right* of the `+`, the notes' derivation of the multiplicative
 		  identity stays self-contained: a · 1 = a · σ(0) = a + a · 0 = a + 0 = a, which
@@ -303,32 +305,46 @@ class N(frozenset):
 		...
 
 	def __radd__(self, other: int) -> Self:
-		"""Return `other + self`, per the addition axioms of §1.4.1.
+		"""Return `other + self`, so that a python int works on the left of `+` too.
 
-		Coerce the left operand, then lean on `__add__` to do the work. This is a fair
-		extension of the exercise, since it is not an axiom but a theorem that + is
-		commutative.
+		Provided; not part of the exercise.
 
-		Hint: `__add__` already coerces its right operand, so this one does not need to
-		reimplement that logic.
+		Python reaches here only after the left operand has declined: `3 + N(2)` tries
+		`int.__add__` first, is handed `NotImplemented`, and falls back to this. So the
+		method exists purely to make the mixed-type case symmetric — `N(2) + 3` never
+		comes through here at all.
+
+		It is one line, and that line is worth reading slowly, because it is not the
+		definition the exercise asks for. `other + self` is computed as `self + other`,
+		which is legitimate *only* because addition is commutative. Commutativity is a
+		theorem in this development, not one of the two axioms `__add__` transcribes:
+		those give a + 0 = a and a + σ(b) = σ(a + b), and neither says anything about
+		exchanging the operands. This method therefore takes on a debt that `__add__` is
+		careful not to — which is exactly why it is given rather than assigned. Asking for
+		it as an exercise would invite proving the theorem by assuming it.
 
 		>>> 3 + N(2)
 		5
+		>>> 0 + N(2), 3 + N()
+		(2, 3)
 		"""
 		return self + other
 
 	def __rmul__(self, other: int) -> Self:
-		"""Return `other * self`, per the multiplication axioms of §1.4.1.
+		"""Return `other * self`, so that a python int works on the left of `*` too.
 
-		Coerce the left operand, then lean on `__mul__` to do the work. This is a fair
-		extension of the exercise, since it is not an axiom but a theorem that * is
-		commutative.
+		Provided; not part of the exercise.
 
-		Hint: `__mul__` already coerces its right operand, so this one does not need to
-		reimplement that logic.
+		The mirror of `__radd__`, carrying the same debt one rung further up: `other * self`
+		is computed as `self * other`, which needs multiplication to be commutative. That is
+		a theorem too, and a later one — it leans on the commutativity and associativity of
+		addition, which lean in turn on the two addition axioms. `__mul__` itself never
+		assumes any of it; this convenience does.
 
 		>>> 3 * N(2)
 		6
+		>>> 1 * N(3), 0 * N(3)
+		(3, 0)
 		"""
 		return self * other
 
