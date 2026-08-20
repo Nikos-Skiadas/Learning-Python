@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Axiom scorer for the number systems constructed in chapter 1.
 
 Each type built in this chapter (ℕ now; ℤ, ℚ, ... to follow) claims to satisfy a specific
@@ -18,11 +19,15 @@ Three kinds of law are scored separately, because failing them means different t
 
 Usage:
 
-	python3 scorer.py              # score every registered type
-	python3 scorer.py N            # score one
-	python3 scorer.py -v           # show a counterexample for each failure
+	./scorer                       # score every registered type
+	./scorer N                     # score one
+	./scorer -v                    # show a counterexample for every failure
+	./scorer --help                # the full option list
 
-Exit status is 0 only when every law passes.
+Exit status is 0 only when every law passes, so this drops straight into a pre-commit hook
+or a CI step. The file is executable and deliberately extensionless: it is a command rather
+than a module, and there is nothing to install. It resolves the files it scores relative to
+its own location, so it works from any working directory.
 
 Registering a new type: write a factory returning a `Spec`, decorate it with
 `@register("Z")`, and list the law families that apply in `features`. Everything else —
@@ -53,6 +58,7 @@ for _entry in ("", ".", str(ROOT)):
 		sys.path.remove(_entry)
 
 
+import argparse
 import importlib.util
 import operator
 
@@ -60,6 +66,19 @@ from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
 from itertools import product
 from typing import Any
+
+
+BOLD, DIM, GREEN, RED = "1", "2", "32", "31"
+
+COLOUR = True
+
+
+def paint(text: str, *codes: str) -> str:
+	"""Wrap `text` in ANSI codes, unless colour has been switched off for this run."""
+	if not COLOUR or not codes:
+		return text
+
+	return "".join(f"\033[{code}m" for code in codes) + text + "\033[0m"
 
 
 def load(filename: str, name: str | None = None) -> Any:
@@ -422,21 +441,21 @@ def score(spec: Spec) -> list[Result]:
 def report(spec: Spec, results: list[Result], verbose: bool) -> bool:
 	width = max(len(r.law) for r in results) + 2
 
-	print(f"\n\033[1m{spec.name}\033[0m   ({spec.origin})")
+	print(f"\n{paint(spec.name, BOLD)}   ({spec.origin})")
 	print(f"  sample: {list(spec.sample)}   ternary sample: {list(spec.small)}")
 
 	shown = ""
 	for result in results:
 		if result.family != shown:
 			shown = result.family
-			print(f"\n  \033[2m{shown}\033[0m")
+			print(f"\n  {paint(shown, DIM)}")
 
-		mark = "\033[32m✓\033[0m" if result.ok else "\033[31m✗\033[0m"
-		tag = "" if result.kind == "axiom" else f"\033[2m[{result.kind}]\033[0m"
-		print(f"    {mark} {result.law:<{width}} {tag}")
+		mark = paint("✔", GREEN) if result.ok else paint("✗", RED)
+		tag = "" if result.kind == "axiom" else paint(f"[{result.kind}]", DIM)
+		print(f"    {mark} {result.law:<{width}} {tag}".rstrip())
 
 		if not result.ok and (verbose or result.detail):
-			print(f"        \033[31m{result.detail}\033[0m")
+			print(f"        {paint(result.detail, RED)}")
 
 	print()
 	total_ok = 0
@@ -448,33 +467,56 @@ def report(spec: Spec, results: list[Result], verbose: bool) -> bool:
 
 		ok = sum(r.ok for r in group)
 		total_ok += ok
-		mark = "\033[32m✓\033[0m" if ok == len(group) else "\033[31m✗\033[0m"
+		mark = paint("✔", GREEN) if ok == len(group) else paint("✗", RED)
 		print(f"  {kind + 's':<12} {ok:>3}/{len(group):<3} {100 * ok // len(group):>3}%  {mark}")
 
 	pct = 100 * total_ok // len(results)
-	verdict = "\033[32mvalid\033[0m" if total_ok == len(results) else "\033[31mincomplete\033[0m"
+	perfect = total_ok == len(results)
+	verdict = paint("valid", GREEN) if perfect else paint("incomplete", RED)
 	print(f"  {'─' * 30}\n  {'total':<12} {total_ok:>3}/{len(results):<3} {pct:>3}%  {verdict}")
 
-	return total_ok == len(results)
+	return perfect
 
 
-def main(argv: Sequence[str]) -> int:
-	verbose = any(a in ("-v", "--verbose") for a in argv)
-	wanted = [a for a in argv if not a.startswith("-")] or list(REGISTRY)
-	unknown = [key for key in wanted if key not in REGISTRY]
+def main(argv: Sequence[str] | None = None) -> int:
+	parser = argparse.ArgumentParser(
+		prog=Path(__file__).name,
+		description="Score a number system against the axioms it claims to satisfy.",
+		epilog="Exit status is 0 only when every law passes.",
+	)
+	parser.add_argument(
+		"types",
+		nargs="*",
+		choices=list(REGISTRY),
+		metavar="TYPE",
+		help=f"type(s) to score; defaults to all of: {', '.join(REGISTRY)}",
+	)
+	parser.add_argument(
+		"-v",
+		"--verbose",
+		action="store_true",
+		help="show a counterexample for every failing law",
+	)
+	parser.add_argument(
+		"--colour",
+		"--color",
+		choices=("auto", "always", "never"),
+		default="auto",
+		help="colourise the report; auto (the default) means only when stdout is a terminal",
+	)
 
-	if unknown:
-		print(f"unknown type(s): {', '.join(unknown)}", file=sys.stderr)
-		print(f"registered: {', '.join(REGISTRY)}", file=sys.stderr)
-		return 2
+	args = parser.parse_args(argv)
+
+	global COLOUR
+	COLOUR = args.colour == "always" or (args.colour == "auto" and sys.stdout.isatty())
 
 	perfect = True
-	for key in wanted:
+	for key in args.types or REGISTRY:
 		spec = REGISTRY[key]()
-		perfect &= report(spec, score(spec), verbose)
+		perfect &= report(spec, score(spec), args.verbose)
 
 	return 0 if perfect else 1
 
 
 if __name__ == "__main__":
-	raise SystemExit(main(sys.argv[1:]))
+	raise SystemExit(main())
