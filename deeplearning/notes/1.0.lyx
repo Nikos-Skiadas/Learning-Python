@@ -3463,7 +3463,7 @@ addition Given the set
 \begin_inset Formula $a+\sigma(b)=\sigma(a+b)$
 \end_inset
 
-
+,
 \end_layout
 
 \begin_layout Enumerate
@@ -3535,6 +3535,110 @@ order A total order on the natural numbers is defined by letting
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Standard
+Given
+\begin_inset Formula 
+\[
+a+\sigma(b)=\sigma(a+b)
+\]
+
+\end_inset
+
+and that 
+\begin_inset Formula $\sigma^{-1}$
+\end_inset
+
+ exists,
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a=\sigma(b)\Longleftrightarrow b=\sigma^{-1}(a)$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+ addition gains a formula 
+\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $c=\sigma(b)\in\mathbb{N}$
+\end_inset
+
+.
+ Then
+\begin_inset Formula 
+\[
+a+c=a+\sigma(b)=\sigma(a+b)=\sigma(a+\sigma^{-1}(c))
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Given
+\begin_inset Formula 
+\[
+a\cdot\sigma(b)=a+a\cdot b
+\]
+
+\end_inset
+
+and that 
+\begin_inset Formula $\sigma^{-1}$
+\end_inset
+
+ exists,
+\begin_inset Foot
+status open
+
+\begin_layout Plain Layout
+\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a=\sigma(b)\Longleftrightarrow b=\sigma^{-1}(a)$
+\end_inset
+
+.
+\end_layout
+
+\end_inset
+
+ multiplication gains a formula 
+\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\end_inset
+
+.
+ Let 
+\begin_inset Formula $c=\sigma(b)\in\mathbb{N}$
+\end_inset
+
+.
+ Then
+\begin_inset Formula 
+\[
+a\cdot c=a\cdot\sigma(b)=a+a\cdot b=a+a\cdot\sigma^{-1}(c)
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Exercise

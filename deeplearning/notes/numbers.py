@@ -202,8 +202,8 @@ class N(frozenset):
 		>>> print(N(7))
 		7
 		"""
-		
-		return str(len(self)) #n έχει ακριβώς n στοιχεία
+
+		return repr(len(self))  # n has exactly n elements
 
 	def __add__(self, other: Self | int) -> Self:
 		"""Return `self + other`, per the addition axioms of §1.4.1.
@@ -258,9 +258,10 @@ class N(frozenset):
 			return NotImplemented
 
 		cls = type(self)
-		other = cls(other)  # ετατρέπουμε το δεξί όρισμα σε φυσικό αριθμo
+		other = cls(other)  # coerce the right operand to an instance of the same class
 
-		if not other:  # a + 0 = a
+		# a + 0 = a
+		if not other:
 			return self
 
 		# a + σ(b) = σ(a + b)
@@ -307,9 +308,10 @@ class N(frozenset):
 			return NotImplemented
 
 		cls = type(self)
-		other = cls(other)  # Μετατρέπουμε μία φορά το δεξί όρισμα σε φυσικό αριθμό.
+		other = cls(other)  # coerce the right operand to an instance of the same class
 
-		if not other:  #a · 0 = 0.
+		# a · 0 = 0
+		if not other:
 			return cls()
 
 		# a · σ(b) = a + a · b
@@ -385,7 +387,7 @@ class N(frozenset):
 		"""
 		cls = type(self)
 
-		# Ο διάδοχος είναι το σύνολο μαζί με το σύνολο ως νέο στοιχείο
+		# The successor of this number is the union of the number with its singleton
 		return cls(self | {self})
 
 	@property
@@ -436,7 +438,7 @@ class N(frozenset):
 
 		cls = type(self)
 
-		# Η ένωση της αλυσίδας {0, ..., n-1} δίνει το μεγαλύτερο στοιχείο, n-1
+		# The union of the chain {0, ..., n-1} gives the greatest element, n-1
 		return cls(frozenset.union(*self))
 
 	@property
