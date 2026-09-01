@@ -202,7 +202,8 @@ class N(frozenset):
 		>>> print(N(7))
 		7
 		"""
-		...
+		
+		return str(len(self)) #n έχει ακριβώς n στοιχεία
 
 	def __add__(self, other: Self | int) -> Self:
 		"""Return `self + other`, per the addition axioms of §1.4.1.
@@ -257,8 +258,13 @@ class N(frozenset):
 			return NotImplemented
 
 		cls = type(self)
+		other = cls(other)  # ετατρέπουμε το δεξί όρισμα σε φυσικό αριθμo
 
-		...
+		if not other:  # a + 0 = a
+			return self
+
+		# a + σ(b) = σ(a + b)
+		return (self + other.prev).next
 
 	def __mul__(self, other: Self | int) -> Self:
 		"""Return `self * other`, per the multiplication axioms of §1.4.1.
@@ -301,8 +307,13 @@ class N(frozenset):
 			return NotImplemented
 
 		cls = type(self)
+		other = cls(other)  # Μετατρέπουμε μία φορά το δεξί όρισμα σε φυσικό αριθμό.
 
-		...
+		if not other:  #a · 0 = 0.
+			return cls()
+
+		# a · σ(b) = a + a · b
+		return self + self * other.prev
 
 	def __radd__(self, other: int) -> Self:
 		"""Return `other + self`, so that a python int works on the left of `+` too.
@@ -374,7 +385,8 @@ class N(frozenset):
 		"""
 		cls = type(self)
 
-		...
+		# Ο διάδοχος είναι το σύνολο μαζί με το σύνολο ως νέο στοιχείο
+		return cls(self | {self})
 
 	@property
 	def prev(self) -> Self:
@@ -424,7 +436,8 @@ class N(frozenset):
 
 		cls = type(self)
 
-		...
+		# Η ένωση της αλυσίδας {0, ..., n-1} δίνει το μεγαλύτερο στοιχείο, n-1
+		return cls(frozenset.union(*self))
 
 	@property
 	def set(self) -> str:
