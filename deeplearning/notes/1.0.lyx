@@ -2560,6 +2560,344 @@ A set with the cardinality of a natural number is called a finite set,
  one has an infinite set.
 \end_layout
 
+\begin_layout Subsection
+Equivalence relation
+\end_layout
+
+\begin_layout Standard
+A 
+\emph on
+binary relation
+\emph default
+ 
+\begin_inset Formula $\sim:X\times X\to\{0,1\}$
+\end_inset
+
+ on a set 
+\begin_inset Formula $X$
+\end_inset
+
+ is said to be an equivalence relation if it is:
+\end_layout
+
+\begin_layout Description
+reflexive 
+\begin_inset Formula $\forall a\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\sim a$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+symmetric 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\sim b$
+\end_inset
+
+ iff 
+\begin_inset Formula $b\sim a$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+transitive 
+\begin_inset Formula $\forall a,b,c$
+\end_inset
+
+,
+ if 
+\begin_inset Formula $a\sim b$
+\end_inset
+
+ and 
+\begin_inset Formula $b\sim c$
+\end_inset
+
+ then 
+\begin_inset Formula $a\sim c$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Formula $X$
+\end_inset
+
+ together with the relation 
+\begin_inset Formula $\sim$
+\end_inset
+
+ is called a 
+\emph on
+setoid
+\emph default
+.
+\end_layout
+
+\begin_layout Subsubsection
+Related important definitions
+\end_layout
+
+\begin_layout Standard
+Let 
+\begin_inset Formula $a,b\in X$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $\sim$
+\end_inset
+
+ be an equivalence relation.
+\end_layout
+
+\begin_layout Definition
+\begin_inset Argument 1
+status open
+
+\begin_layout Plain Layout
+equivalence class
+\end_layout
+
+\end_inset
+
+A subset 
+\begin_inset Formula $Y\subseteq X$
+\end_inset
+
+ such that 
+\begin_inset Formula $a\sim b$
+\end_inset
+
+ holds 
+\begin_inset Formula $\forall a,b\in Y$
+\end_inset
+
+,
+ and never for either 
+\begin_inset Formula $a\notin Y$
+\end_inset
+
+ or 
+\begin_inset Formula $b\notin Y$
+\end_inset
+
+,
+ is called an 
+\emph on
+equivalence class
+\emph default
+ of 
+\begin_inset Formula $X$
+\end_inset
+
+ by 
+\begin_inset Formula $\sim$
+\end_inset
+
+.
+ Let
+\begin_inset Formula 
+\[
+[a]=\{x\in X:x\sim a\}\subseteq X
+\]
+
+\end_inset
+
+denote the equivalence class to which 
+\begin_inset Formula $a$
+\end_inset
+
+ belongs.
+ All elements of 
+\begin_inset Formula $X$
+\end_inset
+
+ equivalent to each other are also elements of the same equivalence class.
+\end_layout
+
+\begin_layout Exercise
+\begin_inset Formula $\forall a\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $[a]$
+\end_inset
+
+ is indeed an equivalence class.
+\end_layout
+
+\begin_layout Proof
+\begin_inset Formula $\forall b,c\in[a]$
+\end_inset
+
+,
+ 
+\begin_inset Formula $b\sim a$
+\end_inset
+
+ and 
+\begin_inset Formula $c\sim a$
+\end_inset
+
+.
+ By symmetry,
+ 
+\begin_inset Formula $a\sim c$
+\end_inset
+
+.
+ By transitivity,
+ 
+\begin_inset Formula $b\sim c$
+\end_inset
+
+.
+ 
+\begin_inset Formula $\forall d\in X\setminus[a]$
+\end_inset
+
+,
+ 
+\begin_inset Formula $d\nsim a$
+\end_inset
+
+.
+ The same therefore applies for either 
+\begin_inset Formula $d=b$
+\end_inset
+
+ or 
+\begin_inset Formula $d=c$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+In this case,
+ 
+\begin_inset Formula $a$
+\end_inset
+
+ is called a representative of 
+\begin_inset Formula $[a]$
+\end_inset
+
+.
+ Any element of 
+\begin_inset Formula $[a]$
+\end_inset
+
+ can be a representative of 
+\begin_inset Formula $[a]$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+,
+ if 
+\begin_inset Formula $a\sim b$
+\end_inset
+
+ then 
+\begin_inset Formula $a\in[b]$
+\end_inset
+
+ and 
+\begin_inset Formula $b\in[a]$
+\end_inset
+
+ or more strongly,
+ 
+\begin_inset Formula $[a]=[b]$
+\end_inset
+
+ thus belong to the same equivalence class.
+\end_layout
+
+\begin_layout Definition
+A partition of 
+\begin_inset Formula $X$
+\end_inset
+
+ is a set 
+\begin_inset Formula $P$
+\end_inset
+
+ of nonempty subsets of 
+\begin_inset Formula $X$
+\end_inset
+
+,
+ such that every element of 
+\begin_inset Formula $X$
+\end_inset
+
+ is an element of a single element of 
+\begin_inset Formula $P$
+\end_inset
+
+.
+ Each element of 
+\begin_inset Formula $P$
+\end_inset
+
+ is a cell of the partition.
+ Moreover:
+\end_layout
+
+\begin_layout Itemize
+the elements of 
+\begin_inset Formula $P$
+\end_inset
+
+ are pairwise disjoint,
+ or 
+\begin_inset Formula $\forall A,B\in P$
+\end_inset
+
+,
+ 
+\begin_inset Formula $A\cap B=\emptyset$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Itemize
+and their union is 
+\begin_inset Formula $X$
+\end_inset
+
+,
+ or
+\begin_inset Formula 
+\[
+\bigcup P=\bigcup\nolimits_{A\in P}A=X
+\]
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection*
 Comprehensive practical exercises
 \end_layout
@@ -3802,6 +4140,14 @@ print
 \end_inset
 
  statements.
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Formula $\boldsymbol{\mathbb{Z}}$
+\end_inset
+
+:
+ the integers
 \end_layout
 
 \end_body
