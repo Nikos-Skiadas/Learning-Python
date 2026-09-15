@@ -1,6 +1,6 @@
 """Set-constructive definition of the natural numbers.
 
-Exercise 8 of the notes (§1.4.1, "ℕ: the natural numbers"): represent ℕ with python's
+Exercise 8 of the notes (§1.5.1, "ℕ: the natural numbers"): represent ℕ with python's
 built-in set type, and let arithmetic fall out of the Peano axioms instead of out of
 python's own int arithmetic.
 
@@ -33,7 +33,7 @@ reimplemented:
 
 * `==` is extensionality (§1.1.1) — two numbers are equal iff they have the same
   elements. That is Peano axiom 4, enforced by the runtime rather than by you.
-* `<=` and `<` are ⊆ and ⊂, and by the order definition in §1.4.1 (n ≥ m iff n ⊇ m)
+* `<=` and `<` are ⊆ and ⊂, and by the order definition in §1.5.1 (n ≥ m iff n ⊇ m)
   that *is* the order on ℕ. Comparison works before a single line is written.
 * `__hash__` exists, which is exactly what keeps σ legal.
 
@@ -59,7 +59,8 @@ construction is a chore rather than a lesson; `set`, because it is a viewer rath
 of the mathematics; and `__radd__` and `__rmul__`, because they buy their convenience by
 assuming commutativity, which is a theorem here — asking for them as exercises would invite
 proving it by assuming it. Implement in the order the class docstring suggests, and treat
-`python3 -m doctest numbers.py` as the progress bar: silence means done.
+`python3 -m doctest deeplearning/notes/naturals.py`, from the repository root, as the progress
+bar: silence means done.
 
 References:
 
@@ -82,7 +83,7 @@ class N(frozenset):
 	An instance is built either from a python int — `N(3)` is {0, 1, 2} — or from the
 	ground up, `N()` being zero and `.next` the successor. Both arithmetic operators accept
 	an N *or* a python int on the right, and both are defined by recursion on that second
-	operand, exactly as in §1.4.1:
+	operand, exactly as in §1.5.1:
 
 		a + 0 = a                a · 0 = 0
 		a + σ(b) = σ(a + b)      a · σ(b) = a + a · b
@@ -206,7 +207,7 @@ class N(frozenset):
 		return repr(len(self))  # n has exactly n elements
 
 	def __add__(self, other: Self | int) -> Self:
-		"""Return `self + other`, per the addition axioms of §1.4.1.
+		"""Return `self + other`, per the addition axioms of §1.5.1.
 
 		1. a + 0 = a
 		2. a + σ(b) = σ(a + b)
@@ -268,7 +269,7 @@ class N(frozenset):
 		return (self + other.prev).next
 
 	def __mul__(self, other: Self | int) -> Self:
-		"""Return `self * other`, per the multiplication axioms of §1.4.1.
+		"""Return `self * other`, per the multiplication axioms of §1.5.1.
 
 		1. a · 0 = 0
 		2. a · σ(b) = a + a · b
@@ -408,7 +409,7 @@ class N(frozenset):
 		  already sitting there as one of the three elements. So `prev` does not build
 		  anything new; it recovers something out of `self`.
 		* Which element? The greatest one. And "greatest" here is not about `len`, it is
-		  the order of §1.4.1, which for these sets is ⊆.
+		  the order of §1.5.1, which for these sets is ⊆.
 		* Now bring in the second consequence from the module docstring: the elements of
 		  n form a chain, 0 ⊂ 1 ⊂ ... ⊂ (n-1). A chain has a greatest member, and that
 		  member absorbs every other. Which single set operation from §1.2.2, applied
