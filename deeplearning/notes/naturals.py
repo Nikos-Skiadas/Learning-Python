@@ -1,8 +1,8 @@
 """Set-constructive definition of the natural numbers.
 
-Exercise 8 of the notes (§1.5.1, "ℕ: the natural numbers"): represent ℕ with python's
-built-in set type, and let arithmetic fall out of the Peano axioms instead of out of
-python's own int arithmetic.
+The exercise for §1.5.1 ("ℕ: the natural numbers"): represent ℕ with python's built-in set
+type, and let arithmetic fall out of the Peano axioms instead of out of python's own int
+arithmetic.
 
 The construction being modelled is von Neumann's:
 

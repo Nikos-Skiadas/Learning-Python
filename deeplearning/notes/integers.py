@@ -1,12 +1,12 @@
 """Set-constructive definition of the integers.
 
-The sequel to Exercise 8, for §1.5.2 ("ℤ: the integers"): represent ℤ on top of the ℕ built
-in `naturals.py`, and let arithmetic fall out of §1.5.2's definitions instead of out of
-python's own int arithmetic.
+The sequel to `naturals.py`, for §1.5.2 ("ℤ: the integers"): represent ℤ on top of the ℕ
+built there, and let arithmetic fall out of §1.5.2's definitions instead of out of python's
+own int arithmetic.
 
 The construction being modelled is a quotient set in the sense of §1.4:
 
-	ℤ = (ℕ × ℕ)/∼          where (a, b) ∼ (c, d) ⟺ a + d = b + c
+	ℤ = (ℕ × ℕ)/∼          where (a, b) ∼ (c, d) <=> a + d = b + c
 
 The intuition is that the pair (a, b) stands for a − b, which is why the relation is stated
 without a subtraction that ℕ does not have. So one integer is *many* pairs:
@@ -20,13 +20,13 @@ all three:
 
 * An instance is a *representative* (§1.4.1's word), not a class. `Z(1, 2)` and `Z(4, 5)` are
   different pairs that have to behave as the same integer.
-* Equality is therefore **not** structural. This is the one deep difference from Exercise 8,
+* Equality is therefore **not** structural. This is the one deep difference from `naturals.py`,
   where extensionality made `==` free and correct.
 * Every class has exactly one member of the form (n, 0) or (0, n) — §1.5.2's last paragraph.
   That unique member is the handle on the class, and several members below need it.
 
 Why a bare class with two plain members, rather than a subclass of anything: because nothing
-in python models a quotient. Exercise 8 could inherit from `frozenset` and get `==`, `<=` and
+in python models a quotient. `naturals.py` could inherit from `frozenset` and get `==`, `<=` and
 `__hash__` already *correct*, since extensionality is Peano axiom 4 and ⊆ is the order on von
 Neumann naturals. There is no such base here. A `tuple` would have supplied immutability and
 unpacking, but its `==` is componentwise, its `<` lexicographic, its `+` concatenation and
@@ -54,13 +54,13 @@ Three gotchas:
 * Defining `__eq__` sets `__hash__` to `None` unless you define `__hash__` too — python
   assumes a changed equality invalidates the inherited hash, and here it is right to. An
   integer that cannot go in a set is not much of an integer, so both are assigned.
-* Immutability is a *convention* here, not a guarantee. `frozenset` enforced it in Exercise 8;
-  nothing stops `self.a` being reassigned now, and doing that after the object has gone into
-  a set or a dict corrupts the container. Treat the two members as write-once. (`__slots__`
-  narrows the door without closing it: it forbids *new* attributes, not assignment to the
-  declared ones.)
+* Immutability is a *convention* here, not a guarantee. `frozenset` enforced it in
+  `naturals.py`; nothing stops `self.a` being reassigned now, and doing that after the object
+  has gone into a set or a dict corrupts the container. Treat the two members as write-once.
+  (`__slots__` narrows the door without closing it: it forbids *new* attributes, not
+  assignment to the declared ones.)
 * No python int arithmetic anywhere. The members are naturals, and ℕ already has `+`, `*`,
-  `==`, `<=`, `.next` and `.prev` from Exercise 8; every definition in §1.5.2 is written in
+  `==`, `<=`, `.next` and `.prev` from `naturals.py`; every definition in §1.5.2 is written in
   terms of exactly those. If `len`, `-`, or an int literal turns up inside a method body, the
   construction has been short-circuited. The one exception is `__init__`, which is given, and
   which is the bridge from python's ints *into* the construction — bridges are allowed to see
@@ -118,12 +118,13 @@ class Z:
 
 	The definitions being transcribed, all from §1.5.2:
 
-		[(a, b)] = [(c, d)]  ⟺  a + d = c + b
-		[(a, b)] ≤ [(c, d)]  ⟺  a + d ≤ c + b
-		[(a, b)] + [(c, d)]  =  [(a + c, b + d)]
-		[(a, b)] · [(c, d)]  =  [(ac + bd, ad + bc)]
-		       −[(a, b)]     =  [(b, a)]
-		[(a, b)] − [(c, d)]  =  [(a + d, b + c)]
+		[(a, b)] = [(c, d)]  <=>  a + d = c + b
+		[(a, b)] ≤ [(c, d)]  <=>  a + d ≤ c + b
+
+		[(a, b)] + [(c, d)] = [(a + c, b + d)]
+		[(a, b)] · [(c, d)] = [(ac + bd, ad + bc)]
+		          −[(a, b)] = [(b, a)]
+		[(a, b)] − [(c, d)] = [(a + d, b + c)]
 
 	Ten members to implement. The file groups them by what they are; this is the order to
 	*write* them in, chosen so that each is solvable by the time you reach it:
@@ -184,7 +185,7 @@ class Z:
 		  in §1.5.2 impossible to transcribe honestly.
 		* **Defaults make the common spellings short.** `Z()` is zero and `Z(3)` is the class
 		  [(3, 0)], which §1.5.2 identifies with +3.
-		* **`__init__`, not `__new__`.** Exercise 8 needed `__new__` because its base class
+		* **`__init__`, not `__new__`.** `naturals.py` needed `__new__` because its base class
 		  was immutable and the contents had to exist before the object did. There is no base
 		  class here, so the ordinary hook is the right one — and immutability stops being a
 		  guarantee and becomes a promise the class makes. Do not reassign `self.a` or
@@ -210,10 +211,11 @@ class Z:
 		"""
 		# ℕ holds no negatives, so each argument is split into the part it can take and the
 		# part that has to cross over: a − b = (a⁺ + b⁻) − (a⁻ + b⁺).
-		up_a, down_a = (a, 0) if not isinstance(a, int) or a >= 0 else (0, -a)
-		up_b, down_b = (b, 0) if not isinstance(b, int) or b >= 0 else (0, -b)
+		p_a, m_a = (a, 0) if not isinstance(a, int) or a >= 0 else (0, -a)
+		p_b, m_b = (b, 0) if not isinstance(b, int) or b >= 0 else (0, -b)
 
-		self.a, self.b = N(up_a) + down_b, N(down_a) + up_b
+		self.a = N(p_a) + m_b
+		self.b = N(m_a) + p_b
 
 	@property
 	def equivalence_class(self) -> str:
@@ -228,7 +230,7 @@ class Z:
 		hence the trailing ellipsis; it has no last member, and no first one either except by
 		the convention that the canonical representative comes first.
 
-		The counterpart of Exercise 8's `set`, and pointing at the same thing: the notation on
+		The counterpart of `naturals.py`'s `set`, pointing at the same thing: the notation on
 		the page is a summary, and underneath it there is a construction.
 
 		>>> Z(1, 2).equivalence_class
@@ -260,7 +262,7 @@ class Z:
 		two numbers themselves, and a `Z` would compare equal to every other representative,
 		which makes it useless for the two jobs above.
 
-		This is the brain-stretcher, the counterpart of Exercise 8's `prev`. Scaffolding, in
+		This is the brain-stretcher, the counterpart of `naturals.py`'s `prev`. Scaffolding, in
 		the order worth thinking about:
 
 		* Take (4, 6) and ask what the answer must be: (0, 2). Now ask what was done to get
@@ -269,7 +271,7 @@ class Z:
 		  Substitute into a + d = b + c and see what cancels. If it holds, then peeling a
 		  successor off both members at once never leaves the class, which is exactly the
 		  licence this method needs.
-		* Which ℕ operation is "take one off"? Exercise 8 wrote it, and it is the only member
+		* Which ℕ operation is "take one off"? `naturals.py` wrote it, and it is the only member
 		  of ℕ that goes downwards.
 		* When do you stop? When one of them has run out — and that same operation raises at
 		  zero, so the loop condition has to stop before it does rather than catch it after.
@@ -308,7 +310,7 @@ class Z:
 		  the shape of that answer is what makes the rest easy.
 		* Of the two naturals in a canonical pair, at least one is zero. Which one tells you
 		  the sign, and the other is the magnitude — already carrying ℕ's own decimal repr
-		  from Exercise 8, so there is nothing to compute here.
+		  from `naturals.py`, so there is nothing to compute here.
 		* Zero is the case where *both* are zero, and it must print `'0'`, not `'-0'`. Pick
 		  the branch order that gets that for free rather than special-casing it.
 		* No arithmetic. If `len` or `-` appears in this body, `canonical` was not used.
@@ -338,7 +340,7 @@ class Z:
 		* `canonical` hands you that member, as a plain pair. Hash it directly and this is one
 		  line — and note that hashing a `Z` instead would call this method again.
 		* Nothing needs inventing: the members are naturals, and `frozenset` gave them a
-		  working hash back in Exercise 8.
+		  working hash back in `naturals.py`.
 		* This method exists at all because `__eq__` set `__hash__` to `None`. That is python
 		  refusing to let a changed equality keep an inherited hash, and it is right to.
 
@@ -363,7 +365,7 @@ class Z:
 		Given; not part of the exercise.
 
 		Python reaches here only after the left operand has declined, so `Z(2) + 3` never
-		comes through. As in Exercise 8, the one line pays for its convenience by computing
+		comes through. As in `naturals.py`, the one line pays for its convenience by computing
 		`other + self` as `self + other`, which is legitimate only because addition is
 		commutative — a theorem in this development rather than one of §1.5.2's definitions.
 		Given rather than assigned, so that the exercise is not invited to prove it by
@@ -440,7 +442,7 @@ class Z:
 
 		Hints:
 
-		* Screen the type before touching either operand, exactly as Exercise 8's `__add__`
+		* Screen the type before touching either operand, exactly as `naturals.py`'s `__add__`
 		  did, and for the same reason.
 		* Then coerce. An `N` or an int is *not* already a pair of naturals, so it has to go
 		  through the constructor before its members can be read; a `Z` already is one and
@@ -584,7 +586,7 @@ class Z:
 	def __eq__(self, other: object) -> bool:
 		"""Return whether `self` and `other` are the same integer, per §1.5.2:
 
-			[(a, b)] = [(c, d)]  ⟺  a + d = c + b
+			[(a, b)] = [(c, d)]  <=>  a + d = c + b
 
 		This is the method that makes the class a quotient rather than a pair of numbers.
 		`object`'s inherited `==` compares identity, so two separately built representatives
@@ -641,7 +643,7 @@ class Z:
 	def __le__(self, other: Self) -> bool:
 		"""Return whether `self` ≤ `other`, per §1.5.2:
 
-			[(a, b)] ≤ [(c, d)]  ⟺  a + d ≤ c + b
+			[(a, b)] ≤ [(c, d)]  <=>  a + d ≤ c + b
 
 		`object` supplies no ordering at all, so until this exists `<` raises TypeError.
 
@@ -654,7 +656,7 @@ class Z:
 		* Transcribe the rule. It is `__eq__` with `≤` in place of `=`, on the very same two
 		  sums — which is the sense in which ℤ inherits its order from ℕ rather than inventing
 		  one.
-		* The `<=` on the right-hand side is ℕ's, which Exercise 8 got for free from
+		* The `<=` on the right-hand side is ℕ's, which `naturals.py` got for free from
 		  `frozenset`: on von Neumann naturals, ⊆ *is* ≤. So this method bottoms out in a
 		  subset test, two constructions down.
 		* Check it against a case that a naive memberwise comparison gets wrong — (0, 0)
