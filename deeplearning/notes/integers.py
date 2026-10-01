@@ -483,6 +483,11 @@ class Z:
 			...
 		TypeError: unsupported operand type(s) for +: 'Z' and 'str'
 		"""
+		if not isinstance(other, (Z, N, int)):
+			return NotImplemented
+
+		if not isinstance(other, Z):
+			other = Z(other)
 
 		# Addition is defined only for Z, N, and int. Anything else is not supported.
 		return Z(self.a + other.a, self.b + other.b)
