@@ -3735,7 +3735,7 @@ The rationals are a densely ordered set:
  For any two fractions such that
 \begin_inset Formula 
 \[
-\dfrac{m}{n}<\dfrac{m^{\prime}}{n}
+\dfrac{m}{n}<\dfrac{m^{\prime}}{n^{\prime}}
 \]
 
 \end_inset
@@ -3753,7 +3753,7 @@ The rationals are a densely ordered set:
  we have
 \begin_inset Formula 
 \[
-\dfrac{m}{n}<\dfrac{m+m^{\prime}}{n+n^{\prime}}<\dfrac{m^{\prime}}{n}.
+\dfrac{m}{n}<\dfrac{m+m^{\prime}}{n+n^{\prime}}<\dfrac{m^{\prime}}{n^{\prime}}.
 \]
 
 \end_inset
