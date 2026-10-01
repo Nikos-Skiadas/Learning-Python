@@ -123,7 +123,7 @@ class Z:
 
 		[(a, b)] + [(c, d)] = [(a + c, b + d)]
 		[(a, b)] · [(c, d)] = [(ac + bd, ad + bc)]
-		          −[(a, b)] = [(b, a)]
+				  −[(a, b)] = [(b, a)]
 		[(a, b)] − [(c, d)] = [(a + d, b + c)]
 
 	Ten members to implement. The file groups them by what they are; this is the order to
@@ -522,6 +522,9 @@ class Z:
 		(-1, -1, 5)
 		"""
 
+		if not isinstance(other, (Z, N, int)):
+			return NotImplemented
+
 		if not isinstance(other, Z):
 			other = Z(other)
 
@@ -557,6 +560,9 @@ class Z:
 		>>> Z(2) * 3, Z(2) * N(3), Z(2) * -3
 		(6, 6, -6)
 		"""
+
+		if not isinstance(other, (Z, N, int)):
+			return NotImplemented
 
 		if not isinstance(other, Z):
 			other = Z(other)
@@ -661,8 +667,10 @@ class Z:
 		>>> Z(3) == 3, Z(3) == "x"                      # not a Z: NotImplemented, hence False
 		(False, False)
 		"""
-
+		if not isinstance(other, Z):
+			return NotImplemented
 		# The equality relation is true only when a+d == c+b.
+		
 		return self.a + other.b == other.a + self.b
 
 	def __bool__(self) -> bool:
