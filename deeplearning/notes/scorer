@@ -772,7 +772,7 @@ def report(spec: Spec, results: list[Result]) -> bool:
 
 	pct = 100 * total_ok // len(results)
 	perfect = total_ok == len(results)
-	verdict = paint("valid", GREEN) if perfect else paint("incomplete", RED)
+	verdict = paint("✔", GREEN) if perfect else paint("✗", RED)
 	print(f"  {'─' * 30}\n  {'total':<12} {total_ok:>3}/{len(results):<3} {pct:>3}%  {verdict}")
 
 	return perfect

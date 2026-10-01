@@ -294,15 +294,14 @@ class Z:
 		>>> Z(9, 4).canonical == Z(*Z(9, 4).canonical).canonical      # idempotent
 		True
 		"""
-
 		a, b = self.a, self.b
-
 
 		while a and b:
 			a = a.prev
 			b = b.prev
 
 		return a, b
+		# NOTE: How else can we do this?
 
 	def __repr__(self) -> str:
 		"""Return the familiar signed decimal spelling, e.g. `'-3'` for the class of (0, 3).
@@ -340,12 +339,6 @@ class Z:
 		return repr(a)
 
 	def __hash__(self) -> int:
-
-
-		# Hash the canonical representative, which is the same for every member of the class
-		return hash(self.canonical)
-
-	
 		"""Hash the integer, consistently with `__eq__`.
 
 		Equal objects must hash equally, or a `set` or `dict` holding them quietly misbehaves.
@@ -372,6 +365,8 @@ class Z:
 		>>> {Z(0, 1): "minus one"}[Z(3, 4)]       # usable as a dict key
 		'minus one'
 		"""
+		# Hash the canonical representative, which is the same for every member of the class
+		return hash(self.canonical)
 
 	# ---------------------------------------------------------------------------------------
 	# OPERATIONS — the arithmetic of §1.5.2, each one a transcription and nothing more.
@@ -445,8 +440,10 @@ class Z:
 		>>> Z(5) + -Z(5) == Z()                   # ... and an inverse
 		True
 		"""
+		cls = type(self)
+
 		# We just swap the two naturals, which is what the rule says.
-		return Z(self.b, self.a)
+		return cls(self.b, self.a)
 
 	def __add__(self, other: Self | N | int) -> Self:
 		"""Return `self + other`, per §1.5.2:
@@ -483,14 +480,16 @@ class Z:
 			...
 		TypeError: unsupported operand type(s) for +: 'Z' and 'str'
 		"""
+		cls = type(self)
+
 		if not isinstance(other, (Z, N, int)):
 			return NotImplemented
 
 		if not isinstance(other, Z):
-			other = Z(other)
+			other = cls(other)
 
 		# Addition is defined only for Z, N, and int. Anything else is not supported.
-		return Z(self.a + other.a, self.b + other.b)
+		return cls(self.a + other.a, self.b + other.b)
 
 	def __sub__(self, other: Self | N | int) -> Self:
 		"""Return `self - other`, per §1.5.2:
@@ -521,14 +520,15 @@ class Z:
 		>>> Z(2) - 3, Z(2) - N(3), Z(2) - -3
 		(-1, -1, 5)
 		"""
+		cls = type(self)
 
 		if not isinstance(other, (Z, N, int)):
 			return NotImplemented
 
 		if not isinstance(other, Z):
-			other = Z(other)
+			other = cls(other)
 
-		# Αφαιρούμε προσθέτοντας τον αντίθετο του άλλου αριθμού.
+		# We subtract by adding the additive inverse of the other number.
 		return self + (-other)
 
 	def __mul__(self, other: Self | N | int) -> Self:
@@ -560,17 +560,19 @@ class Z:
 		>>> Z(2) * 3, Z(2) * N(3), Z(2) * -3
 		(6, 6, -6)
 		"""
+		cls = type(self)
 
 		if not isinstance(other, (Z, N, int)):
 			return NotImplemented
 
 		if not isinstance(other, Z):
-			other = Z(other)
+			other = cls(other)
 
 		# Transcribe the rule directly. The products and sums are all ℕ's, which already work.
-		a, b = self.a, self.b
-		c, d = other.a, other.b
-		return Z(a * c + b * d, a * d + b * c)
+		return cls(
+			self.a * other.a + self.b * other.b,
+			self.a * other.b + self.b * other.a,
+		)
 
 	# ---------------------------------------------------------------------------------------
 	# RELATIONS — when two integers are the same, when one is below another, and when one
@@ -669,8 +671,8 @@ class Z:
 		"""
 		if not isinstance(other, Z):
 			return NotImplemented
+
 		# The equality relation is true only when a+d == c+b.
-		
 		return self.a + other.b == other.a + self.b
 
 	def __bool__(self) -> bool:
@@ -722,6 +724,8 @@ class Z:
 		>>> sorted([Z(2), Z(0, 3), Z(), Z(1)])
 		[-3, 0, 1, 2]
 		"""
+		if not isinstance(other, Z):
+			return NotImplemented
 
 		# The inequality relation is true only when a+d ≤ c+b.
 		return self.a + other.b <= other.a + self.b
