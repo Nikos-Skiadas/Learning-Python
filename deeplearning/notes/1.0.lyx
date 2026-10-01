@@ -3356,13 +3356,13 @@ The intuition is that
 \end_inset
 
  with the following rule (when we expect 
-\begin_inset Formula $a-b=c-d$
+\begin_inset Formula $a-b=a^{\prime}-b^{\prime}$
 \end_inset
 
 ):
 \begin_inset Formula 
 \[
-(a,b)\sim(c,d)\Longleftrightarrow a+d=b+c
+(a,b)\sim(a^{\prime},b^{\prime})\Longleftrightarrow a+b^{\prime}=b+a^{\prime}
 \]
 
 \end_inset
@@ -3390,7 +3390,7 @@ Addition and multiplication of integers can be defined in terms of the equivalen
 
 \begin_layout Description
 addition 
-\begin_inset Formula $[(a,b)]+[(c,d)]\coloneqq[(a+c,b+d)]$
+\begin_inset Formula $[(a,b)]+[(a^{\prime},b^{\prime})]\coloneqq[(a+a^{\prime},b+b^{\prime})]$
 \end_inset
 
 
@@ -3398,7 +3398,7 @@ addition
 
 \begin_layout Description
 multiplication 
-\begin_inset Formula $[(a,b)][(c,d)]\coloneqq[(ac+bd,ad+bc)]$
+\begin_inset Formula $[(a,b)][(a^{\prime},b^{\prime})]\coloneqq[(aa^{\prime}+bb^{\prime},ab^{\prime}+ba^{\prime})]$
 \end_inset
 
 
@@ -3422,7 +3422,7 @@ Hence subtraction can be defined as the addition of the ada-bditive inverse:
 
 \begin_layout Description
 subtraction 
-\begin_inset Formula $[(a,b)]-[(c,d)]\coloneqq[(a+d,b+c)]$
+\begin_inset Formula $[(a,b)]-[(a^{\prime},b^{\prime})]\coloneqq[(a+b^{\prime},b+a^{\prime})]$
 \end_inset
 
 
@@ -3434,7 +3434,7 @@ The standard ordering on the integers is given by:
 
 \begin_layout Description
 ordering 
-\begin_inset Formula $[(a,b)]\leq[(c,d)]\Longleftrightarrow a+d\leq c+b$
+\begin_inset Formula $[(a,b)]\leq[(a^{\prime},b^{\prime})]\Longleftrightarrow a+b^{\prime}\leq a^{\prime}+b$
 \end_inset
 
 
@@ -3442,7 +3442,7 @@ ordering
 
 \begin_layout Description
 equality 
-\begin_inset Formula $[(a,b)]=[(c,d)]\Longleftrightarrow a+d=c+b$
+\begin_inset Formula $[(a,b)]=[(a^{\prime},b^{\prime})]\Longleftrightarrow a+b^{\prime}=a^{\prime}+b$
 \end_inset
 
 
@@ -3519,6 +3519,270 @@ Thus
 
 If the natural number are identified with the corresponding integers,
  this convention creates no ambiguity.
+\end_layout
+
+\begin_layout Minisec
+Cardinality
+\end_layout
+
+\begin_layout Standard
+The set of integers is countably infinite,
+ meaning it is possible to pair each integer with a unique natural number.
+ An example of such a bijection 
+\begin_inset Formula $f:\mathbb{Z}\longleftrightarrow\mathbb{N}$
+\end_inset
+
+ is
+\begin_inset Formula 
+\[
+f(n)=\begin{cases}
+2n & n\geq0\\
+2n+1 & n<0
+\end{cases}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsubsection
+\begin_inset Formula $\boldsymbol{\mathbb{Q}}$
+\end_inset
+
+:
+ Rational numbers
+\end_layout
+
+\begin_layout Standard
+In mathematics,
+ a 
+\emph on
+rational number
+\emph default
+ is a number that can be expressed as the quotient or fraction 
+\begin_inset Formula $m/n$
+\end_inset
+
+ of two integers,
+ a numerator 
+\begin_inset Formula $m\in\mathbb{Z}$
+\end_inset
+
+ and a nonzero denominator 
+\begin_inset Formula $n\in\mathbb{Z}^{*}$
+\end_inset
+
+.
+ For example,
+ every integer 
+\begin_inset Formula $m\in\mathbb{Z}$
+\end_inset
+
+ is a rational number 
+\begin_inset Formula $m/1$
+\end_inset
+
+.
+ The set (field) of rationals is usually denoted by 
+\begin_inset Formula $\mathbb{Q}$
+\end_inset
+
+,
+ therefore 
+\begin_inset Formula $\mathbb{Z}\subset\mathbb{Q}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Minisec
+Formal construction
+\end_layout
+
+\begin_layout Standard
+The rational number may be built as equivalence classes of ordered pairs of integers.
+\end_layout
+
+\begin_layout Standard
+More precisely,
+ let 
+\begin_inset Formula $\mathbb{Z}\times\mathbb{Z}^{*}$
+\end_inset
+
+ be the set of the pairs 
+\begin_inset Formula $(m,n)$
+\end_inset
+
+ of integers such that 
+\begin_inset Formula $n\neq0$
+\end_inset
+
+.
+ An equivalence relation is defined on this set by
+\begin_inset Formula 
+\[
+(m,n)\sim(m^{\prime},n^{\prime})\Longleftrightarrow mn^{\prime}=m^{\prime}n.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The set of rational numbers is defined as the quotient set 
+\begin_inset Formula $\mathbb{Q}=(\mathbb{Z}\times\mathbb{Z}^{*})/\sim$
+\end_inset
+
+ by this equivalence relation.
+ The latter is a congruence relation,
+ which means that it is compatible with the addition and multiplication defined as:
+\end_layout
+
+\begin_layout Description
+addition 
+\begin_inset Formula $[(m,n)]+[(m^{\prime},n^{\prime})]\coloneqq[(mn^{\prime}+m^{\prime}n,nn^{\prime})]$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+multiplication 
+\begin_inset Formula $[(m,n)][(m^{\prime},n^{\prime})]\coloneqq[(mm^{\prime},nn^{\prime})]$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The equivalence class of a pair 
+\begin_inset Formula $(m,n)$
+\end_inset
+
+ is denoted 
+\begin_inset Formula $m/n$
+\end_inset
+
+.
+ This means that
+\begin_inset Formula 
+\[
+\dfrac{m}{n}=\dfrac{m^{\prime}}{n^{\prime}}\Longleftrightarrow mn^{\prime}=m^{\prime}n.
+\]
+
+\end_inset
+
+Each equivalence class contains a unique canonical representative element.
+ The canonical representative is the unique pair 
+\begin_inset Formula $(m,n)$
+\end_inset
+
+ in the equivalence classs such that 
+\begin_inset Formula $m$
+\end_inset
+
+ and 
+\begin_inset Formula $n$
+\end_inset
+
+ are coprime or 
+\begin_inset Formula $\gcd(m,n)=1$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $n>0$
+\end_inset
+
+.
+ It is called the representation in lowest terms of the rational number.
+\end_layout
+
+\begin_layout Standard
+A total order may be defined on the rational numbers,
+ that extends the natural order of the integers:
+\end_layout
+
+\begin_layout Description
+ordering 
+\begin_inset Formula $[(m,n)]\leq[(m^{\prime},n^{\prime})]\Longleftrightarrow(mn^{\prime}\leq m^{\prime}n\wedge nn^{\prime}>0)\vee(mn^{\prime}\geq m^{\prime}n\wedge nn^{\prime}<0)$
+\end_inset
+
+ 
+\end_layout
+
+\begin_layout Description
+equality 
+\begin_inset Formula $[(m,n)]=[(m^{\prime},n^{\prime})]\Longleftrightarrow mn^{\prime}=m^{\prime}n$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Properties
+\end_layout
+
+\begin_layout Standard
+The rationals are a densely ordered set:
+ between any two (different) rationals,
+ there sits another one,
+ and,
+ therefore,
+ infinitely many other ones.
+ For any two fractions such that
+\begin_inset Formula 
+\[
+\dfrac{m}{n}<\dfrac{m^{\prime}}{n}
+\]
+
+\end_inset
+
+(where 
+\begin_inset Formula $n$
+\end_inset
+
+,
+ 
+\begin_inset Formula $n^{\prime}$
+\end_inset
+
+ are positive),
+ we have
+\begin_inset Formula 
+\[
+\dfrac{m}{n}<\dfrac{m+m^{\prime}}{n+n^{\prime}}<\dfrac{m^{\prime}}{n}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Countability
+\end_layout
+
+\begin_layout Standard
+The set of positive rational numbers is countable.
+\end_layout
+
+\begin_layout Standard
+More precisely,
+ one can sort the fractions by increasing values of the sum of the numerator and the denominator,
+ and,
+ for equal sums,
+ by increasing numerator or denominator.
+ This produces a sequence of fractions from which one can remove the reducible fractions,
+ obtaining a sequence that contains each rational number exactly once.
+ This establishes a bijection betwen the rational numbers and the natural numbers,
+ which matps each rational number to its rank in the sequence.
+\end_layout
+
+\begin_layout Standard
+A similar method can be used for numbering all rational numbers.
 \end_layout
 
 \end_body
