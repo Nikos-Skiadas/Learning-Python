@@ -77,12 +77,19 @@ Working through this: the class is laid out in three groups — representations,
 relations — and each group leads with the members that are given, then the ones to implement.
 Ten members carry the exercise, and each states what it must return, which definition from
 §1.5.2 it discharges, the errors it owes the caller, and hints, plus doctests that serve as
-its specification. Eight more are given, and say so in their own docstrings: `__init__`,
+its specification. Eleven more are given, and say so in their own docstrings: `__init__`,
 because plumbing python ints into a pair of naturals is a chore rather than a lesson;
 `equivalence_class`, because it is a viewer rather than part of the mathematics; `__radd__`,
 `__rsub__` and `__rmul__`, because they buy their convenience by assuming commutativity,
 which is a theorem here; and `__lt__`, `__ge__` and `__gt__`, because they are derivable
 boilerplate around the two comparisons that carry the mathematics.
+
+Three of those eleven are there for `rationals.py` rather than for ℤ, and arrived after this
+exercise was written: `__int__`, the bridge back out to python; `__abs__`, a magnitude to
+compare against when a sign is in the way; and `__floordiv__`, the only division an integer
+can honestly have. §1.5.2 asks for none of them, and ℤ's own arithmetic uses none of them —
+they are here because operations on integers belong with the integers, not with whatever is
+built on top.
 
 The file's grouping is not the order to solve in — the class docstring gives that. Run
 
@@ -144,7 +151,8 @@ class Z:
 	(3, -3, -3, 0)
 	>>> Z(1, 2) == Z(4, 5)                    # one integer, two representatives
 	True
-	>>> Z(1, 2).canonical, Z(4, 5).canonical  # ... reducing to the same canonical pair
+	>>> c, d = Z(1, 2).canonical, Z(4, 5).canonical
+	>>> (c.a, c.b), (d.a, d.b)                # ... carried by the same canonical members
 	((0, 1), (0, 1))
 	>>> len({Z(1, 2), Z(4, 5), Z(0, 1)})      # ... so a set collapses them
 	1
@@ -202,10 +210,9 @@ class Z:
 		(-3, 3, 1)
 		>>> Z(N(1), N(2))                         # naturals pass straight through
 		-1
-		>>> Z(3).canonical                        # ... and ints are read as naturals
-		(3, 0)
-		>>> [type(m).__name__ for m in Z(3).canonical]
-		['N', 'N']
+		>>> c = Z(3).canonical                    # ... and ints are read as naturals
+		>>> (c.a, c.b), [type(m).__name__ for m in (c.a, c.b)]
+		((3, 0), ['N', 'N'])
 		>>> sorted(vars(Z(1, 2)))                 # the two members, before __repr__ exists
 		['a', 'b']
 		"""
@@ -216,6 +223,38 @@ class Z:
 
 		self.a = N(p_a) + m_b
 		self.b = N(m_a) + p_b
+
+	def __int__(self) -> int:
+		"""Return this integer as a python int — the bridge back out of the construction.
+
+		Given; not part of the exercise.
+
+		`__init__` is the bridge in, and this is the bridge out: `int(Z(-3))` is `-3`. Nothing
+		inside this class uses it, and nothing should — the whole exercise is to define ℤ's
+		arithmetic without python's. It exists for callers at the boundary, and `rationals.py`
+		is the first: it reaches for `math.gcd`, which speaks ints and nothing else.
+
+		The implementation is the only place in this file where an int subtraction appears,
+		and it is allowed to, being the one method whose declared job is to produce an int.
+		`len` on a natural is its cardinality, which `naturals.py` showed *is* the number, so
+		the difference of the two cardinalities is the signed value.
+
+		Note what it does *not* do: it never asks for `canonical`. The pair (a, b) means a − b
+		whatever representative it is, so the subtraction is right for all of them — (9, 4) and
+		(5, 0) both come out as 5. Reducing first would cost a loop and change nothing, which
+		makes this the clearest example in the chapter of the rule the module docstring states
+		twice: reach for the canonical form only when something must come out the *same* for
+		every representative. Hashing needs that. Printing needs it. Arithmetic does not, and
+		neither does this.
+
+		>>> int(Z(3)), int(Z(0, 3)), int(Z())
+		(3, -3, 0)
+		>>> int(Z(9, 4)), int(Z(4, 9))            # any representative, same answer
+		(5, -5)
+		>>> [int(Z(k)) for k in range(-3, 4)]
+		[-3, -2, -1, 0, 1, 2, 3]
+		"""
+		return len(self.a) - len(self.b)
 
 	@property
 	def equivalence_class(self) -> str:
@@ -242,25 +281,47 @@ class Z:
 		>>> Z(4, 5).equivalence_class == Z(1, 2).equivalence_class    # same integer, same class
 		True
 		"""
-		a, b = self.canonical
-		members = ", ".join(f"({a + k}, {b + k})" for k in range(5))
+		members = ", ".join(
+			f"({self.canonical.a + k}, {self.canonical.b + k})" for k in range(5)
+		)
 
 		return "{" + members + ", ...}"
 
 	# ..................................................................... to implement
 
 	@property
-	def canonical(self) -> tuple[N, N]:
-		"""Return the unique representative of this integer of the form (n, 0) or (0, n).
+	def canonical(self) -> Self:
+		"""Return this integer carried by its tidiest representative: (n, 0) or (0, n).
 
 		§1.5.2 closes by asserting that every class has exactly one such member; this property
 		produces it. It is the handle on the class as a whole — `__hash__` and `__repr__` both
 		need something that comes out the same for every representative, and this is the only
 		thing on offer.
 
-		Returns a plain pair of naturals rather than a `Z`, deliberately: the caller wants the
-		two numbers themselves, and a `Z` would compare equal to every other representative,
-		which makes it useless for the two jobs above.
+		Returns a `Z` rather than a plain pair, because the canonical form of an integer *is*
+		that integer: same value, tidier members, and the type should say so. Two consequences
+		follow, and both are felt below. It compares equal to every other representative, so
+		testing this method means looking at its `.a` and `.b` rather than at its value — which
+		is honest, since not changing the value is precisely its job. And `__hash__` cannot
+		hash the result directly without calling itself forever.
+
+		A plain property, so every `self.canonical` runs the reduction again — and the methods
+		below ask for it twice in a line rather than stashing it, which means they pay that
+		twice. The repetition is deliberate. It keeps each of them a transcription of its own
+		rule, with nothing between the definition and the code, and this chapter is built to
+		be read rather than to be fast. `functools.cached_property` would remove the second
+		run at a price worth knowing: it writes the answer into the instance's `__dict__`,
+		which makes an object that modifies itself, and it never invalidates, so the first
+		reassignment of a member turns the cached value into a lie. Neither is fatal here,
+		since the members are write-once by convention — but a convention is a thin thing to
+		hang a cache on, and the saving buys nothing this file wants.
+
+		`rationals.py` is this property's heaviest customer. Every loop there reduces its
+		running values through it, because the difference of two integers carries members as
+		large as its operands — `Z(8) - Z(6)` is the pair (8, 6), not (2, 0) — so iterating
+		without reducing makes the members grow without bound while the value shrinks, and
+		ℕ's equality is exponential in the size of its operands. `__floordiv__` below does the
+		same thing for the same reason.
 
 		This is the brain-stretcher, the counterpart of `naturals.py`'s `prev`. Scaffolding, in
 		the order worth thinking about:
@@ -282,16 +343,24 @@ class Z:
 		* Work on local names, never on `self.a` and `self.b` themselves. Reducing in place
 		  would leave the object no longer the one you started with — see the module docstring
 		  on immutability being a convention here.
+		* The answer is a new instance of this class, built from the two reduced members. Build
+		  it with `type(self)` rather than naming `Z`, so a subclass gets its own type back.
 		* Sanity check: the result must still be equal, as an integer, to what you started
 		  with, and applying it twice must change nothing.
 
-		>>> Z(4, 6).canonical, Z(6, 4).canonical
-		((0, 2), (2, 0))
-		>>> Z(7, 7).canonical, Z().canonical
-		((0, 0), (0, 0))
-		>>> all(Z(*Z(a, b).canonical) == Z(a, b) for a in range(5) for b in range(5))
+		>>> c = Z(4, 6).canonical
+		>>> c, (c.a, c.b)                         # the same integer, its tidiest members
+		(-2, (0, 2))
+		>>> d = Z(6, 4).canonical
+		>>> d, (d.a, d.b)
+		(2, (2, 0))
+		>>> z = Z(7, 7).canonical
+		>>> z, (z.a, z.b)
+		(0, (0, 0))
+		>>> all(Z(a, b).canonical == Z(a, b) for a in range(5) for b in range(5))
 		True
-		>>> Z(9, 4).canonical == Z(*Z(9, 4).canonical).canonical      # idempotent
+		>>> e = Z(9, 4).canonical
+		>>> (e.canonical.a, e.canonical.b) == (e.a, e.b)              # idempotent
 		True
 		"""
 		a, b = self.a, self.b
@@ -300,8 +369,7 @@ class Z:
 			a = a.prev
 			b = b.prev
 
-		return a, b
-		# NOTE: How else can we do this?
+		return type(self)(a, b)
 
 	def __repr__(self) -> str:
 		"""Return the familiar signed decimal spelling, e.g. `'-3'` for the class of (0, 3).
@@ -313,9 +381,10 @@ class Z:
 		Hints:
 
 		* A representative such as (4, 6) cannot be printed directly; (0, 2) can. So this
-		  method starts by asking `canonical` for the representative that *is* printable, and
-		  the shape of that answer is what makes the rest easy.
-		* Of the two naturals in a canonical pair, at least one is zero. Which one tells you
+		  method starts by asking `canonical` for the representative that *is* printable. What
+		  comes back is a `Z`, not a pair, so reach into its `.a` and `.b` — and note that
+		  printing it instead would call this method again, forever.
+		* Of the two naturals in a canonical form, at least one is zero. Which one tells you
 		  the sign, and the other is the magnitude — already carrying ℕ's own decimal repr
 		  from `naturals.py`, so there is nothing to compute here.
 		* Zero is the case where *both* are zero, and it must print `'0'`, not `'-0'`. Pick
@@ -329,14 +398,14 @@ class Z:
 		>>> print(Z(7) * Z(0, 3))
 		-21
 		"""
-		a, b = self.canonical
+		# A negative integer has a zero first member, so a non-zero second member is the
+		# magnitude and the sign has to be written in front of it
+		if self.canonical.b:
+			return "-" + repr(self.canonical.b)
 
-		# If the second number is not zero, the integer is negative and the first number is zero. Print the second with a
-		if b:
-			return "-" + repr(b)
-
-		# Else print a (Obviously if it is zero, the integer is zero and a is zero too, so this prints '0' correctly.)
-		return repr(a)
+		# Otherwise the first member is the magnitude — and when the integer is zero both
+		# members are zero, so this prints '0' without needing a branch of its own
+		return repr(self.canonical.a)
 
 	def __hash__(self) -> int:
 		"""Hash the integer, consistently with `__eq__`.
@@ -351,8 +420,9 @@ class Z:
 		* §1.5.2's last paragraph is the whole hint: every class has exactly one member of
 		  the form (n, 0) or (0, n). That member is an invariant of the class, so hashing it
 		  hashes the integer rather than the representative.
-		* `canonical` hands you that member, as a plain pair. Hash it directly and this is one
-		  line — and note that hashing a `Z` instead would call this method again.
+		* `canonical` hands you that representative — but as a `Z`, and hashing a `Z` is what
+		  this method *is*, so hashing it directly recurses forever. Reach into its `.a` and
+		  `.b` and hash those two together instead.
 		* Nothing needs inventing: the members are naturals, and `frozenset` gave them a
 		  working hash back in `naturals.py`.
 		* This method exists at all because `__eq__` set `__hash__` to `None`. That is python
@@ -365,14 +435,98 @@ class Z:
 		>>> {Z(0, 1): "minus one"}[Z(3, 4)]       # usable as a dict key
 		'minus one'
 		"""
-		# Hash the canonical representative, which is the same for every member of the class
-		return hash(self.canonical)
+		# Hash the canonical representative's members, which are the same for every member of
+		# the class. Hashing the representative itself would call this method again.
+		return hash((self.canonical.a, self.canonical.b))
 
 	# ---------------------------------------------------------------------------------------
 	# OPERATIONS — the arithmetic of §1.5.2, each one a transcription and nothing more.
 	# ---------------------------------------------------------------------------------------
 
 	# ............................................................................ given
+
+	def __abs__(self) -> Self:
+		"""Return |self|, this integer with its sign discarded.
+
+		Given; not part of the exercise.
+
+		§1.5.2 never mentions absolute value, and ℤ's own exercise never needed one. It earns
+		its place here because the things built *on* ℤ do: a magnitude is what you compare
+		against when a sign would only get in the way, and `__floordiv__` just below works on
+		magnitudes and puts the sign back at the end.
+
+		One line, and it needs nothing new — the comparison and the negation are both already
+		defined, so this is a statement about ℤ rather than a computation in it.
+
+		>>> abs(Z(3)), abs(Z(0, 3)), abs(Z())
+		(3, 3, 0)
+		>>> abs(Z(4, 9)), abs(Z(9, 4))            # any representative, same answer
+		(5, 5)
+		>>> abs(Z(-3)) == abs(Z(3))
+		True
+		"""
+		return self if self >= type(self)() else -self
+
+	def __floordiv__(self, other: Self | N | int) -> Self:
+		"""Return `self // other`, the quotient rounded towards minus infinity.
+
+		Given; not part of the exercise.
+
+		§1.5.2 defines addition, multiplication, negation and subtraction and then stops,
+		because an integer divided by an integer is in general not an integer — the gap that
+		ℚ is built to fill. What `//` offers instead is the *floor* of that quotient, which is
+		always an integer, so it is an operation ℤ can honestly have.
+
+		Python's floor division rounds towards minus infinity rather than towards zero, which
+		matters only when the signs differ: `7 // 2` is 3 but `-7 // 2` is -4, not -3. This
+		method reproduces that, because an operator should mean what the language says it
+		means. `rationals.py` only ever uses it where the division comes out exact — it
+		divides a numerator and a denominator by their common divisor — so the rounding rule
+		is invisible there, but it would be a trap to spell it `//` and have it do something
+		else.
+
+		The method is repeated subtraction, counting: subtraction and comparison are all ℤ
+		offers. Each difference goes through `canonical`, without which the members grow as
+		described there, and ℕ's equality makes the loop seize up after a handful of steps.
+
+		Raises ZeroDivisionError on a zero divisor.
+
+		>>> Z(12) // Z(4), Z(12) // Z(3), Z(7) // Z(2)
+		(3, 4, 3)
+		>>> Z(-7) // Z(2), Z(7) // Z(-2), Z(-7) // Z(-2)      # floor, not truncation
+		(-4, -4, 3)
+		>>> Z(-6) // Z(2), Z(6) // Z(-2)                      # exact: nothing to round
+		(-3, -3)
+		>>> Z() // Z(5), Z(12) // 4, Z(12) // N(4)
+		(0, 3, 3)
+		>>> Z(7) // Z()
+		Traceback (most recent call last):
+			...
+		ZeroDivisionError: integer division by zero
+		"""
+		if not isinstance(other, (Z, N, int)):
+			return NotImplemented
+
+		cls = type(self)
+		other = other if isinstance(other, Z) else cls(other)
+
+		if not other:
+			raise ZeroDivisionError("integer division by zero")
+
+		remainder, step = abs(self), abs(other)
+		quotient = cls()
+
+		# Count how many times the divisor fits, reducing as we go so the members stay small
+		while step <= remainder:
+			remainder = (remainder - step).canonical
+			quotient = quotient + 1
+
+		# Signs agree: the quotient is exact or already rounded down. Signs differ: negate,
+		# and go one further down whenever something was left over.
+		if (self < cls()) == (other < cls()):
+			return quotient
+
+		return -quotient if not remainder else -(quotient + 1)
 
 	def __radd__(self, other: N | int) -> Self:
 		"""Return `other + self`, so that an int or a natural works on the left of `+`.

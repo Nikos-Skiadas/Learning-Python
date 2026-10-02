@@ -77,7 +77,8 @@ import importlib
 import operator
 
 from collections.abc import Callable, Iterable, Iterator, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from fractions import Fraction
 from itertools import product
 from typing import Any
 
@@ -136,17 +137,20 @@ class Spec:
 	source: str                                 # the file under test, for leak detection
 	cls: type
 	features: frozenset[str]
-	embed: Callable[[int], Any]                 # int -> the type under test
-	unembed: Callable[[Any], int]               # the type -> int, for agreement checks
+	embed: Callable[[Any], Any]                 # a plain value -> the type under test
+	unembed: Callable[[Any], Any]               # the type -> a plain value, for agreement
 	same: Callable[[Any, Any], bool]            # equality oracle
-	sample: Sequence[int]                       # values for unary/binary laws
-	small: Sequence[int]                        # values for ternary laws
+	sample: Sequence[Any]                       # values for unary/binary laws
+	small: Sequence[Any]                        # values for ternary laws
 	succ: Callable[[Any], Any] | None = None
 	pred: Callable[[Any], Any] | None = None
 	normalize: Callable[[Any], Any] | None = None    # operand reader; defaults to `cls`
 	spelling: Callable[[Any], str] = repr        # how the type's own repr should read
-	witness: Sequence[int] | None = None        # values c may take in "∃c, a + c = b"
-	representatives: Callable[[int], Sequence[Any]] | None = None   # many for one value
+	approximate: Callable[[Any], float] | None = None   # a lossy bridge out, where there is one
+	witness: Sequence[Any] | None = None        # values c may take in "∃c, a + c = b"
+	coercible: Sequence[Any] | None = None      # plain values the operators must accept
+	invert: Callable[[Any], Any] | None = None  # multiplicative inverse, where there is one
+	representatives: Callable[[Any], Sequence[Any]] | None = None   # many for one value
 	canonical: Callable[[Any], Any] | None = None                   # class -> its one form
 	rebuild: Callable[[Any], Any] | None = None                     # that form -> a value
 	bad_operands: Sequence[Any] = ()            # values the operators must refuse
@@ -170,6 +174,15 @@ class Spec:
 		separately.
 		"""
 		return [self.embed(k) for k in (self.sample if self.witness is None else self.witness)]
+
+	def coercibles(self) -> Sequence[Any]:
+		"""Plain python values the operators are expected to accept on the right.
+
+		The sample serves for ℕ and ℤ, whose sampled values are python ints already. It does
+		not for ℚ, which is sampled with `Fraction`s that `Q` has no reason to accept — the
+		coercion it owes callers is of ints, so those are declared separately.
+		"""
+		return self.sample if self.coercible is None else self.coercible
 
 	def alike(self, left: Any, right: Any) -> bool:
 		"""`same`, except that a value which is not of the type equals nothing at all.
@@ -218,11 +231,19 @@ def forall(cases: Iterable[tuple], predicate: Callable[..., bool]) -> tuple[bool
 	One counterexample is enough to sink a law, so the search stops at the first by default.
 	Under `--verbose` it keeps looking and reports up to `COUNTEREXAMPLES`, which is what
 	tells "one odd case" apart from "this law simply does not hold here".
+
+	A law with nothing to quantify over fails rather than passing. Vacuous truth is not
+	evidence, and the way an empty case list actually arises is telling: a family that filters
+	its sample — `field` keeps the non-zero values — gets an empty one precisely when the
+	predicate it filtered on is broken. An implementation whose `__bool__` answered `False`
+	for everything once scored full marks this way.
 	"""
 	failures: list[str] = []
 	capped = False
+	checked = 0
 
 	for case in cases:
+		checked += 1
 		where = ", ".join(map(show, case))
 
 		try:
@@ -241,6 +262,9 @@ def forall(cases: Iterable[tuple], predicate: Callable[..., bool]) -> tuple[bool
 		if len(failures) >= COUNTEREXAMPLES:
 			capped = True
 			break
+
+	if not checked:
+		return False, "nothing to check: the law had no cases to quantify over"
 
 	if not failures:
 		return True, ""
@@ -270,6 +294,15 @@ def oracle(s: Spec) -> Iterator[Result]:
 	yield check("oracle", "repr spells the value it embeds", lambda: forall(
 		((k,) for k in s.sample), lambda k: repr(s.embed(k)) == s.spelling(k)))
 
+	if (approximate := s.approximate) is not None:
+		yield check("oracle", "the float bridge approximates the value", lambda: forall(
+			((k,) for k in s.sample), lambda k: approximate(s.embed(k)) == float(k)))
+
+		if (klass := s.representatives) is not None:
+			yield check("oracle", "the float bridge ignores the representative", lambda: forall(
+				((k,) for k in s.sample),
+				lambda k: len({approximate(x) for x in klass(k)}) == 1))
+
 
 def sanity(s: Spec) -> Iterator[Result]:
 	"""Is the implementation even well formed? Checked first, because everything assumes it.
@@ -288,6 +321,9 @@ def sanity(s: Spec) -> Iterator[Result]:
 		((k,) for k in s.sample), lambda k: isinstance(s.embed(k), s.cls)), kind)
 	yield check(kind, "repr returns a string", lambda: (
 		isinstance(repr(s.embed(0)), str), "repr did not return a str"), kind)
+	yield check(kind, "zero is falsy and one is truthy", lambda: (
+		not s.embed(0) and bool(s.embed(1)),
+		f"bool(zero) is {bool(s.embed(0))} and bool(one) is {bool(s.embed(1))}"), kind)
 	yield check(kind, "+ returns an instance of the type", lambda: (
 		isinstance(s.embed(1) + s.embed(1), s.cls),
 		f"got {type(s.embed(1) + s.embed(1)).__name__}"), kind)
@@ -453,6 +489,10 @@ def quotient(s: Spec) -> Iterator[Result]:
 		pairs(s.small),
 		lambda j, k: all(s.alike(x * y, s.embed(j * k)) for x in klass(j) for y in klass(k))))
 
+	yield check("quotient", "≤ is well defined on classes", lambda: forall(
+		pairs(s.sample),
+		lambda j, k: all(s.order(x, y) == (j <= k) for x in klass(j) for y in klass(k))))
+
 	if "negation" in s.features:
 		yield check("quotient", "− is well defined on classes", lambda: forall(
 			pairs(s.sample),
@@ -474,6 +514,45 @@ def quotient(s: Spec) -> Iterator[Result]:
 		len({x for k in s.sample for x in klass(k)}) == len(set(s.sample)),
 		"a set built from every representative does not hold exactly one per value"),
 		"contract")
+
+
+def field(s: Spec) -> Iterator[Result]:
+	"""Multiplicative inverses and division, per §1.5.3 — what separates a field from a ring.
+
+	ℤ is closed under +, − and ·, and gives every number an additive inverse; there it stops,
+	because a quotient of two integers is an integer only by accident. ℚ gives every *non-zero*
+	number a multiplicative inverse too, and division follows from it. Everything scored here
+	is new at ℚ, as `negation` was new at ℤ — and the exclusion of zero is the whole reason the
+	underlying set is ℤ × ℤ* rather than ℤ × ℤ.
+	"""
+	if (invert := s.invert) is None:
+		yield check("field", "the spec supplies an inverse", lambda: (
+			False, "a field cannot be scored without an `invert` hook"), "sanity")
+		return
+
+	nonzero = [v for v in s.values() if v]
+
+	yield check("field", "a · a⁻¹ = 1", lambda: forall(
+		((v,) for v in nonzero), lambda v: s.alike(v * invert(v), s.embed(1))))
+	yield check("field", "a / b = a · b⁻¹", lambda: forall(
+		((a, b) for a in s.values() for b in nonzero),
+		lambda a, b: s.alike(a / b, a * invert(b))))
+	yield check("field", "agrees with python's /", lambda: forall(
+		((j, k) for j in s.sample for k in s.sample if k),
+		lambda j, k: s.unembed(s.embed(j) / s.embed(k)) == j / k))
+	yield check("field", "(a⁻¹)⁻¹ = a  (an involution)", lambda: forall(
+		((v,) for v in nonzero), lambda v: s.alike(invert(invert(v)), v)), "theorem")
+	yield check("field", "a / a = 1", lambda: forall(
+		((v,) for v in nonzero), lambda v: s.alike(v / v, s.embed(1))), "theorem")
+	yield check("field", "a / 1 = a", lambda: forall(
+		((v,) for v in s.values()), lambda v: s.alike(v / s.embed(1), v)), "theorem")
+	yield check("field", "(a · b)⁻¹ = a⁻¹ · b⁻¹", lambda: forall(
+		((a, b) for a in nonzero for b in nonzero),
+		lambda a, b: s.alike(invert(a * b), invert(a) * invert(b))), "theorem")
+	yield check("field", "zero has no inverse", lambda: raises(
+		lambda: invert(s.embed(0)), ZeroDivisionError), "contract")
+	yield check("field", "division by zero is refused", lambda: raises(
+		lambda: s.embed(1) / s.embed(0), ZeroDivisionError), "contract")
 
 
 def algebra(s: Spec) -> Iterator[Result]:
@@ -506,6 +585,8 @@ def order(s: Spec) -> Iterator[Result]:
 		lambda a, b, c: not (le(a, b) and le(b, c)) or le(a, c)))
 	yield check("order", "total", lambda: forall(
 		pairs(s.values()), lambda a, b: le(a, b) or le(b, a)))
+	yield check("order", "agrees with python's ≤", lambda: forall(
+		pairs(s.sample), lambda j, k: le(s.embed(j), s.embed(k)) == (j <= k)))
 	yield check("order", "a ≤ b iff ∃c, a + c = b", lambda: forall(
 		pairs(s.values()),
 		lambda a, b: le(a, b) == any(s.alike(a + c, b) for c in s.witnesses())))
@@ -518,10 +599,10 @@ def order(s: Spec) -> Iterator[Result]:
 def coercion(s: Spec) -> Iterator[Result]:
 	"""A python int on the right of an operator must behave as its embedding."""
 	yield check("coercion", "a + int(k) = a + embed(k)", lambda: forall(
-		pairs(s.sample),
+		pairs(s.coercibles()),
 		lambda j, k: s.alike(s.embed(j) + k, s.embed(j) + s.embed(k))), "contract")
 	yield check("coercion", "a · int(k) = a · embed(k)", lambda: forall(
-		pairs(s.sample),
+		pairs(s.coercibles()),
 		lambda j, k: s.alike(s.embed(j) * k, s.embed(j) * s.embed(k))), "contract")
 	read = s.normalize or s.cls
 
@@ -532,10 +613,10 @@ def coercion(s: Spec) -> Iterator[Result]:
 
 	if s.reflected:
 		yield check("coercion", "int(k) + a = embed(k) + a", lambda: forall(
-			pairs(s.sample),
+			pairs(s.coercibles()),
 			lambda j, k: s.alike(j + s.embed(k), s.embed(j) + s.embed(k))), "contract")
 		yield check("coercion", "int(k) · a = embed(k) · a", lambda: forall(
-			pairs(s.sample),
+			pairs(s.coercibles()),
 			lambda j, k: s.alike(j * s.embed(k), s.embed(j) * s.embed(k))), "contract")
 
 
@@ -545,6 +626,9 @@ def contracts(s: Spec) -> Iterator[Result]:
 
 	if "negation" in s.features:
 		operators.append(("−", operator.sub))
+
+	if "field" in s.features:
+		operators.append(("/", operator.truediv))
 
 	for bad in s.bad_operands:
 		for label, op in operators:
@@ -623,6 +707,7 @@ FAMILIES: dict[str, Callable[[Spec], Iterator[Result]]] = {
 	"addition": addition,
 	"multiplication": multiplication,
 	"negation": negation,
+	"field": field,
 	"algebra": algebra,
 	"order": order,
 	"quotient": quotient,
@@ -679,7 +764,7 @@ def integers() -> Spec:
 			"order", "quotient", "coercion", "contracts",
 		}),
 		embed=Z,
-		unembed=lambda z: int(repr(z)),
+		unembed=int,
 		same=lambda a, b: repr(a) == repr(b),
 		sample=range(-4, 5),
 		small=range(-2, 3),
@@ -688,12 +773,76 @@ def integers() -> Spec:
 		reflected=True,
 		# (k + j) − j is k for every j, so this walks up one equivalence class
 		representatives=lambda k: [Z(k + j, j) for j in range(3)],
-		canonical=lambda z: z.canonical,
+		# `Z.canonical` hands back a Z, which compares equal to every representative; the
+		# members are what distinguishes one canonical form from another
+		canonical=lambda z: (z.canonical.a, z.canonical.b),
 		rebuild=lambda pair: Z(*pair),
 		bad_operands=("x", 2.0, 0.0, None, []),
 		domain_errors=(
 			("Z(2) <= 3 refuses a non-Z", lambda: Z(2) <= 3, TypeError),
 			("Z(2.0) refuses a float", lambda: Z(2.0), TypeError),
+		),
+	)
+
+
+@register("Q")
+def rationals() -> Spec:
+	module = load("rationals")
+	Q = module.Q
+
+	# Sampled with `Fraction`s rather than ints, which is what the `embed`/`unembed` hooks are
+	# for. Both ints and Fractions carry `.numerator` and `.denominator`, so one embedding
+	# serves the sample and the `embed(0)` / `embed(1)` that several families reach for.
+	half = Fraction(1, 2)
+	sample = [-Fraction(1), -half, Fraction(), half, Fraction(1), Fraction(2)]
+	small = [-half, Fraction(), half, Fraction(1)]
+
+	def spelling(value: Fraction) -> str:
+		if value.denominator == 1:
+			return str(value.numerator)
+
+		return f"{value.numerator}/{value.denominator}"
+
+	return Spec(
+		name="ℚ  the rational numbers",
+		origin="rationals.Q",
+		source=module.__file__,
+		cls=Q,
+		features=frozenset({
+			"sanity", "oracle", "addition", "multiplication", "negation", "field",
+			"algebra", "order", "quotient", "coercion", "contracts",
+		}),
+		embed=lambda value: Q(value.numerator, value.denominator),
+		# `Fraction` reduces for itself, so there is nothing for `canonical` to do here
+		unembed=lambda q: Fraction(int(q.m), int(q.n)),
+		same=lambda a, b: repr(a) == repr(b),
+		spelling=spelling,
+		sample=sample,
+		small=small,
+		# every non-negative difference over the sample, since b − a is the witness the order
+		# law needs and ℚ's differences are not themselves sampled values
+		witness=sorted({b - a for a in sample for b in sample if b >= a}),
+		coercible=range(-2, 3),        # `Q` coerces python ints, not Fractions
+		normalize=lambda v: v if isinstance(v, Q) else Q(v),
+		approximate=float,
+		invert=lambda q: q.inverse,
+		reflected=True,
+		# (km, kn) is m/n for every k, and so is (−m, −n) — the last of those is the one with a
+		# negative denominator, which is the only way the second branch of §1.5.3's ordering
+		# rule ever gets exercised: `Fraction` normalises the sign away, so `embed` never
+		# produces it
+		representatives=lambda f: [
+			Q(f.numerator, f.denominator),
+			Q(f.numerator * 2, f.denominator * 2),
+			Q(-f.numerator, -f.denominator),
+		],
+		canonical=lambda q: (q.canonical.m, q.canonical.n),
+		rebuild=lambda pair: Q(*pair),
+		bad_operands=("x", 2.0, 0.0, None, []),
+		domain_errors=(
+			("Q(1, 0) refuses a zero denominator", lambda: Q(1, 0), ZeroDivisionError),
+			("Q(1, 2) <= 3 refuses a non-Q", lambda: Q(1, 2) <= 3, TypeError),
+			("Q(2.0) refuses a float", lambda: Q(2.0), TypeError),
 		),
 	)
 

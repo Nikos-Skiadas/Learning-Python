@@ -27,22 +27,27 @@ rational number at all. This is the first constructor in the chapter that reject
 for a *mathematical* reason rather than a plumbing one, and `ZeroDivisionError` is what python
 calls that.
 
-**2. The canonical form needs an algorithm.** §1.5.3 says the canonical representative is the
-unique (m, n) with gcd(m, n) = 1 and n > 0 — lowest terms. ℤ's canonical form was a loop that
-peeled one off both members; this one needs a greatest common divisor and an exact division,
-and ℤ has neither. They have to be built first, out of what ℤ does have, which is why this
-file opens with arithmetic on ℤ before it defines anything about ℚ.
+**2. The canonical form needs more than ℤ once had.** §1.5.3 says the canonical representative
+is the unique (m, n) with gcd(m, n) = 1 and n > 0 — lowest terms. ℤ's canonical form was a
+loop that peeled one off both members; this one needs a greatest common divisor and a
+division, and §1.5.2 defines neither. Both are now available, and from different directions,
+which is worth noticing. Division is `Z.__floordiv__`, given in `integers.py` and built out of
+ℤ's own subtraction, so it stays inside the construction. The gcd is `math.gcd`, which is
+outside it altogether — it speaks python ints, so `canonical` has to step out through
+`Z.__int__` and back in through `Z(...)`. That crossing is deliberate and declared: computing
+a gcd is not what this chapter is about, and pretending otherwise would pad the exercise
+without teaching anything ℤ did not already.
 
 **3. Representatives grow while values shrink.** This one is not in the notes, and it is the
-sharpest thing in the exercise. `integers.py` deliberately did *not* reduce its pairs — an
+sharpest thing in the chapter. `integers.py` deliberately did *not* reduce its pairs — an
 instance holds a representative, and that is the whole point of a quotient. Harmless there,
-because nothing iterated. Here the gcd iterates, and the arithmetic compounds: `Z(8) - Z(6)`
-is the pair (8, 6), not (2, 0), and after three more subtractions the value 2 is being carried
-as (18, 16). The numbers in the *members* grow without bound while the number they denote
-shrinks to nothing — and since ℕ's equality is exponential in the size of its operands, the
-whole thing seizes up. `reduced` below exists for exactly this, and every loop in this file
-calls it. The lesson is worth more than the function: a representation you never normalise is
-free until something iterates over it.
+because nothing iterated. The moment something does, it compounds: `Z(8) - Z(6)` is the pair
+(8, 6), not (2, 0), and after three more subtractions the value 2 is being carried as (18, 16).
+The members grow without bound while the number they denote shrinks to nothing — and since ℕ's
+equality is exponential in the size of its operands, the whole thing seizes up. That is why
+`Z.canonical` returns a `Z` rather than a pair, and why `Z.__floordiv__` reduces on every step
+of its loop. Nothing in *this* file has to arrange it any more, but the lesson is the one to
+carry forward: a representation you never normalise is free until something iterates over it.
 
 **4. The order is sign-sensitive.** §1.5.3's ordering rule has two branches, and the second is
 easy to miss:
@@ -53,7 +58,7 @@ Cross-multiplying reverses the inequality when the denominators have opposite si
 is −1/2 and is below zero, but the naive single-branch test says otherwise.
 
 **5. ℚ is a field.** ℤ gave every number an additive inverse; ℚ gives every *non-zero* number
-a multiplicative one. `reciprocal` is this chapter's `__neg__` — the reason the construction
+a multiplicative one. `inverse` is this chapter's `__neg__` — the reason the construction
 exists — and it swaps the two members just as negation did, which is a pleasing rhyme and not
 a coincidence: both undo an operation by exchanging the roles of the pair.
 
@@ -66,11 +71,13 @@ numerators and denominators to single digits, and watch the products: `Q(1,2) + 
 5/6 and instant, while `Q(1,2) + Q(1,3) + Q(1,6)` reaches a denominator of 36 and will not
 finish. This is the price of standing on three constructions, not a defect in any of them.
 
-Working through this: the file opens with four functions on ℤ, then the class, laid out in the
-same three groups as `integers.py` — representations, operations, relations — each leading
-with what is given, then what is to implement. Eleven members carry the exercise and fourteen
-are given; each states what it must return, which definition from §1.5.3 it discharges, the
-errors it owes the caller, and hints, plus doctests that serve as its specification. Run
+Working through this: the class is laid out in the same three groups as `integers.py` —
+representations, operations, relations — each leading with what is given, then what is to
+implement. Eleven members carry the exercise and eleven are given; each states what it must
+return, which definition from §1.5.3 it discharges, the errors it owes the caller, and hints,
+plus doctests that serve as its specification. Nothing lives above the class: the arithmetic
+on ℤ that an earlier draft defined here is now `Z.__abs__`, `Z.__int__` and `Z.__floordiv__`,
+given in `integers.py`, which is where operations on integers belong. Run
 
 	python3 -m doctest deeplearning/notes/rationals.py
 
@@ -93,155 +100,6 @@ from deeplearning.notes.integers import Z
 from deeplearning.notes.naturals import N
 
 
-# ---------------------------------------------------------------------------------------
-# ARITHMETIC ON ℤ — three things the integers' own exercise never needed, and the one the
-#                   rationals cannot be built without.
-# ---------------------------------------------------------------------------------------
-
-# ............................................................................ given
-
-
-def reduced(value: Z) -> Z:
-	"""Return `value` as its canonical representative — the same integer, smaller members.
-
-	Given; not part of the exercise.
-
-	`integers.py` was right not to reduce: an instance holds a representative, and refusing
-	to normalise is what makes the class a quotient rather than a pair of numbers. The cost
-	of that decision only appears when something iterates, and this file iterates constantly.
-
-	Watch what repeated subtraction does to the members, as against the value:
-
-		a = 6 (6, 0)   b = 8 (8, 0)
-		a = 6 (6, 0)   b = 2 (8, 6)        b - a
-		a = 4 (12, 8)  b = 2 (8, 6)        a - b
-		a = 2 (18, 16) b = 2 (8, 6)        a - b
-
-	The value falls from 6 to 2 while its members climb to 18. ℕ's equality is exponential in
-	the size of its operands, so a few more steps of that and nothing returns. Every loop
-	below passes its result through here, which keeps the members at the size of the value
-	they denote.
-
-	>>> reduced(Z(8) - Z(6))
-	2
-	>>> tuple(sorted(vars(Z(8) - Z(6)).items()))              # the unreduced pair
-	(('a', 8), ('b', 6))
-	>>> tuple(sorted(vars(reduced(Z(8) - Z(6))).items()))     # the same integer, reduced
-	(('a', 2), ('b', 0))
-	"""
-	return Z(*value.canonical)
-
-
-def magnitude(value: Z) -> Z:
-	"""Return `value` without its sign, i.e. |value|.
-
-	Given; not part of the exercise.
-
-	`integers.py` never defined `__abs__`, because nothing there needed one. The Euclidean
-	algorithm does: it is stated for non-negative integers, and the sign of a gcd is a
-	convention rather than a fact. One line, using only the comparison and the negation that
-	ℤ already has.
-
-	>>> magnitude(Z(5)), magnitude(Z(-5)), magnitude(Z())
-	(5, 5, 0)
-	"""
-	return value if value >= Z() else -value
-
-
-def divide(dividend: Z, divisor: Z) -> Z:
-	"""Return the exact quotient `dividend / divisor`, which must divide without remainder.
-
-	Given; not part of the exercise.
-
-	ℤ has no division — §1.5.2 defines addition, multiplication, negation and subtraction, and
-	stops, because an integer divided by an integer is in general not an integer. That is the
-	gap ℚ is built to fill, so this function is deliberately narrow: it is the division that
-	*is* exact, which is the only kind `canonical` ever asks for, having just divided out a
-	common divisor.
-
-	The method is repeated subtraction, counting. It is the same shape as `gcd` below, and for
-	the same reason — subtraction and comparison are all ℤ offers. Each difference goes through
-	`reduced`, without which the members grow as described there.
-
-	Raises ZeroDivisionError on a zero divisor, and ValueError when the division leaves a
-	remainder — the second being a loud failure rather than a silent wrong answer, since every
-	caller in this file believes the division is exact.
-
-	>>> divide(Z(12), Z(4)), divide(Z(12), Z(3)), divide(Z(0), Z(5))
-	(3, 4, 0)
-	>>> divide(Z(-12), Z(4)), divide(Z(12), Z(-4)), divide(Z(-12), Z(-4))
-	(-3, -3, 3)
-	>>> divide(Z(7), Z(2))
-	Traceback (most recent call last):
-		...
-	ValueError: 2 does not divide 7 exactly
-	>>> divide(Z(7), Z())
-	Traceback (most recent call last):
-		...
-	ZeroDivisionError: division by zero
-	"""
-	if not divisor:
-		raise ZeroDivisionError("division by zero")
-
-	negative = (dividend < Z()) != (divisor < Z())
-	remainder, step = magnitude(dividend), magnitude(divisor)
-	quotient = Z()
-
-	while step <= remainder:
-		remainder = reduced(remainder - step)
-		quotient = quotient + 1
-
-	if remainder:
-		raise ValueError(f"{divisor} does not divide {dividend} exactly")
-
-	return -quotient if negative else quotient
-
-
-# ..................................................................... to implement
-
-
-def gcd(left: Z, right: Z) -> Z:
-	"""Return the greatest common divisor of two integers, as a non-negative integer.
-
-	§1.5.3 defines the canonical representative of a rational as the pair in lowest terms —
-	gcd(m, n) = 1 with n > 0 — so `canonical` cannot be written until this exists. It is this
-	chapter's brain-stretcher, the counterpart of ℕ's `prev` and ℤ's `canonical`.
-
-	Scaffolding, in the order worth thinking about:
-
-	* The Euclidean algorithm you may know divides and takes remainders. You do not have
-	  division: `divide` above is exact only, and it is not what this needs. Look instead for
-	  the *older* form of the algorithm, the one Euclid actually wrote, which uses nothing but
-	  comparison and subtraction — both of which ℤ has.
-	* The idea in one line: gcd(a, b) is unchanged if you replace the larger by the difference
-	  of the two, because any number dividing both divides their difference as well. Convince
-	  yourself of that before coding — it is the whole algorithm.
-	* So the loop repeatedly replaces the larger of the two by the difference, and stops when
-	  one of them reaches zero. The other is then the answer. Zero in ℤ is falsy, so the loop
-	  condition needs no comparison.
-	* When one is zero, the answer is the other. There is a tidy way to write "whichever of
-	  the two is not zero" that needs no branch at all, given that the other is zero.
-	* Sign is a convention: gcd(-8, 12) is 4, not -4. Strip the signs once, at the top, and the
-	  loop never has to think about them. `magnitude` is there for that.
-	* **Reduce every difference.** This is the point the module docstring makes at length: a
-	  difference of two integers is a pair whose members are as large as the operands, and
-	  without `reduced` the loop grinds to a halt after a handful of steps. Write it without,
-	  watch `gcd(Z(12), Z(18))` hang, then put it in — it is worth seeing once.
-	* Check it against a case where the two are equal, one where they are coprime, and one
-	  where one of them is zero.
-
-	>>> gcd(Z(12), Z(18)), gcd(Z(4), Z(6)), gcd(Z(9), Z(3))
-	(6, 2, 3)
-	>>> gcd(Z(7), Z(5)), gcd(Z(6), Z(6))              # coprime, and equal
-	(1, 6)
-	>>> gcd(Z(-8), Z(12)), gcd(Z(8), Z(-12))          # sign-blind, and never negative
-	(4, 4)
-	>>> gcd(Z(0), Z(5)), gcd(Z(5), Z(0))              # everything divides zero
-	(5, 5)
-	"""
-	...
-
-
 class Q:
 	"""A rational number, represented by two integers standing for their quotient.
 
@@ -261,32 +119,33 @@ class Q:
 	Eleven members to implement. The file groups them by what they are; this is the order to
 	*write* them in, chosen so that each is solvable by the time you reach it:
 
-		1. `gcd`         — above the class, and nothing here works without it.
-		2. `canonical`   — lowest terms, with the sign moved to the numerator.
-		3. `__repr__`    — the debugger for everything after.
-		4. `__eq__`, then `__hash__`.
-		5. `__mul__`, then `__add__`  — multiplication is the easier of the two here.
-		6. `reciprocal`, then `__truediv__`  — what makes ℚ a field.
-		7. `__bool__`, then `__le__`  — and read §1.5.3's ordering rule twice.
+		0. `__float__`   — depends on nothing, so it can come first, and gives you arithmetic
+		                   you already trust to check the rest against.
+		1. `canonical`   — lowest terms, with the sign moved to the numerator. Nothing else
+		                   here works until it does.
+		2. `__repr__`    — the debugger for everything after.
+		3. `__eq__`, then `__hash__`.
+		4. `__mul__`, then `__add__`  — multiplication is the easier of the two here.
+		5. `inverse`, then `__truediv__`  — what makes ℚ a field.
+		6. `__bool__`, then `__le__`  — and read §1.5.3's ordering rule twice.
 
 	>>> Q(1, 2), Q(2, 4), Q(3), Q()
 	(1/2, 1/2, 3, 0)
 	>>> Q(1, 2) == Q(2, 4)                    # one rational, two representatives
 	True
-	>>> Q(1, 2).canonical, Q(2, 4).canonical  # ... reducing to the same lowest terms
+	>>> c, d = Q(1, 2).canonical, Q(2, 4).canonical
+	>>> (c.m, c.n), (d.m, d.n)                # ... carried by the same lowest terms
 	((1, 2), (1, 2))
 	>>> len({Q(1, 2), Q(2, 4), Q(3, 6)})      # ... so a set collapses them
 	1
 	>>> Q(1, 2) + Q(1, 3), Q(1, 2) * Q(2, 3), Q(1, 2) - Q(1, 4)
 	(5/6, 1/3, 1/4)
-	>>> Q(1, 2) / Q(3, 4), Q(2, 3).reciprocal
+	>>> Q(1, 2) / Q(3, 4), Q(2, 3).inverse
 	(2/3, 3/2)
 	>>> Q(1, 2) + 1, Q(1, 2) * 3              # ints, naturals and integers coerce on the right
 	(3/2, 3/2)
 	>>> Q(1, 3) < Q(1, 2), Q(1, -2) < Q()     # ... and a negative denominator still works
 	(True, True)
-	>>> Q(1, 3).mediant(Q(1, 2))              # strictly between them: ℚ is dense
-	2/5
 	>>> Q(1, 2).equivalence_class             # the object really is a class of pairs
 	'{(1, 2), (2, 4), (3, 6), (4, 8), (5, 10), ...}'
 	"""
@@ -319,11 +178,11 @@ class Q:
 		  python's name for it. Note the order: the members are coerced *first*, so that
 		  `Q(1, Z())` and `Q(1, 0)` fail the same way.
 		* **The members are reduced, the fraction is not.** Each member is passed through
-		  `reduced`, which replaces the integer's representative by a tidier one denoting the
-		  same integer — see the module docstring on why that matters. This is *not* reducing
-		  the fraction: `Q(2, 4)` still stores 2 and 4, and finding that it is a half is
-		  `canonical`'s job. Normalising the fraction here would collapse the quotient and
-		  throw away the exercise.
+		  `Z.canonical`, which hands back the same integer carried by tidier members — see the
+		  module docstring on why that matters. This is *not* reducing the fraction: `Q(2, 4)`
+		  still stores 2 and 4, and finding that it is a half is `Q.canonical`'s job.
+		  Normalising the fraction here would collapse the quotient and throw away the
+		  exercise.
 
 		>>> Q(1, 2), Q(3), Q(), Q(2, 4)
 		(1/2, 3, 0, 1/2)
@@ -338,8 +197,8 @@ class Q:
 			...
 		ZeroDivisionError: a rational number has no zero denominator
 		"""
-		self.m = reduced(m if isinstance(m, Z) else Z(m))
-		self.n = reduced(n if isinstance(n, Z) else Z(n))
+		self.m = (m if isinstance(m, Z) else Z(m)).canonical
+		self.n = (n if isinstance(n, Z) else Z(n)).canonical
 
 		if not self.n:
 			raise ZeroDivisionError("a rational number has no zero denominator")
@@ -373,15 +232,16 @@ class Q:
 		>>> Q(1, 2).equivalence_class == Q(5, 10).equivalence_class    # one rational, one class
 		True
 		"""
-		m, n = self.canonical
-		members = ", ".join(f"({m * k}, {n * k})" for k in range(1, 6))
+		members = ", ".join(
+			f"({self.canonical.m * k}, {self.canonical.n * k})" for k in range(1, 6)
+		)
 
 		return "{" + members + ", ...}"
 
 	# ..................................................................... to implement
 
 	@property
-	def canonical(self) -> tuple[Z, Z]:
+	def canonical(self) -> Self:
 		"""Return this rational in lowest terms: gcd(m, n) = 1 with n > 0.
 
 		§1.5.3 asserts that every class contains exactly one such pair, and calls it the
@@ -389,9 +249,23 @@ class Q:
 		`__repr__` and `equivalence_class` all need something that comes out the same for every
 		representative, and this is the only thing on offer.
 
-		Returns a plain pair of integers rather than a `Q`, for the same reason `integers.py`
-		returned a plain pair: a `Q` would compare equal to every other representative, which
-		makes it useless for the jobs above.
+		Returns a `Q` rather than a plain pair, exactly as `Z.canonical` returns a `Z`: the
+		canonical form of a rational *is* that rational, carried by its tidiest members. Both
+		consequences carry over too. It compares equal to every other representative, so
+		testing this method means looking at its `.m` and `.n`; and `__hash__` cannot hash the
+		result directly without calling itself forever.
+
+		A plain property, again as in `integers.py`, so each `self.canonical` runs the gcd
+		again. Write it out wherever you need it rather than stashing it in a local — that is
+		what the methods below do, and the note in `Z.canonical` says why the repetition is
+		worth more here than the saved call.
+
+		It is worth knowing which members do *not* want it, because it is most of them. The
+		arithmetic never reduces, since §1.5.3's rules are stated for arbitrary
+		representatives; `__eq__` and `__le__` cross-multiply instead, for the same reason; and
+		`__float__` divides whatever pair it is handed, because m/n is the value whichever
+		representative carries it. Only the three things that must agree across a whole class
+		come here: `__repr__`, `__hash__` and `equivalence_class`.
 
 		Hints:
 
@@ -402,22 +276,33 @@ class Q:
 		* The sign is the easier half. If the denominator is negative, negate *both* members.
 		  Check against the defining relation that this stays inside the class: is (m, n) ∼
 		  (−m, −n)? Substitute into m·n' = m'·n and see.
-		* The divisor is `gcd` above, and dividing it out is `divide` above — which is exact
-		  precisely because what you are dividing by is a common divisor. That is the whole
-		  reason `divide` may refuse an inexact division: here it never has to.
-		* Zero needs no special case, but check it anyway. What is gcd(0, n)? And does the
-		  answer it gives you come out as (0, 1)?
+		* The common divisor is `math.gcd`, and this is the one place in the file that steps
+		  outside the construction to get something. `math.gcd` speaks python ints, so the two
+		  members go out through `int(...)` — `integers.py` gives `Z.__int__` for exactly this —
+		  and the answer comes back in through `Z(...)`. The module docstring says why that
+		  crossing is allowed rather than cheating.
+		* Dividing the divisor out is `Z.__floordiv__`, also given in `integers.py`. Its
+		  rounding rule never shows here: what you are dividing by is a common divisor of both,
+		  so both divisions come out exact and there is nothing to round.
+		* Zero needs no special case, but check it anyway. What is `math.gcd(0, n)`? And does
+		  the answer it gives you come out as 0/1?
+		* The result is a new instance of this class. Build it with `type(self)` rather than
+		  naming `Q`, as everything else here does.
 		* Sanity checks: the result must still be equal, as a rational, to what you started
 		  with; applying it twice must change nothing; and `Q(2, 4)` and `Q(3, 6)` must produce
-		  the *same* pair, since that is the property every other member leans on.
+		  the *same* members, since that is the property every other member leans on.
 
-		>>> Q(6, 8).canonical, Q(2, 4).canonical
+		>>> c, d = Q(6, 8).canonical, Q(2, 4).canonical
+		>>> (c.m, c.n), (d.m, d.n)
 		((3, 4), (1, 2))
-		>>> Q(-9, 12).canonical, Q(9, -12).canonical      # the sign moves to the numerator
+		>>> e, f = Q(-9, 12).canonical, Q(9, -12).canonical    # the sign moves to the numerator
+		>>> (e.m, e.n), (f.m, f.n)
 		((-3, 4), (-3, 4))
-		>>> Q(0, 5).canonical, Q(7, 1).canonical
+		>>> g, h = Q(0, 5).canonical, Q(7, 1).canonical
+		>>> (g.m, g.n), (h.m, h.n)
 		((0, 1), (7, 1))
-		>>> Q(2, 4).canonical == Q(3, 6).canonical        # one class, one canonical form
+		>>> i, j = Q(2, 4).canonical, Q(3, 6).canonical        # one class, one canonical form
+		>>> (i.m, i.n) == (j.m, j.n)
 		True
 		"""
 		...
@@ -431,8 +316,10 @@ class Q:
 
 		Hints:
 
-		* The pair to print is the canonical one, not the stored one: `Q(2, 4)` should read as
-		  a half, not as two-quarters. Everything else follows from `canonical`'s answer.
+		* The form to print is the canonical one, not the stored one: `Q(2, 4)` should read as
+		  a half, not as two-quarters. What `canonical` hands back is a `Q`, not a pair, so
+		  reach into its `.m` and `.n` — and note that printing it instead would call this
+		  method again, forever.
 		* Both members already carry ℤ's own signed decimal repr from `integers.py`, so there
 		  is nothing to compute — only to arrange, with a slash between them.
 		* One case deserves its own branch, and §1.5.3 names it: every integer m is the
@@ -451,6 +338,49 @@ class Q:
 		"""
 		...
 
+	def __float__(self) -> float:
+		"""Return this rational as a python float — the bridge back out of the construction.
+
+		`Z.__int__` is the same idea one construction down, and this is its sequel: `__init__`
+		brings python's numbers in, and this takes the answer back out. It depends on nothing
+		else here, so it can be written at any point — including first, as a way of checking
+		everything else against arithmetic you already trust.
+
+		It differs from `Z.__int__` in one way that is worth more than the method: it is
+		**lossy**. Every integer this chapter can build is some python int exactly, so the
+		bridge out of ℤ gives back the whole thing. A float is a binary fraction of fixed
+		width, and a third is not one — `float(Q(1, 3))` is `0.333...3`, close but not equal.
+		So this is the first bridge in the chapter that *loses* the number it was given, and
+		the reason ℚ is worth constructing at all rather than reaching for floats: 1/3 + 1/3 +
+		1/3 is exactly 1 here, and is not in floating point.
+
+		Hints:
+
+		* Two calls and a division, and the division is python's rather than ℚ's — this
+		  method's declared job is to produce a float, so it is allowed python's arithmetic in
+		  the same way `Z.__int__` is allowed an int subtraction.
+		* Do not reach for `canonical`. m/n is the value whichever representative carries it,
+		  so `Q(1, 2)` and `Q(2, 4)` divide to the same float without any reduction — see the
+		  note in `canonical` about which members want it and which do not.
+		* The denominator cannot be zero, so there is no error case to guard. That is
+		  `__init__`'s doing, and it is the one place the restriction on ℤ* pays a dividend
+		  rather than costing something.
+		* Negatives need no handling either: the sign can sit on either member, and the
+		  division works out the same.
+
+		>>> float(Q(1, 2)), float(Q(3, 4)), float(Q())
+		(0.5, 0.75, 0.0)
+		>>> float(Q(-1, 2)), float(Q(1, -2))      # the sign may sit on either member
+		(-0.5, -0.5)
+		>>> float(Q(2, 4)) == float(Q(1, 2))      # any representative, same answer
+		True
+		>>> float(Q(1, 3))                        # lossy, where `Z.__int__` is exact
+		0.3333333333333333
+		>>> float(Q(1, 10)) + float(Q(2, 10)) == float(Q(3, 10))     # floats drift
+		False
+		"""
+		...
+
 	def __hash__(self) -> int:
 		"""Hash the rational, consistently with `__eq__`.
 
@@ -461,8 +391,10 @@ class Q:
 		Hints:
 
 		* The same answer as in `integers.py`, for the same reason: hash the one representative
-		  every member of the class agrees on. `canonical` hands it to you as a plain pair.
-		* Note that hashing a `Q` instead would call this method again.
+		  every member of the class agrees on. `canonical` hands it to you as a `Q`, so hash
+		  its two members together rather than the `Q` itself — which, being a `Q`, would call
+		  this method again, forever.
+		* The members are integers, and `integers.py` already gave them a working hash.
 		* This method exists at all because `__eq__` set `__hash__` to `None` — python refusing
 		  to let a changed equality keep an inherited hash, and right to.
 
@@ -490,7 +422,7 @@ class Q:
 		members. Here it is a one-liner that negates the numerator and changes nothing else,
 		and it carries no new idea: ℤ already supplied additive inverses, and ℚ simply inherits
 		them. The member that matters at this level is the *multiplicative* inverse, which is
-		`reciprocal`, and that one is assigned.
+		`inverse`, and that one is assigned.
 
 		>>> -Q(1, 2), -Q(-1, 2), -Q()
 		(-1/2, 1/2, 0)
@@ -511,10 +443,12 @@ class Q:
 		>>> Q(1, 2) - 1, Q(1, 2) - Z(1)
 		(-1/2, -1/2)
 		"""
+		cls = type(self)
+
 		if not isinstance(other, (Q, Z, N, int)):
 			return NotImplemented
 
-		return self + -(other if isinstance(other, Q) else type(self)(other))
+		return self + -(other if isinstance(other, Q) else cls(other))
 
 	def __radd__(self, other: Z | N | int) -> Self:
 		"""Return `other + self`, so that an int, natural or integer works on the left of `+`.
@@ -560,13 +494,13 @@ class Q:
 
 		Worth reading beside `__rsub__`, because division commutes no more than subtraction
 		does and the line is correspondingly different: `other / self` is computed as
-		`self.reciprocal * other`, which reorders a *multiplication*. So the debt is again
+		`self.inverse * other`, which reorders a *multiplication*. So the debt is again
 		commutativity of `·`, and not a false claim about `/`.
 
 		>>> 1 / Q(1, 2), 3 / Q(3, 4), Z(2) / Q(1, 2)
 		(2, 4, 4)
 		"""
-		return self.reciprocal * other
+		return self.inverse * other
 
 	# ..................................................................... to implement
 
@@ -576,7 +510,7 @@ class Q:
 			[(m, n)] · [(m', n')] = [(m·m', n·n')]
 
 		Memberwise multiplication, using ℤ's `*` on each — the easiest definition in the file,
-		and the one to write first, because `reciprocal` and `__truediv__` both lean on it.
+		and the one to write first, because `inverse` and `__truediv__` both lean on it.
 
 		`other` may be a `Q`, a `Z`, an `N`, or a python int, the last three read through the
 		constructor on the way in. Any other type returns `NotImplemented`, which lets python
@@ -645,7 +579,7 @@ class Q:
 		...
 
 	@property
-	def reciprocal(self) -> Self:
+	def inverse(self) -> Self:
 		"""Return the multiplicative inverse, n/m. Not defined at zero.
 
 		This is what ℚ is for. ℤ gave every number an additive inverse and stopped; ℚ gives
@@ -655,53 +589,53 @@ class Q:
 		(1, 1).
 
 		Raises ZeroDivisionError at zero, which is the one place the restriction on ℤ* bites
-		from the inside: the reciprocal of (0, n) would be (n, 0), and that is not a pair this
+		from the inside: the inverse of (0, n) would be (n, 0), and that is not a pair this
 		construction admits.
 
 		Hints:
 
 		* The answer swaps the two members, exactly as `integers.py`'s `__neg__` did. Both
 		  invert an operation by exchanging the roles of the pair, which is the rhyme the
-		  module docstring mentions — negation swaps a difference, reciprocal swaps a quotient.
+		  module docstring mentions — negation swaps a difference, inversion swaps a quotient.
 		* Guard zero *before* swapping, not after. Building the swapped pair first would hand
 		  a zero denominator to the constructor, which raises the right error for the wrong
-		  reason and with a message about the constructor rather than about reciprocals.
-		* A negative rational has a negative reciprocal, and you get that for free — check
-		  `Q(-2, 3).reciprocal` and satisfy yourself that no sign handling was needed.
-		* The property to check is the defining one: a number times its reciprocal is one.
+		  reason and with a message about the constructor rather than about inverses.
+		* A negative rational has a negative inverse, and you get that for free — check
+		  `Q(-2, 3).inverse` and satisfy yourself that no sign handling was needed.
+		* The property to check is the defining one: a number times its inverse is one.
 
-		>>> Q(2, 3).reciprocal, Q(1, 2).reciprocal
+		>>> Q(2, 3).inverse, Q(1, 2).inverse
 		(3/2, 2)
-		>>> Q(-2, 3).reciprocal
+		>>> Q(-2, 3).inverse
 		-3/2
-		>>> Q(2, 3) * Q(2, 3).reciprocal == Q(1)
+		>>> Q(2, 3) * Q(2, 3).inverse == Q(1)
 		True
-		>>> Q().reciprocal
+		>>> Q().inverse
 		Traceback (most recent call last):
 			...
-		ZeroDivisionError: zero has no reciprocal
+		ZeroDivisionError: zero has no inverse
 		"""
 		...
 
 	def __truediv__(self, other: Self | Z | N | int) -> Self:
-		"""Return `self / other`, as multiplication by the reciprocal.
+		"""Return `self / other`, as multiplication by the inverse.
 
 		The operation ℤ could not have: there, `a / b` is an integer only by accident, which is
-		exactly the gap this whole construction was built to close. Note which of `divide` and
-		this one is the real division — `divide` above is a crutch for `canonical`, restricted
-		to the exact case, and this is the operation ℚ exists to provide.
+		exactly the gap this whole construction was built to close. Note which of this and
+		`Z.__floordiv__` is the real division — `//` rounds an answer that was never an integer
+		to one that is, and this returns the answer itself, which is what ℚ exists to provide.
 
 		Same operand handling as `__mul__`. Raises ZeroDivisionError on division by zero.
 
 		Hints:
 
 		* One line, in terms of two members this class already has. `__sub__` stands to
-		  `__neg__` exactly as this stands to `reciprocal`, and it is given just above as a
+		  `__sub__` exactly as this stands to `inverse`, and it is given just above as a
 		  model.
-		* Division by zero needs no guard of its own. Work out which member raises it, and
+		  Division by zero needs no guard of its own. Work out which member raises it, and
 		  satisfy yourself that the message it produces is the right one to show a caller who
-		  wrote `x / 0`.
-		* Coerce first all the same, or an int on the right will not have a reciprocal to take.
+		  wrote `x / 0` (i.e., the one from `inverse`).
+		* Coerce first all the same, or an int on the right will not have a inverse to take.
 
 		>>> Q(1, 2) / Q(3, 4), Q(2, 3) / Q(2, 3)
 		(2/3, 1)
@@ -710,7 +644,7 @@ class Q:
 		>>> Q(1, 2) / Q()
 		Traceback (most recent call last):
 			...
-		ZeroDivisionError: zero has no reciprocal
+		ZeroDivisionError: zero has no inverse
 		"""
 		...
 
@@ -720,40 +654,6 @@ class Q:
 	# ---------------------------------------------------------------------------------------
 
 	# ............................................................................ given
-
-	def mediant(self, other: Self) -> Self:
-		"""Return a rational strictly between `self` and `other`. Witnesses that ℚ is dense.
-
-		Given; not part of the exercise.
-
-		§1.5.3's Properties close by observing that between any two different rationals there
-		sits another, and therefore infinitely many: for m/n < m'/n' with positive denominators,
-
-			m/n  <  (m + m')/(n + n')  <  m'/n'
-
-		The middle term is called the *mediant*, and it is the one place in this file where
-		adding numerators to numerators and denominators to denominators — the classic wrong
-		way to add fractions — is the right thing to do. It is not addition; it is a witness.
-
-		One wrinkle makes it worth reading rather than skipping: the mediant is **not well
-		defined on classes**. Taken on representatives, (1,3) and (1,2) give 2/5, while (2,6)
-		and (1,2) give 3/8 — both strictly between a third and a half, but different numbers.
-		So this method reduces both sides to their canonical form first, which is what makes
-		it a function of the two rationals rather than of the two pairs. Every other member of
-		this class is well defined on classes without having to arrange it; this one is the
-		exception that shows what the others are quietly getting right.
-
-		>>> Q(1, 3).mediant(Q(1, 2))
-		2/5
-		>>> Q(1, 3) < Q(1, 3).mediant(Q(1, 2)) < Q(1, 2)
-		True
-		>>> Q().mediant(Q(1)), Q(2, 6).mediant(Q(1, 2))    # the second reduces first
-		(1/2, 2/5)
-		"""
-		m, n = self.canonical
-		p, q = other.canonical
-
-		return type(self)(m + p, n + q)
 
 	def __lt__(self, other: Self) -> bool:
 		"""Return whether `self` < `other`, as `≤` and not `=`.
@@ -837,7 +737,7 @@ class Q:
 		"""Return whether this rational is non-zero.
 
 		`object` calls every instance true, zero included. That is wrong on its own, and
-		quietly wrong in any code that writes `if q:` — including `reciprocal`, which has to
+		quietly wrong in any code that writes `if q:` — including `inverse`, which has to
 		ask exactly this question.
 
 		Hint: zero is the class [(0, 1)], and §1.5.3's equality says which other pairs are in
