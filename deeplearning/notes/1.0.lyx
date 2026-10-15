@@ -166,7 +166,7 @@ Sets
 Basic notions
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 In mathematics,
  a set is a collection of different things,
  called elements or members of the set.
@@ -237,7 +237,7 @@ is in
  The axiom of extensionality states that two sets are equal if and only if they have the same elements.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 There exists a set with no elements,
  and extensionality implies that there is only one such set.
  It is called the 
@@ -251,7 +251,7 @@ empty set
  or {}.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 A singleton is a set with exactly one element.
  If 
 \begin_inset Formula $x$
@@ -293,7 +293,7 @@ Extensionality implies that to specify a set,
 Roster notation
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 
 \emph on
 Roster
@@ -316,7 +316,7 @@ enumeration notation
  denote sets and not tuples because of the enclosing braces.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Example
 The notations 
 \begin_inset Formula $\{\}$
 \end_inset
@@ -357,7 +357,7 @@ When there is a clear pattern for generating all set elements,
 Set-builder notation
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Set-builder notation specifies a set as being the set of all elements that satisfy some logical formula.
  More precisely,
  if 
@@ -533,7 +533,7 @@ As seen before,
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 A 
 \emph on
 subset
@@ -558,6 +558,7 @@ subset
  The following are different ways of expressing the same thing:
 \end_layout
 
+\begin_deeper
 \begin_layout Itemize
 \begin_inset Formula $A$
 \end_inset
@@ -614,6 +615,7 @@ subset
 .
 \end_layout
 
+\end_deeper
 \begin_layout Standard
 The relationship between sets established by 
 \begin_inset Formula $\subseteq$
@@ -633,7 +635,7 @@ The relationship between sets established by
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 A set 
 \begin_inset Formula $A$
 \end_inset
@@ -669,32 +671,10 @@ proper subset
 \end_layout
 
 \begin_layout Minisec
-Examples
-\end_layout
-
-\begin_layout Itemize
-The set of all humans is a proper subset of the set of all mammals.
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $\{1,3\}\subset\{1,2,3,4\}$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Itemize
-\begin_inset Formula $\{1,2,3,4\}\subseteq\{1,2,3,4\}$
-\end_inset
-
-
-\end_layout
-
-\begin_layout Minisec
 Properties of containment
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Proposition
 Two sets are equal if and only if they contain each other:
  
 \begin_inset Formula $A=B$
@@ -711,7 +691,7 @@ Two sets are equal if and only if they contain each other:
 ).
 \end_layout
 
-\begin_layout Itemize
+\begin_layout Corollary
 The empy set is a subset of every set:
  
 \begin_inset Formula $\forall A$
@@ -792,7 +772,7 @@ In what follows,
 Intersection
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 The 
 \emph on
 intersection
@@ -847,7 +827,7 @@ and
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Proposition
 Intersection is associative and commutative;
  this means that for proceeding a sequence of intersections,
  one may proceed in any order,
@@ -868,12 +848,12 @@ Intersection is associative and commutative;
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 If 
 \begin_inset Formula $\mathcal{S}$
 \end_inset
 
- is set of sets,
+ is a nonempty set of sets,
  its intersection,
  denoted
 \begin_inset Formula 
@@ -917,7 +897,7 @@ Example:
 Union
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 The 
 \emph on
 union
@@ -972,11 +952,11 @@ or
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Proposition
 Union is associative and commutative.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 If 
 \begin_inset Formula $\mathcal{S}$
 \end_inset
@@ -1025,7 +1005,7 @@ Example:
 Set difference
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 The 
 \emph on
 set difference
@@ -1130,7 +1110,7 @@ universal set
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 The 
 \emph on
 symmetric difference
@@ -1168,65 +1148,11 @@ A\bigtriangleup B=(A\setminus B)\cup(B\setminus A)=(A\cup B)\setminus(A\cap B).
 
 \end_layout
 
-\begin_layout Subsection*
-Comprehensive practical exercises
-\end_layout
-
-\begin_layout Standard
-A training team is auditing the prerequisites completed by twelve learners in 
-\begin_inset Formula $U$
-\end_inset
-
-.
- Let 
-\begin_inset Formula $\mathcal{F}=\{P,L,S\},$
-\end_inset
-
- record completion of 
-\family typewriter
-python
-\family default
- (
-\begin_inset Formula $P)$
-\end_inset
-
-,
- linear algebra (
-\begin_inset Formula $L$
-\end_inset
-
-),
- and statistics (
-\begin_inset Formula $S$
-\end_inset
-
-),
- respectively.
- Let
-\begin_inset Formula 
-\begin{gather*}
-U=\{1,2,3,\ldots,12\},\\
-P=\{1,2,4,5,7,9,11\},\\
-L=\{2,3,5,6,9,10\},\\
-S=\{1,3,5,7,8,10,12\},\\
-R=\{10,1,5,3,12,8,3,7,5\}.
-\end{gather*}
-
-\end_inset
-
-All sets are considered relative to 
-\begin_inset Formula $U$
-\end_inset
-
- unless stated otherwise.
- Show your reasoning whenever a justification is requested.
-\end_layout
-
 \begin_layout Subsection
 Functions
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 A 
 \emph on
 function
@@ -1386,7 +1312,7 @@ The graph of a function
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Special types of a function 
 \begin_inset Formula $f:A\to B$
 \end_inset
@@ -1394,6 +1320,7 @@ Special types of a function
 :
 \end_layout
 
+\begin_deeper
 \begin_layout Itemize
 \begin_inset Formula $f$
 \end_inset
@@ -1440,21 +1367,22 @@ bijective
  iff is is both injective and surjective.
 \end_layout
 
+\end_deeper
 \begin_layout Minisec
 Indexed family
 \end_layout
 
 \begin_layout Standard
 Intuitively,
- an indexed family is a set whose elements are labelled with the elements of another (index) set 
-\begin_inset Formula $I\subseteq\mathbb{N}$
+ an indexed family is a collection whose elements are labelled with the elements of an arbitrary (index) set 
+\begin_inset Formula $I$
 \end_inset
 
 .
  These labels allow the same element to occure several times in the family.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 An indexed family is a function that has an index set 
 \begin_inset Formula $I$
 \end_inset
@@ -1480,6 +1408,7 @@ An indexed family is a function that has an index set
  For
 \end_layout
 
+\begin_deeper
 \begin_layout Itemize
 \begin_inset Formula $I=\{0,1\}$
 \end_inset
@@ -1512,11 +1441,12 @@ An indexed family is a function that has an index set
  we have a sequence.
 \end_layout
 
+\end_deeper
 \begin_layout Standard
 The above notations
 \begin_inset Formula 
 \[
-\bigcup\nolimits_{A\in\mathcal{S}}A\text{ and }\bigcap\nolimits_{A\in\mathcal{S}}
+\bigcup\nolimits_{A\in\mathcal{S}}A\text{ and }\bigcap\nolimits_{A\in\mathcal{S}}A
 \]
 
 \end_inset
@@ -1525,12 +1455,13 @@ are commonly replaced with a notation involving indexed families,
  namely
 \begin_inset Formula 
 \[
-\bigcup\nolimits_{i\in I}A_{i}=\{x|(\exists i\in I\}x\in A_{i})\text{ and }\bigcap\nolimits_{i\in I}A_{i}=\{x|(\forall i\in I\}x\in A_{i}).
+\bigcup\nolimits_{i\in I}A_{i}=\{x|(\exists i\in I)x\in A_{i}\}\text{ and }\bigcap\nolimits_{i\in I}A_{i}=\{x|(\forall i\in I)x\in A_{i}\}.
 \]
 
 \end_inset
 
-
+For intersection,
+ assume the index set is nonempty.
 \end_layout
 
 \begin_layout Subsubsection
@@ -1595,7 +1526,7 @@ name "minisec:Cartesian-product"
 Cartesian product
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Given sets 
 \begin_inset Formula $A$
 \end_inset
@@ -1640,6 +1571,10 @@ A\times B=\{(a,b)|a\in A\wedge b\in B\}.
 
 \end_inset
 
+
+\end_layout
+
+\begin_layout Standard
 The definition makes sense even if 
 \begin_inset Formula $A=B$
 \end_inset
@@ -1652,8 +1587,8 @@ The definition makes sense even if
 
 \end_layout
 
-\begin_layout Standard
-Given an (ordered) indexed family of sets 
+\begin_layout Definition
+Given an indexed family of sets 
 \begin_inset Formula $(A_{i})_{i\in I}$
 \end_inset
 
@@ -1686,7 +1621,7 @@ is the set of all indexed families of elements
 Set exponentiation
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Given two sets 
 \begin_inset Formula $A$
 \end_inset
@@ -1735,7 +1670,7 @@ Equivalently,
 
 ,
  of sets that are all equal to 
-\begin_inset Formula $F$
+\begin_inset Formula $B$
 \end_inset
 
 .
@@ -1755,7 +1690,7 @@ B^{A}=\prod\nolimits_{a\in A}B=\{(b_{a})_{a\in A}|(\forall a\in A)b_{a}\in B\}.
 Power Set
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 The power set of a set 
 \begin_inset Formula $E$
 \end_inset
@@ -1790,7 +1725,7 @@ The power set of a set
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Proposition
 There is a natural one-to one correspondence between the subsets of 
 \begin_inset Formula $E$
 \end_inset
@@ -1829,7 +1764,7 @@ There is a natural one-to one correspondence between the subsets of
 
 \end_layout
 
-\begin_layout Standard
+\begin_layout Corollary
 In particular,
  if 
 \begin_inset Formula $E$
@@ -1863,7 +1798,7 @@ In particular,
 Cardinality
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Informally,
  the cardinality of a set 
 \begin_inset Formula $S$
@@ -1908,16 +1843,97 @@ A set with the cardinality of a natural number is called a finite set,
 \end_layout
 
 \begin_layout Subsection
-Equivalence relation
+Relations
 \end_layout
 
 \begin_layout Standard
+In mathematics,
+ a binary relation denotes some kind of relationship between two objects in a set,
+ which may or may not hold.
+\end_layout
+
+\begin_layout Definition
+Given a set 
+\begin_inset Formula $X$
+\end_inset
+
+,
+ a binary relation 
+\begin_inset Formula $R$
+\end_inset
+
+ over 
+\begin_inset Formula $X$
+\end_inset
+
+ is a set of ordered pairs of elements from 
+\begin_inset Formula $X$
+\end_inset
+
+,
+ formally 
+\begin_inset Formula $R\subseteq X\times X$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+The statement 
+\begin_inset Formula $(x,y)\in R$
+\end_inset
+
+ reads
+\end_layout
+
+\begin_layout Quote
+\begin_inset Formula $x$
+\end_inset
+
+ is 
+\begin_inset Formula $R$
+\end_inset
+
+-related to 
+\begin_inset Formula $y$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+and is written in infix notation as 
+\begin_inset Formula $xRy$
+\end_inset
+
+.
+ The order of the elements is important;
+ if 
+\begin_inset Formula $x\neq y$
+\end_inset
+
+ the 
+\begin_inset Formula $yRx$
+\end_inset
+
+ can be true or false independently of 
+\begin_inset Formula $xRy$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Subsubsection
+Equivalence relation
+\end_layout
+
+\begin_layout Definition
 A 
 \emph on
 binary relation
 \emph default
  
-\begin_inset Formula $\sim:X\times X\to\{0,1\}$
+\begin_inset Formula $\mathord{\sim}\subseteq X\times X$
 \end_inset
 
  on a set 
@@ -1927,6 +1943,7 @@ binary relation
  is said to be an equivalence relation if it is:
 \end_layout
 
+\begin_deeper
 \begin_layout Description
 reflexive 
 \begin_inset Formula $\forall a\in X$
@@ -1959,10 +1976,9 @@ symmetric
 
 \begin_layout Description
 transitive 
-\begin_inset Formula $\forall a,b,c$
+\begin_inset Formula $\forall a,b,c\in X$
 \end_inset
 
-,
  if 
 \begin_inset Formula $a\sim b$
 \end_inset
@@ -1978,6 +1994,7 @@ transitive
 .
 \end_layout
 
+\end_deeper
 \begin_layout Standard
 \begin_inset Formula $X$
 \end_inset
@@ -1993,7 +2010,7 @@ setoid
 .
 \end_layout
 
-\begin_layout Subsubsection
+\begin_layout Minisec
 Related important definitions
 \end_layout
 
@@ -2011,16 +2028,7 @@ Let
 \end_layout
 
 \begin_layout Definition
-\begin_inset Argument 1
-status open
-
-\begin_layout Plain Layout
-equivalence class
-\end_layout
-
-\end_inset
-
-A subset 
+A nonempty subset 
 \begin_inset Formula $Y\subseteq X$
 \end_inset
 
@@ -2033,12 +2041,12 @@ A subset
 \end_inset
 
 ,
- and never for either 
-\begin_inset Formula $a\notin Y$
+ and no element of 
+\begin_inset Formula $Y$
 \end_inset
 
- or 
-\begin_inset Formula $b\notin Y$
+ is equivalent to an element outside 
+\begin_inset Formula $Y$
 \end_inset
 
 ,
@@ -2083,7 +2091,7 @@ name "prop:equivalence-class"
 \end_inset
 
 
-\begin_inset Formula $\forall a,b,c\in X$
+\begin_inset Formula $\forall b,c\in X$
 \end_inset
 
 ,
@@ -2099,54 +2107,36 @@ name "prop:equivalence-class"
 \begin_inset Formula $b\nsim c$
 \end_inset
 
+ and 
+\begin_inset Formula $[b]\cap[c]=\emptyset$
+\end_inset
+
 .
 \end_layout
 
 \begin_layout Proof
-\begin_inset Formula $\forall b,c\in[a]$
+If 
+\begin_inset Formula $b\sim c$
 \end_inset
 
 ,
- 
-\begin_inset Formula $b\sim a$
+ symmetry and transitivity imply that an element is equivalent to 
+\begin_inset Formula $b$
 \end_inset
 
- and 
-\begin_inset Formula $c\sim a$
+ exactly when it is equivalent to 
+\begin_inset Formula $c$
 \end_inset
 
-.
- By symmetry,
- 
-\begin_inset Formula $a\sim c$
-\end_inset
-
-.
- By transitivity,
- 
+,
+ so their classes are equal.
+ If their classes share an element,
+ symmetry and transitivity imply 
 \begin_inset Formula $b\sim c$
 \end_inset
 
 .
- 
-\begin_inset Formula $\forall d\in X\setminus[a]$
-\end_inset
-
-,
- 
-\begin_inset Formula $d\nsim a$
-\end_inset
-
-.
- The same therefore applies for either 
-\begin_inset Formula $d=b$
-\end_inset
-
- or 
-\begin_inset Formula $d=c$
-\end_inset
-
-.
+ Otherwise their classes are disjoint.
 \end_layout
 
 \begin_layout Standard
@@ -2237,7 +2227,7 @@ the elements of
 
 ,
  
-\begin_inset Formula $A\cap B=\emptyset$
+\begin_inset Formula $A\neq B\Rightarrow A\cap B=\emptyset$
 \end_inset
 
 ,
@@ -2261,15 +2251,6 @@ and their union is
 \end_layout
 
 \begin_layout Theorem
-\begin_inset Argument 1
-status open
-
-\begin_layout Plain Layout
-fundamental theorem of equivlaence relations
-\end_layout
-
-\end_inset
-
 A key result links equivlance relations and partitions:
 \end_layout
 
@@ -2327,7 +2308,7 @@ tuple "list"
 \end_inset
 
 ,
- any two equivalent relations are disjoint.
+ any two distinct equivalence classes are disjoint.
  Also,
  the union of all possible equivalence classes in 
 \begin_inset Formula $X$
@@ -2352,6 +2333,32 @@ because
 ,
  
 \begin_inset Formula $a\in[a]$
+\end_inset
+
+.
+ Conversely,
+ define 
+\begin_inset Formula $a\sim_{P}b$
+\end_inset
+
+ to mean that 
+\begin_inset Formula $a$
+\end_inset
+
+ and 
+\begin_inset Formula $b$
+\end_inset
+
+ belong to the same cell of 
+\begin_inset Formula $P$
+\end_inset
+
+.
+ This relation is reflexive,
+ symmetric,
+ and transitive,
+ and its equivalence classes are exactly the cells of 
+\begin_inset Formula $P$
 \end_inset
 
 .
@@ -2404,6 +2411,746 @@ According to the fundamental theorem,
 .
 \end_layout
 
+\begin_layout Subsubsection
+Order
+\end_layout
+
+\begin_layout Standard
+In mathematics,
+ a partial order on a set is an arrangement such that,
+ for certain pairs of elements,
+ one precedes the other.
+\end_layout
+
+\begin_layout Definition
+A binary relation 
+\begin_inset Formula $\mathord{\lesssim}$
+\end_inset
+
+ on a set 
+\begin_inset Formula $X$
+\end_inset
+
+ is called a 
+\emph on
+preorder
+\emph default
+ if it is reflexive and transitive:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+reflexivity 
+\begin_inset Formula $\forall a\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\lesssim a$
+\end_inset
+
+,
+ i.e.
+ every element is related to itself.
+\end_layout
+
+\begin_layout Description
+transitivity 
+\begin_inset Formula $\forall a,b,c\in X$
+\end_inset
+
+ with 
+\begin_inset Formula $a\lesssim b$
+\end_inset
+
+ and 
+\begin_inset Formula $b\lesssim c$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\lesssim c$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+A set that is equipped with a preorder is called a 
+\emph on
+preordered set
+\emph default
+ (or 
+\emph on
+proset
+\emph default
+).
+\end_layout
+
+\begin_layout Proposition
+Given a preorder 
+\begin_inset Formula $\lesssim$
+\end_inset
+
+ on 
+\begin_inset Formula $X$
+\end_inset
+
+ one may define an equivalence relation 
+\begin_inset Formula $\sim$
+\end_inset
+
+ on 
+\begin_inset Formula $X$
+\end_inset
+
+ by
+\begin_inset Formula 
+\[
+a\lesssim b\wedge b\lesssim a\Longleftrightarrow a\sim b
+\]
+
+\end_inset
+
+
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Proof
+For the equivalence relation axioms:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+reflexive 
+\begin_inset Formula $\forall a\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\lesssim a$
+\end_inset
+
+ implies 
+\begin_inset Formula $a\sim a$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+symmetric 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\lesssim b$
+\end_inset
+
+ and 
+\begin_inset Formula $b\lesssim a$
+\end_inset
+
+ imply both 
+\begin_inset Formula $a\sim b$
+\end_inset
+
+ and 
+\begin_inset Formula $b\sim a$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+transitive 
+\begin_inset Formula $\forall a,b,c\in X$
+\end_inset
+
+,
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $a\lesssim b$
+\end_inset
+
+ and 
+\begin_inset Formula $b\lesssim c$
+\end_inset
+
+ imply 
+\begin_inset Formula $a\lesssim c$
+\end_inset
+
+,
+ and
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $b\lesssim a$
+\end_inset
+
+ and 
+\begin_inset Formula $c\lesssim b$
+\end_inset
+
+ imply 
+\begin_inset Formula $c\lesssim a$
+\end_inset
+
+,
+ therefore,
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $a\sim b$
+\end_inset
+
+ and 
+\begin_inset Formula $b\sim c$
+\end_inset
+
+ imply 
+\begin_inset Formula $a\sim c$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\end_deeper
+\begin_layout Minisec
+Partial
+\end_layout
+
+\begin_layout Standard
+The word partial is used to indicate that not every pair of elements needs to be comparable;
+ that is,
+ there may be pairs for which neither element precedes the other.
+ Partial orders thus generalize total orders,
+ in which every pair is comparable.
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+partial order
+\emph default
+ 
+\begin_inset Formula $\mathord{\leq}$
+\end_inset
+
+ is a preorder on a set 
+\begin_inset Formula $X$
+\end_inset
+
+ that is antisymmetric:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+antisymmetry 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\leq b\wedge b\leq a\Longrightarrow a=b$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+Formally,
+ a partial order is a binary relation that is reflexive,
+ antisymmetric and transitive.
+ A 
+\emph on
+partially ordered set
+\emph default
+ (
+\emph on
+poset
+\emph default
+ for short) is a set 
+\begin_inset Formula $X$
+\end_inset
+
+ (called the ground set of the order) equipped with a partial order.
+\end_layout
+
+\begin_layout Corollary
+Given a preorder 
+\begin_inset Formula $\lesssim$
+\end_inset
+
+ on 
+\begin_inset Formula $X$
+\end_inset
+
+ and the equivalence relation 
+\begin_inset Formula $\sim$
+\end_inset
+
+ it implies,
+ one may define a partial order 
+\begin_inset Formula $\leq$
+\end_inset
+
+ on 
+\begin_inset Formula $X/\mathord{\sim}$
+\end_inset
+
+,
+ by
+\begin_inset Formula 
+\[
+[a]\leq[b]\Longleftrightarrow a\lesssim b
+\]
+
+\end_inset
+
+
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+If reflexivity is replaced with irreflexivity (while keeping transitivity) then we get the definition of a strict partial order on 
+\begin_inset Formula $X$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+strict partial order
+\emph default
+ 
+\begin_inset Formula $<$
+\end_inset
+
+ is a binary relation on 
+\begin_inset Formula $X$
+\end_inset
+
+ that is irreflexive and transitive:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+irreflexivity 
+\begin_inset Formula $\forall a\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\neg(a<a)$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Description
+transitivity 
+\begin_inset Formula $\forall a,b,c\in X$
+\end_inset
+
+ with 
+\begin_inset Formula $a<b$
+\end_inset
+
+ and 
+\begin_inset Formula $b<c$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a<c$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+Any preorder 
+\begin_inset Formula $\lesssim$
+\end_inset
+
+ on a set 
+\begin_inset Formula $X$
+\end_inset
+
+ gives rise to a strict partial order defined (using the induced equivalence relation 
+\begin_inset Formula $\sim$
+\end_inset
+
+) by
+\begin_inset Formula 
+\[
+a<b\Longleftrightarrow a\lesssim b\wedge\neg(a\sim b)
+\]
+
+\end_inset
+
+
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+.
+ A partial order on 
+\begin_inset Formula $X$
+\end_inset
+
+ gives rise to the same strict partial order,
+ hence using the same name.
+\end_layout
+
+\begin_layout Minisec
+Total
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+total order
+\emph default
+ 
+\begin_inset Formula $\leq$
+\end_inset
+
+ on some set 
+\begin_inset Formula $X$
+\end_inset
+
+ is a partial order in which any two elements are comparable,
+ that is:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+strong
+\begin_inset space ~
+\end_inset
+
+connectivity 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\leq b\vee b\leq a$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Definition
+Note that,
+ reflexivity in total orders follows from strong connectivity.
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+strict total order
+\emph default
+ 
+\begin_inset Formula $\leq$
+\end_inset
+
+ on a set 
+\begin_inset Formula $X$
+\end_inset
+
+ is a strict partial order in which any two elements are comparable,
+ that is:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+connectivity 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\neq b\Longrightarrow a<b\vee b>a$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+A total order 
+\begin_inset Formula $\leq$
+\end_inset
+
+ on a set 
+\begin_inset Formula $X$
+\end_inset
+
+ implies a strict total order 
+\begin_inset Formula $<$
+\end_inset
+
+ by
+\begin_inset Formula 
+\[
+a<b\Longleftrightarrow a\leq b\wedge a\neq b
+\]
+
+\end_inset
+
+
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Minisec
+Extrema
+\end_layout
+
+\begin_layout Definition
+There are several notions of 
+\emph on
+greatest
+\emph default
+ and 
+\emph on
+least
+\emph default
+ element in a poset 
+\begin_inset Formula $X$
+\end_inset
+
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+greatest/least
+\begin_inset space ~
+\end_inset
+
+element A poset can have at most one greatest and one least element:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+An element 
+\begin_inset Formula $M=\max X\in X$
+\end_inset
+
+ is a greatest element iff 
+\begin_inset Formula $\forall a\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\leq M$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+An element 
+\begin_inset Formula $m=\min X\in X$
+\end_inset
+
+ is a least element iff 
+\begin_inset Formula $\forall a\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $m\leq a$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+maximal/minimal
+\begin_inset space ~
+\end_inset
+
+elements If a poset has a greatesr element,
+ it must bee the unique maximal element,
+ but otherwise there can be more than one maximal element,
+ and similarly for the least element and minimal elements:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+An element 
+\begin_inset Formula $M\in X$
+\end_inset
+
+ is a maximal element if 
+\begin_inset Formula $\nexists a\in X$
+\end_inset
+
+,
+ such that 
+\begin_inset Formula $M<a$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+An element 
+\begin_inset Formula $m\in X$
+\end_inset
+
+ is a minimal element if 
+\begin_inset Formula $\nexists a\in X$
+\end_inset
+
+,
+ such that 
+\begin_inset Formula $a<m$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Description
+upper/lower
+\begin_inset space ~
+\end_inset
+
+bounds For a subset 
+\begin_inset Formula $A\subseteq X$
+\end_inset
+
+,
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+an element 
+\begin_inset Formula $M\in X$
+\end_inset
+
+ is an upper bound of 
+\begin_inset Formula $A$
+\end_inset
+
+ if 
+\begin_inset Formula $\forall a\in A$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\leq M$
+\end_inset
+
+.
+ In particular,
+ 
+\begin_inset Formula $M\in A$
+\end_inset
+
+ is not necessary for 
+\begin_inset Formula $M$
+\end_inset
+
+ to be an upper bound of 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ but if it is,
+ 
+\begin_inset Formula $M=\max A$
+\end_inset
+
+ is the greatest element of 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ so the latter is also an upper bound of 
+\begin_inset Formula $A$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+an element 
+\begin_inset Formula $m\in X$
+\end_inset
+
+ is a lower bound of 
+\begin_inset Formula $A$
+\end_inset
+
+ if 
+\begin_inset Formula $\forall a\in A$
+\end_inset
+
+,
+ 
+\begin_inset Formula $m\leq a$
+\end_inset
+
+.
+ In particular,
+ 
+\begin_inset Formula $m\in A$
+\end_inset
+
+ is not necessary for 
+\begin_inset Formula $m$
+\end_inset
+
+ to be lower bound of 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ but if it is,
+ 
+\begin_inset Formula $m=\min A$
+\end_inset
+
+ is the greatest element of 
+\begin_inset Formula $A$
+\end_inset
+
+,
+ so the latter is also a lower bound of 
+\begin_inset Formula $A$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\end_deeper
 \begin_layout Subsection
 Number systems
 \end_layout
@@ -2551,7 +3298,7 @@ If the successor of
  then the statement is true for every natural number:
 \begin_inset Formula 
 \[
-(P_{0}\wedge(\forall x\in\mathbb{N})P_{x}\Rightarrow P_{\sigma(x)})\Rightarrow(\forall x\in\mathbb{N})P_{x}
+(P_{0}\wedge(\forall x\in\mathbb{N})(P_{x}\Rightarrow P_{\sigma(x)}))\Rightarrow(\forall x\in\mathbb{N})P_{x}
 \]
 
 \end_inset
@@ -2578,6 +3325,13 @@ where
 \end_inset
 
  is injective.
+ Every positive natural number is a successor,
+ by induction,
+ so the inverse map 
+\begin_inset Formula $\sigma^{-1}:\mathbb{N}^{*}\to\mathbb{N}$
+\end_inset
+
+ exists.
 \end_layout
 
 \begin_layout Example
@@ -2719,10 +3473,7 @@ status open
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $\sigma$
-\end_inset
-
-
+construction
 \end_layout
 
 \end_inset
@@ -2760,7 +3511,7 @@ unrolled
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $0\cup\{0\}$
+\begin_inset Formula $\emptyset$
 \end_inset
 
 
@@ -2807,7 +3558,7 @@ unrolled
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $1\cup\{1\}$
+\begin_inset Formula $0\cup\{0\}$
 \end_inset
 
 
@@ -2854,7 +3605,7 @@ unrolled
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $2\cup\{2\}$
+\begin_inset Formula $1\cup\{1\}$
 \end_inset
 
 
@@ -2901,7 +3652,7 @@ unrolled
 \begin_inset Text
 
 \begin_layout Plain Layout
-\begin_inset Formula $3\cup\{3\}$
+\begin_inset Formula $2\cup\{2\}$
 \end_inset
 
 
@@ -3146,7 +3897,7 @@ and that
 status open
 
 \begin_layout Plain Layout
-\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\begin_inset Formula $\forall a\in\mathbb{N}^{*},b\in\mathbb{N}$
 \end_inset
 
 ,
@@ -3160,12 +3911,12 @@ status open
 \end_inset
 
  addition gains a formula 
-\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\begin_inset Formula $\forall a\in\mathbb{N},c\in\mathbb{N}^{*}$
 \end_inset
 
 .
  Let 
-\begin_inset Formula $c=\sigma(b)\in\mathbb{N}$
+\begin_inset Formula $c=\sigma(b)\in\mathbb{N}^{*}$
 \end_inset
 
 .
@@ -3198,7 +3949,7 @@ and that
 status open
 
 \begin_layout Plain Layout
-\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\begin_inset Formula $\forall a\in\mathbb{N}^{*},b\in\mathbb{N}$
 \end_inset
 
 ,
@@ -3212,12 +3963,12 @@ status open
 \end_inset
 
  multiplication gains a formula 
-\begin_inset Formula $\forall a,b\in\mathbb{N}$
+\begin_inset Formula $\forall a\in\mathbb{N},c\in\mathbb{N}^{*}$
 \end_inset
 
 .
  Let 
-\begin_inset Formula $c=\sigma(b)\in\mathbb{N}$
+\begin_inset Formula $c=\sigma(b)\in\mathbb{N}^{*}$
 \end_inset
 
 .
@@ -3317,7 +4068,7 @@ The set of natural numbers
 \begin_inset Formula $\mathbb{Z}$
 \end_inset
 
- is countable finite.
+ is countably infinite.
 \end_layout
 
 \begin_layout Minisec
@@ -3546,7 +4297,7 @@ The set of integers is countably infinite,
 \[
 f(n)=\begin{cases}
 2n & n\geq0\\
-2n+1 & n<0
+-2n-1 & n<0
 \end{cases}
 \]
 
@@ -3814,7 +4565,7 @@ Analysis
 Sequences
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 In mathematics,
  a 
 \emph on
@@ -3843,6 +4594,13 @@ terms
 arbitrary
 \emph default
  index set.
+\end_layout
+
+\begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -3901,7 +4659,7 @@ th term of the sequence.
 Formal definition
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Formally,
  a sequence 
 \begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
@@ -3944,7 +4702,7 @@ Although sequences are a type of function,
 Properties
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Given 
 \begin_inset Formula $A$
 \end_inset
@@ -3961,8 +4719,9 @@ monotonic
  and more specifically
 \end_layout
 
+\begin_deeper
 \begin_layout Description
-increasing if 
+increasing or nondecreasing if 
 \begin_inset Formula $\forall n\in\mathbb{N}$
 \end_inset
 
@@ -3975,7 +4734,7 @@ increasing if
 \end_layout
 
 \begin_layout Description
-decreasing if 
+decreasing or nonincreasing if 
 \begin_inset Formula $\forall n\in\mathbb{N}$
 \end_inset
 
@@ -3987,7 +4746,8 @@ decreasing if
 .
 \end_layout
 
-\begin_layout Standard
+\end_deeper
+\begin_layout Definition
 The sequence 
 \begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
 \end_inset
@@ -3999,20 +4759,13 @@ strictly monotonic
  and more specifically
 \end_layout
 
+\begin_deeper
 \begin_layout Description
 strictly
 \begin_inset space ~
 \end_inset
 
-increasing
-\begin_inset space ~
-\end_inset
-
-or
-\begin_inset space ~
-\end_inset
-
-nondecreasing if 
+increasing if 
 \begin_inset Formula $\forall n\in\mathbb{N}$
 \end_inset
 
@@ -4029,15 +4782,7 @@ strictly
 \begin_inset space ~
 \end_inset
 
-decreasing
-\begin_inset space ~
-\end_inset
-
-or
-\begin_inset space ~
-\end_inset
-
-nonincreasing if 
+decreasing if 
 \begin_inset Formula $\forall n\in\mathbb{N}$
 \end_inset
 
@@ -4049,7 +4794,15 @@ nonincreasing if
 .
 \end_layout
 
+\end_deeper
 \begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
 If 
 \begin_inset Formula $\exists M\in A$
 \end_inset
@@ -4130,7 +4883,7 @@ bounded
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Example
 For example,
  the sequence (enumerating 
 \begin_inset Formula $\mathbb{N}$
@@ -4169,6 +4922,13 @@ is bounded from below,
 \end_layout
 
 \begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Example
 Another example is the sequence (enumerating 
 \begin_inset Formula $\mathbb{Z}$
 \end_inset
@@ -4188,6 +4948,13 @@ which is unbounded (both from below and above).
 \end_layout
 
 \begin_layout Standard
+\begin_inset Separator plain
+\end_inset
+
+
+\end_layout
+
+\begin_layout Example
 \begin_inset Formula $\forall c\in A$
 \end_inset
 
@@ -4208,7 +4975,7 @@ is trivially bounded,
 .
 \end_layout
 
-\begin_layout Standard
+\begin_layout Proposition
 If 
 \begin_inset Formula $\exists\max A\in A$
 \end_inset
@@ -4284,7 +5051,7 @@ If
 Subsequences
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 A 
 \emph on
 subsequence
@@ -4292,7 +5059,7 @@ subsequence
  of a given sequence is a sequence formed from the given sequence by deleting dome of the elements without distrurbing the relative positions of the remaining elements.
 \end_layout
 
-\begin_layout Standard
+\begin_layout Definition
 Formally,
  a subsequence of the sequence 
 \begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
