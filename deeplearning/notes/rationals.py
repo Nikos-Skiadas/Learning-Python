@@ -94,6 +94,7 @@ References:
 from __future__ import annotations
 
 
+from math import gcd
 from typing import Self
 
 from deeplearning.notes.integers import Z
@@ -305,7 +306,19 @@ class Q:
 		>>> (i.m, i.n) == (j.m, j.n)
 		True
 		"""
-		...
+		# Παίρνουμε τα μέλη χωρίς να αλλάζουμε το αρχικό κλάσμα
+		m, n = self.m, self.n
+
+		# Κρατάμε το πρόσημο στον αριθμητή και τον παρονομαστή θετικό
+		if n < Z():
+			m = -m
+			n = -n
+
+		# Ο gcd χρειάζεται int και το αποτέλεσμά του επιστρέφει στην κλάση Z
+		divisor = Z(gcd(int(m), int(n)))
+
+		# Διαιρούμε ακριβώς και τα δύο μέλη με τον μέγιστο κοινό διαιρέτη
+		return type(self)(m // divisor, n // divisor)
 
 	def __repr__(self) -> str:
 		"""Return the familiar fraction, e.g. `'3/4'`, or just `'3'` when the rational is whole.
@@ -336,7 +349,12 @@ class Q:
 		>>> print(Q(5, 10))
 		1/2
 		"""
-		...
+		# Παρονομαστής ένα σημαίνει ότι αρκεί να εμφανίσουμε τον αριθμητ
+		if self.canonical.n == Z(1):
+			return repr(self.canonical.m)
+
+		# Εμφανίζουμε το απλοποιημένο κλάσμα με θετικό παρονομαστή
+		return f"{self.canonical.m}/{self.canonical.n}"
 
 	def __float__(self) -> float:
 		"""Return this rational as a python float — the bridge back out of the construction.
@@ -379,7 +397,8 @@ class Q:
 		>>> float(Q(1, 10)) + float(Q(2, 10)) == float(Q(3, 10))     # floats drift
 		False
 		"""
-		...
+		# Μετατρέπουμε τους Z σε int και η διαίρεση της Python δίνει float
+		return int(self.m) / int(self.n)
 
 	def __hash__(self) -> int:
 		"""Hash the rational, consistently with `__eq__`.
@@ -405,7 +424,8 @@ class Q:
 		>>> {Q(1, 2): "a half"}[Q(3, 6)]                  # usable as a dict key
 		'a half'
 		"""
-		...
+		# Ίσα κλάσματα έχουν ίδιο κανονικό ζεύγος, άρα και ίδιο hash
+		return hash((self.canonical.m, self.canonical.n))
 
 	# ---------------------------------------------------------------------------------------
 	# OPERATIONS — the arithmetic of §1.5.3, plus the inverse that makes ℚ a field.
@@ -539,7 +559,17 @@ class Q:
 			...
 		TypeError: unsupported operand type(s) for *: 'Q' and 'NoneType'
 		"""
-		...
+		cls = type(self)
+
+		if not isinstance(other, (Q, Z, N, int)):
+			return NotImplemented
+
+		# Οι υπόλοιποι αποδεκτοί αριθμοί γίνονται κλάσματα με παρονομαστή ένα
+		if not isinstance(other, Q):
+			other = cls(other)
+
+		# Πολλαπλασιάζουμε αριθμητή μεαριθμητή και παρονομαστή με παρονομαστή
+		return cls(self.m * other.m, self.n * other.n)
 
 	def __add__(self, other: Self | Z | N | int) -> Self:
 		"""Return `self + other`, per §1.5.3:
@@ -576,7 +606,19 @@ class Q:
 			...
 		TypeError: unsupported operand type(s) for +: 'Q' and 'str'
 		"""
-		...
+		cls = type(self)
+
+		if not isinstance(other, (Q, Z, N, int)):
+			return NotImplemented
+
+		if not isinstance(other, Q):
+			other = cls(other)
+
+		# Φέρνουμε τα κλάσματα σε κοινό παρονομαστή και προσθέτουμε αριθμητές
+		return cls(
+			self.m * other.n + other.m * self.n,
+			self.n * other.n,
+		)
 
 	@property
 	def inverse(self) -> Self:
@@ -615,7 +657,12 @@ class Q:
 			...
 		ZeroDivisionError: zero has no inverse
 		"""
-		...
+		# Το μηδέν δεν έχει αντίστροφο, γιατί θα προέκυπτε παρονομαστής μηδέν
+		if not self:
+			raise ZeroDivisionError("zero has no inverse")
+
+		# Ανταλλάσσουμε αριθμητή και παρονομαστή
+		return type(self)(self.n, self.m)
 
 	def __truediv__(self, other: Self | Z | N | int) -> Self:
 		"""Return `self / other`, as multiplication by the inverse.
@@ -646,7 +693,16 @@ class Q:
 			...
 		ZeroDivisionError: zero has no inverse
 		"""
-		...
+		cls = type(self)
+
+		if not isinstance(other, (Q, Z, N, int)):
+			return NotImplemented
+
+		if not isinstance(other, Q):
+			other = cls(other)
+
+		# Διαίρεση σημαίνει πολλαπλασιασμός με τον αντίστροφο του διαιρέτη
+		return self * other.inverse
 
 	# ---------------------------------------------------------------------------------------
 	# RELATIONS — when two rationals are the same, when one is below another, and when one
@@ -731,7 +787,12 @@ class Q:
 		>>> Q(1, 2) == 0.5, Q(1, 2) == "x"                # not a Q: NotImplemented, hence False
 		(False, False)
 		"""
-		...
+		# Η ισότητα της άσκησης συγκρίνει μόνο αντικείμενα Q
+		if not isinstance(other, Q):
+			return NotImplemented
+
+		# Δύο κλάσματα είναι ίσα όταν τα χιαστί γινόμενα είναι ίσα
+		return self.m * other.n == other.m * self.n
 
 	def __bool__(self) -> bool:
 		"""Return whether this rational is non-zero.
@@ -749,7 +810,8 @@ class Q:
 		>>> bool(Q()), bool(Q(0, 7)), bool(Q(1, 2) - Q(1, 2))
 		(False, False, False)
 		"""
-		...
+		# Ο παρονομαστής δεν είναι μηδέν, άρα ελέγχουμε μόνο τον αριθμητή
+		return bool(self.m)
 
 	def __le__(self, other: Self) -> bool:
 		"""Return whether `self` ≤ `other`, per §1.5.3:
@@ -792,4 +854,16 @@ class Q:
 		>>> sorted([Q(1, 2), Q(-1, 3), Q(2, 3), Q()])
 		[-1/3, 0, 1/2, 2/3]
 		"""
-		...
+		if not isinstance(other, Q):
+			return NotImplemented
+
+		# Υπολογίζουμε τα δύο χιαστί γινόμενα
+		left = self.m * other.n
+		right = other.m * self.n
+
+		# Ίδια πρόσημα παρονομαστών: η φορά της ανισότητας μένει ίδια
+		if self.n * other.n > Z():
+			return left <= right
+
+		# Αντίθετα πρόσημα: το αρνητικό γινόμενο αντιστρέφει την ανισότητα
+		return left >= right
