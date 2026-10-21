@@ -1,0 +1,661 @@
+#LyX 2.5 created this file. For more info see https://www.lyx.org/
+\lyxformat 643
+\begin_document
+\begin_header
+\save_transient_properties true
+\origin unavailable
+\textclass scrartcl
+\begin_preamble
+%\usepackage{bm}
+\usepackage{bbm}
+\usepackage{xcolor}
+\usepackage{cleveref}
+%\usepackage{textcomp}
+%\usepackage{textgreek}
+%\usepackage{pdflscape}
+%\renewcommand\[{\begin{equation}}
+%\renewcommand\]{\end{equation}}
+\definecolor{red}{rgb}{0.8,0.0,0.0}
+\definecolor{blue}{rgb}{0.2,0.4,1.0}
+\definecolor{magenta}{rgb}{0.6,0.2,8.0}
+\addtokomafont{disposition}{\rmfamily}
+\addtokomafont{descriptionlabel}{\rmfamily}
+%\setlength{\columnseprule}{0.4pt}
+\renewcommand{\arraystretch}{1.5}
+\relpenalty=10000
+\binoppenalty=10000
+\end_preamble
+\use_default_options true
+\master main.lyx
+\begin_modules
+fix-cm
+fixltx2e
+fixme
+theorems-bytype
+theorems-sec-bytype
+\end_modules
+\maintain_unincluded_children no
+\language english
+\language_package default
+\inputencoding auto-legacy
+\fontencoding auto
+\font_roman "default" "default"
+\font_sans "default" "default"
+\font_typewriter "default" "default"
+\font_math "auto" "auto"
+\font_default_family default
+\use_non_tex_fonts false
+\font_sc false
+\font_roman_osf false
+\font_sans_osf false
+\font_typewriter_osf false
+\font_sf_scale 100 100
+\font_tt_scale 100 100
+\use_microtype false
+\use_dash_ligatures true
+\graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command biber
+\index_command default
+\float_placement class
+\float_alignment class
+\paperfontsize 9
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder false
+\pdf_colorlinks true
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize letter
+\use_geometry true
+\use_package amsmath 1
+\use_package amssymb 1
+\use_package cancel 1
+\use_package esint 1
+\use_package mathdots 1
+\use_package mathtools 1
+\use_package mhchem 1
+\use_package stackrel 1
+\use_package stmaryrd 1
+\use_package undertilde 1
+\cite_engine biblatex
+\cite_engine_type authoryear
+\biblio_style plain
+\biblio_options maxbibnames=99
+\biblatex_bibstyle numeric
+\biblatex_citestyle numeric
+\use_bibtopic false
+\use_indices false
+\paperorientation portrait
+\suppress_date true
+\justification false
+\crossref_package refstyle
+\use_formatted_ref 0
+\use_minted 0
+\use_lineno 0
+\backgroundcolor none
+\fontcolor none
+\notefontcolor lightgray
+\boxbgcolor red
+\table_border_color default
+\table_odd_row_color default
+\table_even_row_color default
+\table_alt_row_colors_start 1
+\index Index
+\shortcut idx
+\color #006600
+\end_index
+\leftmargin 0.5in
+\topmargin 1in
+\rightmargin 0.5in
+\bottommargin 1in
+\headheight 0.5in
+\headsep 0.5in
+\footskip 0.5in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation skip
+\defskip halfline
+\is_math_indent 0
+\math_numbering_side default
+\quotes_style english
+\dynamic_quotes 0
+\papercolumns 1
+\papersides 1
+\paperpagestyle headings
+\tablestyle No_Borders
+\bullet 1 0 9 -1
+\bullet 3 0 7 -1
+\tracking_changes false
+\output_changes false
+\change_bars false
+\postpone_fragile_content false
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
+\docbook_table_output 0
+\docbook_mathml_prefix 1
+\docbook_mathml_version 0
+\end_header
+
+\begin_body
+
+\begin_layout Section
+Analysis
+\end_layout
+
+\begin_layout Subsection
+Sequences
+\end_layout
+
+\begin_layout Definition
+In mathematics,
+ a 
+\emph on
+sequence
+\emph default
+ is a collection of objects possibly with repetition,
+ that come in a specified order.
+ Like a set,
+ it contains members (also called 
+\emph on
+elements
+\emph default
+,
+ or 
+\emph on
+terms
+\emph default
+).
+ Unlike a set,
+ the same elements can appear multiple times at different positions in a sequence,
+ and unlike as et,
+ the order does matter.
+ The notion of a sequence can be generalized to an indexed family,
+ defined as a function from an 
+\emph on
+arbitrary
+\emph default
+ index set.
+\end_layout
+
+\begin_layout Standard
+The length of a finite sequence is defined as the number of elemenets in the sequence.
+ The position of an element in a sequence is its 
+\emph on
+rank
+\emph default
+ or 
+\emph on
+index
+\emph default
+;
+ it is the natural number of which the element is the image.
+ The first element typically has index 0 or 1.
+\end_layout
+
+\begin_layout Minisec
+Notation
+\end_layout
+
+\begin_layout Standard
+The terms of a sequence often denoted by the first letters in the alphabet,
+ like 
+\begin_inset Formula $a_{n}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $b_{n}$
+\end_inset
+
+,
+ ...,
+ where the subscript 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+ refers to the 
+\begin_inset Formula $(n+1$
+\end_inset
+
+)th or 
+\begin_inset Formula $n$
+\end_inset
+
+th term of the sequence.
+ The sequence itself is thus denoted as 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Minisec
+Formal definition
+\end_layout
+
+\begin_layout Definition
+Formally,
+ a sequence 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ with terms in a set 
+\begin_inset Formula $A$
+\end_inset
+
+ can be defined as a function
+\begin_inset Formula 
+\[
+a:\mathbb{N}\to A:n\mapsto a(n)=a_{n}.
+\]
+
+\end_inset
+
+The elements of the domain 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+ are the positions or indices of the elements 
+\begin_inset Formula $a_{n}$
+\end_inset
+
+ in the sequence,
+ while the value take by the function are the elements of the sequence.
+\end_layout
+
+\begin_layout Standard
+Although sequences are a type of function,
+ the are usually distinguished notationally from functions in that the input 
+\begin_inset Formula $n\in\mathbb{N}$
+\end_inset
+
+ is written as a subscript rather than parentheses.
+ Seen as a function,
+ 
+\begin_inset Formula $a(\mathbb{N})\subseteq A$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Minisec
+Properties
+\end_layout
+
+\begin_layout Definition
+Given 
+\begin_inset Formula $A$
+\end_inset
+
+ is (at least) partially ordered,
+ a sequence 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ is 
+\emph on
+monotonic
+\emph default
+ and more specifically
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+increasing or nondecreasing if 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{n}\leq a_{n+1}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+decreasing or nonincreasing if 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{n}\geq a_{n+1}$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Definition
+The sequence 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ is 
+\emph on
+strictly monotonic
+\emph default
+ and more specifically
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+strictly
+\begin_inset space ~
+\end_inset
+
+increasing if 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{n}<a_{n+1}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Description
+strictly
+\begin_inset space ~
+\end_inset
+
+decreasing if 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{n}>a_{n+1}$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+If 
+\begin_inset Formula $\exists M\in A$
+\end_inset
+
+ such that 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{n}\le M$
+\end_inset
+
+,
+ then the sequence 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ is said to be 
+\emph on
+bounded from above
+\emph default
+.
+ Any such 
+\begin_inset Formula $M\in A$
+\end_inset
+
+ is called an 
+\emph on
+upper bound
+\emph default
+ of 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+.
+ Likewise,
+ if 
+\begin_inset Formula $\exists m\in A$
+\end_inset
+
+ such that 
+\begin_inset Formula $\forall n\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a_{n}\geq m$
+\end_inset
+
+,
+ then the sequence 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ is 
+\emph on
+bounded from below
+\emph default
+ and any such 
+\begin_inset Formula $m\in A$
+\end_inset
+
+ is called a 
+\emph on
+lower bound
+\emph default
+.
+ If a sequence is bounded from above and below,
+ then the sequence 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ is said to be 
+\emph on
+bounded
+\emph default
+.
+\end_layout
+
+\begin_layout Example
+For example,
+ the sequence (enumerating 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+)
+\begin_inset Formula 
+\[
+a:\mathbb{N}\to\mathbb{N}:n\mapsto a_{n}=n
+\]
+
+\end_inset
+
+is bounded from below,
+ but unbounded from above.
+ Indeed,
+ 
+\begin_inset Formula $m=0$
+\end_inset
+
+ is a valid lower bound,
+ and 
+\begin_inset Formula $\forall M\in\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\exists n>M$
+\end_inset
+
+ such that 
+\begin_inset Formula $a_{n}>M$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Example
+Another example is the sequence (enumerating 
+\begin_inset Formula $\mathbb{Z}$
+\end_inset
+
+)
+\begin_inset Formula 
+\[
+a:\mathbb{N}\to\mathbb{Z}:n\mapsto a_{n}=\begin{cases}
++k & n=2k\\
+-k & n=2k-1
+\end{cases},
+\]
+
+\end_inset
+
+which is unbounded (both from below and above).
+\end_layout
+
+\begin_layout Example
+\begin_inset Formula $\forall c\in A$
+\end_inset
+
+,
+ the constant sequence
+\begin_inset Formula 
+\[
+a:\mathbb{N}\to A:n\mapsto a_{n}=c,
+\]
+
+\end_inset
+
+is trivially bounded,
+ with 
+\begin_inset Formula $M=m=c$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Proposition
+If 
+\begin_inset Formula $\exists\max A$
+\end_inset
+
+ then,
+ every sequence in 
+\begin_inset Formula $A$
+\end_inset
+
+ is bounded from above with 
+\begin_inset Formula $\max A$
+\end_inset
+
+.
+ Correspondingly,
+ 
+\begin_inset Formula $\exists\min A$
+\end_inset
+
+ then,
+ every sequence in 
+\begin_inset Formula $A$
+\end_inset
+
+ is bounded from below with 
+\begin_inset Formula $\min A$
+\end_inset
+
+.
+ If both apply,
+ 
+\begin_inset Formula $A$
+\end_inset
+
+ is said to be bounded itself,
+ and every sequence in 
+\begin_inset Formula $A$
+\end_inset
+
+ is also bounded.
+\end_layout
+
+\begin_layout Minisec
+Subsequences
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+subsequence
+\emph default
+ of a given sequence is a sequence formed from the given sequence by deleting dome of the elements without distrurbing the relative positions of the remaining elements.
+\end_layout
+
+\begin_layout Definition
+Formally,
+ a subsequence of the sequence 
+\begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ on 
+\begin_inset Formula $A$
+\end_inset
+
+ or
+\begin_inset Formula 
+\[
+a:\mathbb{N}\to A:n\mapsto a(n)=a_{n},
+\]
+
+\end_inset
+
+is any sequence of the form 
+\begin_inset Formula $(b_{n}=a_{k_{n}})_{n\in\mathbb{N}}$
+\end_inset
+
+,
+ where 
+\begin_inset Formula $(k_{n})_{n\in\mathbb{N}}$
+\end_inset
+
+ is a 
+\emph on
+strictly increasing
+\emph default
+ sequence of naturals or
+\begin_inset Formula 
+\[
+k:\mathbb{N}\to\mathbb{N}:n\mapsto k_{n}
+\]
+
+\end_inset
+
+ Written in function form,
+ 
+\begin_inset Formula $a_{n}=a(n)$
+\end_inset
+
+ and 
+\begin_inset Formula $b_{n}=b(n)=a_{k_{n}}=a_{k(n)}=a(k_{n})=a(k(n))$
+\end_inset
+
+,
+ therefore
+\begin_inset Formula 
+\[
+b=a\circ k:\mathbb{N}\to A:n\mapsto b(n)=a(k(n)).
+\]
+
+\end_inset
+
+
+\end_layout
+
+\end_body
+\end_document
