@@ -2959,7 +2959,7 @@ An element
 \begin_inset Formula $M=\max X\in X$
 \end_inset
 
- is a greatest element iff 
+ is the greatest element iff 
 \begin_inset Formula $\forall a\in X$
 \end_inset
 
@@ -2976,7 +2976,7 @@ An element
 \begin_inset Formula $m=\min X\in X$
 \end_inset
 
- is a least element iff 
+ is the least element iff 
 \begin_inset Formula $\forall a\in X$
 \end_inset
 
@@ -2994,8 +2994,8 @@ maximal/minimal
 \begin_inset space ~
 \end_inset
 
-elements If a poset has a greatesr element,
- it must bee the unique maximal element,
+elements If a poset has a greatest element,
+ it must be the unique maximal element,
  but otherwise there can be more than one maximal element,
  and similarly for the least element and minimal elements:
 \end_layout
@@ -3151,6 +3151,186 @@ an element
 
 \end_deeper
 \end_deeper
+\begin_layout Standard
+Note that 
+\begin_inset Formula $X$
+\end_inset
+
+ equipped with a total order has a single maximal/minimal element which is also its greatest/least element,
+ due to the fact that every pair in 
+\begin_inset Formula $X$
+\end_inset
+
+ is comparable.
+\end_layout
+
+\begin_layout Definition
+Given a set 
+\begin_inset Formula $X$
+\end_inset
+
+ equipped with a total order 
+\begin_inset Formula $\leq$
+\end_inset
+
+,
+ and 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+ define
+\end_layout
+
+\begin_layout Description
+a
+\begin_inset space ~
+\end_inset
+
+closed
+\begin_inset space ~
+\end_inset
+
+interval on 
+\begin_inset Formula $X$
+\end_inset
+
+ as:
+\begin_inset Formula 
+\[
+[a,b]=\{x\in X|a\leq x\leq b\}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Description
+an
+\begin_inset space ~
+\end_inset
+
+open
+\begin_inset space ~
+\end_inset
+
+interval on 
+\begin_inset Formula $X$
+\end_inset
+
+ using the implied strict order 
+\begin_inset Formula $<$
+\end_inset
+
+ as:
+\begin_inset Formula 
+\[
+(a,b)=\{x\in X|a<x<b\}
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Minisec
+Well ordered sets
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+well order
+\emph default
+ on a set 
+\begin_inset Formula $X$
+\end_inset
+
+ is a total order on 
+\begin_inset Formula $X$
+\end_inset
+
+ with the property that 
+\begin_inset Formula $\forall A\subseteq X$
+\end_inset
+
+ with 
+\begin_inset Formula $A\neq\emptyset$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\exists\min A$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Example
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+ is well ordered (all subsets have 0 as a lower bound) while 
+\begin_inset Formula $\mathbb{Z}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathbb{Q}$
+\end_inset
+
+ are not well ordered (the subset of all negative integers has no least element).
+ Furthermore:
+\end_layout
+
+\begin_layout Description
+well
+\begin_inset space ~
+\end_inset
+
+ordered
+\begin_inset space ~
+\end_inset
+
+sets 
+\begin_inset Formula $\mathbb{N}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\mathbb{N}^{*}=\mathbb{Z}^{+}$
+\end_inset
+
+,
+ 
+\end_layout
+
+\begin_layout Description
+otherwise 
+\begin_inset Formula $\mathbb{Z}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\mathbb{Q}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\mathbb{Q}^{*}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\mathbb{Q}^{+}$
+\end_inset
+
+ (for example 
+\begin_inset Formula $\{1/n>0|n\in\mathbb{Z}^{+}\}\subset\mathbb{Q}^{+}$
+\end_inset
+
+ has no least element)
+\end_layout
+
 \begin_layout Subsection
 Number systems
 \end_layout
@@ -4696,6 +4876,12 @@ Although sequences are a type of function,
 \end_inset
 
  is written as a subscript rather than parentheses.
+ Seen as a function,
+ 
+\begin_inset Formula $a(\mathbb{N})\subseteq A$
+\end_inset
+
+.
 \end_layout
 
 \begin_layout Minisec
@@ -4921,13 +5107,6 @@ is bounded from below,
 .
 \end_layout
 
-\begin_layout Standard
-\begin_inset Separator plain
-\end_inset
-
-
-\end_layout
-
 \begin_layout Example
 Another example is the sequence (enumerating 
 \begin_inset Formula $\mathbb{Z}$
@@ -4945,13 +5124,6 @@ a:\mathbb{N}\to\mathbb{Z}:n\mapsto a_{n}=\begin{cases}
 \end_inset
 
 which is unbounded (both from below and above).
-\end_layout
-
-\begin_layout Standard
-\begin_inset Separator plain
-\end_inset
-
-
 \end_layout
 
 \begin_layout Example
@@ -4977,60 +5149,31 @@ is trivially bounded,
 
 \begin_layout Proposition
 If 
-\begin_inset Formula $\exists\max A\in A$
+\begin_inset Formula $\exists\max A$
 \end_inset
 
-,
- such that 
-\begin_inset Formula $\forall b\in A$
-\end_inset
-
-,
- 
-\begin_inset Formula $b\leq\max A$
-\end_inset
-
- meaning the partially ordered set 
-\begin_inset Formula $A$
-\end_inset
-
- has a (global) maximum (by said order) element,
+ then,
  every sequence in 
 \begin_inset Formula $A$
 \end_inset
 
  is bounded from above with 
-\begin_inset Formula $M=\max A$
+\begin_inset Formula $\max A$
 \end_inset
 
 .
  Correspondingly,
  
-\begin_inset Formula $\exists\min A\in A$
+\begin_inset Formula $\exists\min A$
 \end_inset
 
-,
- such that 
-\begin_inset Formula $\forall b\in A$
-\end_inset
-
-,
- 
-\begin_inset Formula $b\geq\min A$
-\end_inset
-
-,
- meaning 
-\begin_inset Formula $A$
-\end_inset
-
- has a (global) minimum element,
+ then,
  every sequence in 
 \begin_inset Formula $A$
 \end_inset
 
  is bounded from below with 
-\begin_inset Formula $m=\min A$
+\begin_inset Formula $\min A$
 \end_inset
 
 .
@@ -5065,20 +5208,58 @@ Formally,
 \begin_inset Formula $(a_{n})_{n\in\mathbb{N}}$
 \end_inset
 
- is any sequence of the form 
-\begin_inset Formula $(b_{k}=a_{n_{k}})_{k\in\mathbb{N}}$
+ on 
+\begin_inset Formula $A$
+\end_inset
+
+ or
+\begin_inset Formula 
+\[
+a:\mathbb{N}\to A:n\mapsto a(n)=a_{n},
+\]
+
+\end_inset
+
+is any sequence of the form 
+\begin_inset Formula $(b_{n}=a_{k_{n}})_{n\in\mathbb{N}}$
 \end_inset
 
 ,
  where 
-\begin_inset Formula $(n_{k})_{k\in\mathbb{N}}$
+\begin_inset Formula $(k_{n})_{n\in\mathbb{N}}$
 \end_inset
 
- (or 
-\begin_inset Formula $n:\mathbb{N}\to\mathbb{N}:k\mapsto n_{k}$
+ is a 
+\emph on
+strictly increasing
+\emph default
+ sequence of naturals or
+\begin_inset Formula 
+\[
+k:\mathbb{N}\to\mathbb{N}:n\mapsto k_{n}
+\]
+
 \end_inset
 
-) is a strictly increasing sequence of naturals.
+ Written in function form,
+ 
+\begin_inset Formula $a_{n}=a(n)$
+\end_inset
+
+ and 
+\begin_inset Formula $b_{n}=b(n)=a_{k_{n}}=a_{k(n)}=a(k_{n})=a(k(n))$
+\end_inset
+
+,
+ therefore
+\begin_inset Formula 
+\[
+b=a\circ k:\mathbb{N}\to A:n\mapsto b(n)=a(k(n)).
+\]
+
+\end_inset
+
+
 \end_layout
 
 \end_body
