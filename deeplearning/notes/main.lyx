@@ -176,7 +176,7 @@ literal "false"
 \begin_layout Standard
 \begin_inset CommandInset include
 LatexCommand include
-filename "analysis.lyx"
+filename "algebra.lyx"
 literal "false"
 
 \end_inset
@@ -187,7 +187,7 @@ literal "false"
 \begin_layout Standard
 \begin_inset CommandInset include
 LatexCommand include
-filename "algebra.lyx"
+filename "analysis.lyx"
 literal "false"
 
 \end_inset

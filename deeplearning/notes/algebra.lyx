@@ -146,6 +146,15 @@ theorems-sec-bytype
 
 \begin_body
 
+\begin_layout Standard
+\begin_inset FormulaMacro
+\newcommand{\id}{\operatorname{id}}
+{\mathrm{id}}
+\end_inset
+
+
+\end_layout
+
 \begin_layout Section
 Algebra
 \end_layout
@@ -234,6 +243,16 @@ closed
 \begin_inset Formula $X$
 \end_inset
 
+,
+ or 
+\begin_inset Formula $\forall a,b\in X$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\bullet_{S}b\in X$
+\end_inset
+
 .
 \end_layout
 
@@ -283,10 +302,23 @@ Given the operation of subtraction
 \end_inset
 
 .
+ Given the operation of division 
+\begin_inset Formula $/:\mathbb{Q}^{*}\times\mathbb{Q}^{*}\to\mathbb{Q}^{*}$
+\end_inset
+
+,
+ the closure of 
+\begin_inset Formula $\mathbb{Z}^{*}$
+\end_inset
+
+ is 
+\begin_inset Formula $\bar{\mathbb{Z}}^{*}=\mathbb{Q}^{*}$
+\end_inset
+
+.
 \end_layout
 
-\begin_layout Example
-Note that 
+\begin_layout Exercise
 \begin_inset Formula $\forall X\subseteq S$
 \end_inset
 
@@ -296,6 +328,10 @@ Note that
 \end_inset
 
 .
+\end_layout
+
+\begin_layout Proof
+_
 \end_layout
 
 \begin_layout Subsection
@@ -346,7 +382,11 @@ Morphisms
 \end_layout
 
 \begin_layout Definition
-A morphism of magmas 
+A 
+\emph on
+morphism
+\emph default
+ of magmas 
 \begin_inset Formula $M$
 \end_inset
 
@@ -516,6 +556,563 @@ automorphism
 \end_inset
 
 
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+semigroup
+\emph default
+ is a magma 
+\begin_inset Formula $S$
+\end_inset
+
+ the operation 
+\begin_inset Formula $\bullet_{S}$
+\end_inset
+
+ of which is:
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+associative 
+\begin_inset Formula $\forall a,b,c\in S$
+\end_inset
+
+,
+ 
+\begin_inset Formula $(a\bullet_{S}b)\bullet_{S}c=a\bullet_{S}(b\bullet_{S}c)=a\bullet_{S}b\bullet_{S}c$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+More succinctly,
+ a semigroup is an associative magma.
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+semigroup congruence
+\emph default
+ 
+\begin_inset Formula $\sim$
+\end_inset
+
+ is an equivalence relation on a semigroup 
+\begin_inset Formula $S$
+\end_inset
+
+ that is compatible with the semigroup operation 
+\begin_inset Formula $\bullet_{S}$
+\end_inset
+
+.
+ That is,
+ 
+\begin_inset Formula $\forall a,a^{\prime},b,b^{\prime}$
+\end_inset
+
+,
+ such that 
+\begin_inset Formula $a\sim b$
+\end_inset
+
+ and 
+\begin_inset Formula $a^{\prime}\sim b^{\prime}$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\bullet_{S}a^{\prime}\sim b\bullet_{S}b^{\prime}$
+\end_inset
+
+ .
+\end_layout
+
+\begin_layout Definition
+Like any equivalence relation,
+ a semigroup congruence 
+\begin_inset Formula $\sim$
+\end_inset
+
+ induces congruence classes,
+ 
+\begin_inset Formula $\forall a\in S$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+[a]=\{x\in S|x\sim a\},
+\]
+
+\end_inset
+
+and the semigroup operation 
+\begin_inset Formula $\bullet_{S}$
+\end_inset
+
+ induces a binary operation 
+\begin_inset Formula $\bullet_{\sim}$
+\end_inset
+
+ on the congruence classes.
+ 
+\begin_inset Formula $\forall a,b\in S$
+\end_inset
+
+,
+\begin_inset Formula 
+\[
+[a]\bullet_{\sim}[b]=[a\bullet_{S}b].
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Exercise
+Because 
+\begin_inset Formula $\sim$
+\end_inset
+
+ is a congruence,
+ the set of all congruence classes of 
+\begin_inset Formula $\sim$
+\end_inset
+
+ forms a semigroup with 
+\begin_inset Formula $\bullet_{\sim}$
+\end_inset
+
+,
+ called the 
+\emph on
+quotient semigroup
+\emph default
+,
+ denoted 
+\begin_inset Formula $S/\mathord{\sim}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Proof
+_
+\end_layout
+
+\begin_layout Standard
+A subset 
+\begin_inset Formula $A$
+\end_inset
+
+ of a semigroup 
+\begin_inset Formula $S$
+\end_inset
+
+,
+ is a 
+\emph on
+subsemigroup
+\emph default
+ iff A is closed under 
+\begin_inset Formula $\bullet_{S}$
+\end_inset
+
+,
+ or
+\begin_inset Formula $\bar{A}=A$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+A semigroup morphism is called a 
+\emph on
+homomorphism
+\emph default
+ specifically.
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+monoid
+\emph default
+ is a semigroup 
+\begin_inset Formula $M$
+\end_inset
+
+ the operation 
+\begin_inset Formula $\bullet_{M}$
+\end_inset
+
+ of which (additionally) has
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+identity
+\begin_inset space ~
+\end_inset
+
+element 
+\begin_inset Formula $\exists!\mathds{1}_{M}\in M$
+\end_inset
+
+,
+ such that 
+\begin_inset Formula $\forall a\in S$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\mathds{1}_{M}\bullet_{M}a=a\bullet_{M}\mathds{1}_{M}=a$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+In other words,
+ a monoid is a semigroup with and identity element.
+\end_layout
+
+\begin_layout Exercise
+The identity element of a monoid is unique.
+\end_layout
+
+\begin_layout Proof
+Let 
+\begin_inset Formula $\mathds{1}_{M},\mathds{1}^{\prime}_{M}\in M$
+\end_inset
+
+ be identity elements.
+\end_layout
+
+\begin_layout Proof
+_
+\end_layout
+
+\begin_layout Standard
+A 
+\emph on
+submonoid
+\emph default
+ of a monoid 
+\begin_inset Formula $M$
+\end_inset
+
+ is a subset 
+\begin_inset Formula $N\subseteq M$
+\end_inset
+
+ that is closed under the monoid operation 
+\begin_inset Formula $\bullet_{M}$
+\end_inset
+
+ and 
+\begin_inset Formula $\mathds{1}_{M}\in N$
+\end_inset
+
+.
+ In this case,
+ 
+\begin_inset Formula $N$
+\end_inset
+
+ is a monoid under the binary operation 
+\begin_inset Formula $\bullet_{M}$
+\end_inset
+
+ inherited from 
+\begin_inset Formula $M$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+A 
+\emph on
+monoid homomorphism
+\emph default
+ 
+\begin_inset Formula $f:M\to N$
+\end_inset
+
+ is a semigroup homomorphism for which
+\begin_inset Formula 
+\[
+f(\mathds{1}_{M})=\mathds{1}_{N}.
+\]
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Definition
+A 
+\emph on
+group
+\emph default
+ is a monoid 
+\begin_inset Formula $G$
+\end_inset
+
+ the operation 
+\begin_inset Formula $\bullet_{G}$
+\end_inset
+
+ of which (additionally) supports
+\end_layout
+
+\begin_deeper
+\begin_layout Description
+inverse
+\begin_inset space ~
+\end_inset
+
+elements 
+\begin_inset Formula $\forall a\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\exists!a^{\prime}\in G$
+\end_inset
+
+ such that,
+ 
+\begin_inset Formula $a\bullet_{G}a^{\prime}=a^{\prime}\bullet_{G}a=\mathds{1}$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Exercise
+The inverse of an element of a group is unique.
+\end_layout
+
+\begin_layout Proof
+\begin_inset Formula $\forall a\in G$
+\end_inset
+
+,
+ let 
+\begin_inset Formula $a^{\prime},a^{\prime\prime}\in G$
+\end_inset
+
+ be inverse elements of 
+\begin_inset Formula $a$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Proof
+_
+\end_layout
+
+\begin_layout Standard
+The (unique) inverse element of 
+\begin_inset Formula $a\in G$
+\end_inset
+
+ is commonly denoted 
+\begin_inset Formula $a^{-1}$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Standard
+A subgroup of a group 
+\begin_inset Formula $G$
+\end_inset
+
+ is a subset 
+\begin_inset Formula $H\subseteq G$
+\end_inset
+
+ that is closed under the group operation 
+\begin_inset Formula $\bullet_{G}$
+\end_inset
+
+ and under the inverse 
+\begin_inset Formula $\_^{-1}$
+\end_inset
+
+,
+ meaning that 
+\begin_inset Formula $\forall a\in H$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a^{-1}\in H$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Exercise
+A subset 
+\begin_inset Formula $H$
+\end_inset
+
+ of a group 
+\begin_inset Formula $G$
+\end_inset
+
+ is a subgroup of 
+\begin_inset Formula $G$
+\end_inset
+
+ iff 
+\begin_inset Formula $\forall a,b\in H$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\bullet_{G}b^{-1}\in H$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Definition
+A group
+\emph on
+ homomorphism
+\emph default
+ 
+\begin_inset Formula $\varphi:G\to H$
+\end_inset
+
+ is a semigroup homomorphism.
+\end_layout
+
+\begin_layout Exercise
+For a group homomorphism 
+\begin_inset Formula $\varphi:G\to H$
+\end_inset
+
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\varphi(\mathds{1}_{G})=\mathds{1}_{H}$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\varphi(a^{-1})=\varphi(a)^{-1}.$
+\end_inset
+
+
+\end_layout
+
+\end_deeper
+\begin_layout Standard
+The 
+\emph on
+identity homomorphism
+\emph default
+ of a group 
+\begin_inset Formula $G$
+\end_inset
+
+ is the homomorphism 
+\begin_inset Formula $\id_{G}:G\to G$
+\end_inset
+
+ that maps each element of 
+\begin_inset Formula $G$
+\end_inset
+
+ to itself,
+ i.e.
+ 
+\begin_inset Formula $\forall a\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\id_{G}a=a$
+\end_inset
+
+.
+ An 
+\emph on
+inverse homomorphism
+\emph default
+ of a homomorphism 
+\begin_inset Formula $\varphi:G\to H$
+\end_inset
+
+ is a homomorphism 
+\begin_inset Formula $\varphi^{\prime}:H\to G$
+\end_inset
+
+ such that
+\begin_inset Formula 
+\[
+\varphi^{\prime}\circ\varphi:G\to G=\id_{G}\text{ and }\varphi\circ\varphi^{\prime}:H\to H=\id_{H}.
+\]
+
+\end_inset
+
+Therefore an isomorphism (bijective homomorphism) is a homomorphism that has an inverse homomporhpism.
+\end_layout
+
+\begin_layout Exercise
+The set 
+\begin_inset Formula $\varPhi$
+\end_inset
+
+ of all automorphisms (homomorphism with an inverse) on a group 
+\begin_inset Formula $G$
+\end_inset
+
+,
+ form a group under the operation of function composition 
+\begin_inset Formula $\circ:\varPhi\times\varPhi\to\varPhi$
+\end_inset
+
+,
+ with identity element the identity homomorphism 
+\begin_inset Formula $\id_{G}$
+\end_inset
+
+ and inverse homomorphisms with 
+\begin_inset Formula $G=H$
+\end_inset
+
+ as inverse elements.
+\end_layout
+
+\begin_layout Proof
+_
 \end_layout
 
 \end_body
