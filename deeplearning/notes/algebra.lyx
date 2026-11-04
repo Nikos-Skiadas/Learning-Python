@@ -331,7 +331,7 @@ Given the operation of subtraction
 \end_layout
 
 \begin_layout Proof
-_
+...
 \end_layout
 
 \begin_layout Subsection
@@ -1125,7 +1125,7 @@ inverse homomorphism
 Therefore an isomorphism (bijective homomorphism) is a homomorphism that has an inverse homomporhpism (isomorphism).
 \end_layout
 
-\begin_layout Exercise
+\begin_layout Proposition
 The set 
 \begin_inset Formula $\varPhi_{G}$
 \end_inset
