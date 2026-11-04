@@ -582,7 +582,7 @@ associative
 
 ,
  
-\begin_inset Formula $(a\bullet_{S}b)\bullet_{S}c=a\bullet_{S}(b\bullet_{S}c)=a\bullet_{S}b\bullet_{S}c$
+\begin_inset Formula $(a\bullet_{S}b)\bullet_{S}c=a\bullet_{S}b\bullet_{S}c=a\bullet_{S}(b\bullet_{S}c)$
 \end_inset
 
 .
@@ -705,7 +705,7 @@ quotient semigroup
 \end_layout
 
 \begin_layout Proof
-_
+...
 \end_layout
 
 \begin_layout Standard
@@ -722,7 +722,11 @@ A subset
 \emph on
 subsemigroup
 \emph default
- iff A is closed under 
+ iff 
+\begin_inset Formula $A$
+\end_inset
+
+ is closed under 
 \begin_inset Formula $\bullet_{S}$
 \end_inset
 
@@ -775,10 +779,10 @@ element
 
 ,
  
-\begin_inset Formula $\mathds{1}_{M}\bullet_{M}a=a\bullet_{M}\mathds{1}_{M}=a$
+\begin_inset Formula $\mathds{1}_{M}\bullet_{M}a=a=a\bullet_{M}\mathds{1}_{M}$
 \end_inset
 
-
+.
 \end_layout
 
 \end_deeper
@@ -800,7 +804,7 @@ Let
 \end_layout
 
 \begin_layout Proof
-_
+...
 \end_layout
 
 \begin_layout Standard
@@ -894,7 +898,7 @@ elements
 
  such that,
  
-\begin_inset Formula $a\bullet_{G}a^{\prime}=a^{\prime}\bullet_{G}a=\mathds{1}$
+\begin_inset Formula $a\bullet_{G}a^{\prime}=\mathds{1}_{G}=a^{\prime}\bullet_{G}a$
 \end_inset
 
 .
@@ -922,7 +926,7 @@ The inverse of an element of a group is unique.
 \end_layout
 
 \begin_layout Proof
-_
+...
 \end_layout
 
 \begin_layout Standard
@@ -931,7 +935,7 @@ The (unique) inverse element of
 \end_inset
 
  is commonly denoted 
-\begin_inset Formula $a^{-1}$
+\begin_inset Formula $\neg_{G}a$
 \end_inset
 
 .
@@ -950,18 +954,14 @@ A subgroup of a group
 \begin_inset Formula $\bullet_{G}$
 \end_inset
 
- and under the inverse 
-\begin_inset Formula $\_^{-1}$
-\end_inset
-
-,
+ and under the inverse,
  meaning that 
 \begin_inset Formula $\forall a\in H$
 \end_inset
 
 ,
  
-\begin_inset Formula $a^{-1}\in H$
+\begin_inset Formula $\neg_{G}a\in H$
 \end_inset
 
 .
@@ -986,12 +986,48 @@ A subset
 
 ,
  
-\begin_inset Formula $a\bullet_{G}b^{-1}\in H$
+\begin_inset Formula $a\bullet_{G}\neg_{G}b\in H$
 \end_inset
 
 .
 \end_layout
 
+\begin_layout Proof
+We have to prove that both directions hold:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\forall a,b\in H$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\bullet_{G}b\in H$
+\end_inset
+
+ and 
+\begin_inset Formula $\neg b\in H$
+\end_inset
+
+,
+ therefore (because 
+\begin_inset Formula $a,b^{-1}\in H$
+\end_inset
+
+) 
+\begin_inset Formula $a\bullet_{G}\neg_{G}b\in H$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+Conversly,
+ ...
+\end_layout
+
+\end_deeper
 \begin_layout Definition
 A group
 \emph on
@@ -1026,13 +1062,17 @@ For a group homomorphism
 
 ,
  
-\begin_inset Formula $\varphi(a^{-1})=\varphi(a)^{-1}.$
+\begin_inset Formula $\varphi(\neg_{G}a)=\neg_{H}\varphi(a).$
 \end_inset
 
 
 \end_layout
 
 \end_deeper
+\begin_layout Proof
+...
+\end_layout
+
 \begin_layout Standard
 The 
 \emph on
@@ -1042,7 +1082,7 @@ identity homomorphism
 \begin_inset Formula $G$
 \end_inset
 
- is the homomorphism 
+ is the automorphism 
 \begin_inset Formula $\id_{G}:G\to G$
 \end_inset
 
@@ -1066,28 +1106,28 @@ identity homomorphism
 \emph on
 inverse homomorphism
 \emph default
- of a homomorphism 
+ of a monomorphism 
 \begin_inset Formula $\varphi:G\to H$
 \end_inset
 
- is a homomorphism 
-\begin_inset Formula $\varphi^{\prime}:H\to G$
+ is a monomorphism 
+\begin_inset Formula $\varphi^{-1}:H\to G$
 \end_inset
 
  such that
 \begin_inset Formula 
 \[
-\varphi^{\prime}\circ\varphi:G\to G=\id_{G}\text{ and }\varphi\circ\varphi^{\prime}:H\to H=\id_{H}.
+\varphi^{-1}\circ\varphi:G\to H\to G=\id_{G}\text{ and }\varphi\circ\varphi^{-1}:H\to G\to H=\id_{H}.
 \]
 
 \end_inset
 
-Therefore an isomorphism (bijective homomorphism) is a homomorphism that has an inverse homomporhpism.
+Therefore an isomorphism (bijective homomorphism) is a homomorphism that has an inverse homomporhpism (isomorphism).
 \end_layout
 
 \begin_layout Exercise
 The set 
-\begin_inset Formula $\varPhi$
+\begin_inset Formula $\varPhi_{G}$
 \end_inset
 
  of all automorphisms (homomorphism with an inverse) on a group 
@@ -1096,7 +1136,7 @@ The set
 
 ,
  form a group under the operation of function composition 
-\begin_inset Formula $\circ:\varPhi\times\varPhi\to\varPhi$
+\begin_inset Formula $\circ:\varPhi_{G}\times\varPhi_{G}\to\varPhi_{G}$
 \end_inset
 
 ,
@@ -1104,16 +1144,167 @@ The set
 \begin_inset Formula $\id_{G}$
 \end_inset
 
- and inverse homomorphisms with 
-\begin_inset Formula $G=H$
-\end_inset
-
- as inverse elements.
+ and their inverse homomorphism as their inverse element.
 \end_layout
 
 \begin_layout Proof
-_
+Sequentially:
 \end_layout
 
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\varPhi_{G}$
+\end_inset
+
+ with composition 
+\begin_inset Formula $\circ$
+\end_inset
+
+ is a magma.
+ 
+\begin_inset Formula $\forall\varphi,\vartheta:G\to G$
+\end_inset
+
+ automorphisms,
+ 
+\begin_inset Formula $\varphi\circ\vartheta:G\to G$
+\end_inset
+
+ is a bijective homomorphism,
+ ergo an automorphism,
+ therefore 
+\begin_inset Formula $\varPhi_{G}$
+\end_inset
+
+ is closed under 
+\begin_inset Formula $\circ$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\varPhi_{G}$
+\end_inset
+
+ with composition 
+\begin_inset Formula $\circ$
+\end_inset
+
+ is a semigroup.
+ 
+\begin_inset Formula $\forall\varphi,\vartheta,\varsigma:G\to G$
+\end_inset
+
+:
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $(\varphi\circ\vartheta)\circ\varsigma:G\to G:a\mapsto(\varphi\circ\vartheta)(\varsigma(a))=\varphi(\vartheta(\varsigma(a)))$
+\end_inset
+
+ because 
+\begin_inset Formula $\varphi\circ\vartheta:G\to G:a=\varphi(\vartheta(a))$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\varphi\circ(\vartheta\circ\varsigma):G\to G:a\mapsto\varphi((\vartheta\circ\varsigma)(a))=\varphi(\vartheta(\varsigma(a)))$
+\end_inset
+
+ because 
+\begin_inset Formula $\vartheta\circ\varsigma:G\to G:a\mapsto\vartheta(\varsigma(a))$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset Formula $\varPhi_{G}$
+\end_inset
+
+ with composition 
+\begin_inset Formula $\circ$
+\end_inset
+
+ is a monoid,
+ with 
+\begin_inset Formula $\id_{G}$
+\end_inset
+
+ the identity element.
+ 
+\begin_inset Formula $\forall\varphi:G\to G$
+\end_inset
+
+,
+\end_layout
+
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\varphi\circ\id_{G}:G\to G:a=\varphi(\id_{G}a)=\varphi(a)$
+\end_inset
+
+ therefore 
+\begin_inset Formula $\varphi\circ\id_{G}=\varphi$
+\end_inset
+
+,
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\id_{G}\circ\varphi:G\to G:a=\id_{G}\varphi(a)=\varphi(a)$
+\end_inset
+
+ therefore 
+\begin_inset Formula $\id_{G}\circ\varphi=\varphi$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
+\begin_layout Itemize
+\begin_inset Formula $\varPhi_{G}$
+\end_inset
+
+ with composition 
+\begin_inset Formula $\circ$
+\end_inset
+
+ is a group,
+ with the inverse homomorphism 
+\begin_inset Formula $\varphi^{-1}$
+\end_inset
+
+ as the inverse element 
+\begin_inset Formula $\neg\varphi$
+\end_inset
+
+ for each homomoorphism 
+\begin_inset Formula $\varphi:G\to G$
+\end_inset
+
+.
+ By definition of the inverse homomorphism 
+\begin_inset Formula $\varphi^{-1}$
+\end_inset
+
+:
+\begin_inset Formula 
+\[
+\neg\varphi\circ\phi=\varphi^{-1}\circ\varphi=\id_{G}=\varphi\circ\varphi^{-1}=\varphi\circ\neg\phi
+\]
+
+\end_inset
+
+as automorphisms by definition (codomain matches domain) point to the same identity homomorphism when composed with their inverse.
+\end_layout
+
+\end_deeper
 \end_body
 \end_document
