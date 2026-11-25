@@ -270,7 +270,7 @@ It follows that
 \begin_inset Formula $X\subseteq\bar{X}$
 \end_inset
 
- (it is the intersection fo all closed subsets that contain 
+ (it is the intersection of all closed subsets that contain 
 \begin_inset Formula $X$
 \end_inset
 
@@ -325,6 +325,11 @@ Given the operation of subtraction
  closed,
  
 \begin_inset Formula $\bar{X}=X$
+\end_inset
+
+.
+ Also 
+\begin_inset Formula $\bar{S}=S$
 \end_inset
 
 .
@@ -384,7 +389,7 @@ Morphisms
 \begin_layout Definition
 A 
 \emph on
-morphism
+homorphism
 \emph default
  of magmas 
 \begin_inset Formula $M$
@@ -508,12 +513,16 @@ When
 \begin_inset Formula $M=N$
 \end_inset
 
- specifically:
+ specifically (
+\begin_inset Formula $f:M\to M$
+\end_inset
+
+):
 \end_layout
 
 \begin_deeper
 \begin_layout Itemize
-a monomorphism is called an 
+a homomorphism is called an 
 \emph on
 endomorphism
 \emph default
@@ -738,14 +747,6 @@ subsemigroup
 .
 \end_layout
 
-\begin_layout Standard
-A semigroup morphism is called a 
-\emph on
-homomorphism
-\emph default
- specifically.
-\end_layout
-
 \begin_layout Definition
 A 
 \emph on
@@ -801,10 +802,15 @@ Let
 \end_inset
 
  be identity elements.
-\end_layout
+ Then
+\begin_inset Formula 
+\[
+\mathds{1}^{\prime}_{M}=\mathds{1}^{\prime}_{M}\bullet_{M}\mathds{1}_{M}=\mathds{1}_{M}.
+\]
 
-\begin_layout Proof
-...
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -923,10 +929,15 @@ The inverse of an element of a group is unique.
 \end_inset
 
 .
-\end_layout
+ Then
+\begin_inset Formula 
+\[
+a^{\prime\prime}=a^{\prime\prime}\bullet_{G}\mathds{1}_{G}=a^{\prime\prime}\bullet_{G}(a\bullet_{G}a^{\prime})=(a^{\prime\prime}\bullet_{G}a)\bullet_{G}a^{\prime}=\mathds{1}_{G}\bullet_{G}a^{\prime}=a^{\prime}.
+\]
 
-\begin_layout Proof
-...
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -934,11 +945,28 @@ The (unique) inverse element of
 \begin_inset Formula $a\in G$
 \end_inset
 
- is commonly denoted 
+ can be denoted as 
 \begin_inset Formula $\neg_{G}a$
 \end_inset
 
 .
+ Note that
+\begin_inset Formula 
+\[
+\neg_{G}\mathds{1}_{G}=\mathds{1}_{G}.
+\]
+
+\end_inset
+
+Also by uniqueness of the inverse element,
+\begin_inset Formula 
+\[
+\neg_{G}(\neg_{G}a)=a.
+\]
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
@@ -967,6 +995,36 @@ A subgroup of a group
 .
 \end_layout
 
+\begin_layout Standard
+Note that 
+\begin_inset Formula $\mathds{1}_{G}\in H$
+\end_inset
+
+,
+ because that is already implied by closure of 
+\begin_inset Formula $H$
+\end_inset
+
+ on both 
+\begin_inset Formula $\bullet_{G}$
+\end_inset
+
+ and 
+\begin_inset Formula $\neg_{G}$
+\end_inset
+
+,
+ as
+\begin_inset Formula 
+\[
+\mathds{1}_{G}=a\bullet_{G}(\neg_{G}a).
+\]
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Exercise
 A subset 
 \begin_inset Formula $H$
@@ -986,7 +1044,7 @@ A subset
 
 ,
  
-\begin_inset Formula $a\bullet_{G}\neg_{G}b\in H$
+\begin_inset Formula $a\bullet_{G}(\neg_{G}b)\in H$
 \end_inset
 
 .
@@ -1007,26 +1065,73 @@ We have to prove that both directions hold:
 \end_inset
 
  and 
-\begin_inset Formula $\neg b\in H$
+\begin_inset Formula $\neg_{G}b\in H$
 \end_inset
 
 ,
  therefore (because 
-\begin_inset Formula $a,b^{-1}\in H$
+\begin_inset Formula $a,\neg_{G}b\in H$
 \end_inset
 
 ) 
-\begin_inset Formula $a\bullet_{G}\neg_{G}b\in H$
+\begin_inset Formula $a\bullet_{G}(\neg_{G}b)\in H$
 \end_inset
 
 .
 \end_layout
 
 \begin_layout Itemize
-Conversly,
- ...
+Conversly:
 \end_layout
 
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in H$
+\end_inset
+
+,
+ 
+\begin_inset Formula $a\bullet_{G}(\neg_{G}a)=\mathds{1}_{G}\in H$
+\end_inset
+
+.
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in H$
+\end_inset
+
+,
+ since 
+\begin_inset Formula $\mathds{1}_{G}\in H$
+\end_inset
+
+ also,
+ 
+\begin_inset Formula $\mathds{1}_{G}\bullet_{G}(\neg_{G}a)=\neg_{G}a\in H.$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a,b\in H$
+\end_inset
+
+,
+ since 
+\begin_inset Formula $\neg_{G}b\in H$
+\end_inset
+
+ also,
+ 
+\begin_inset Formula $a\bullet_{G}(\neg_{G}(\neg_{G}b))=a\bullet_{G}b\in H$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
 \end_deeper
 \begin_layout Definition
 A group
@@ -1070,9 +1175,43 @@ For a group homomorphism
 
 \end_deeper
 \begin_layout Proof
-...
+\begin_inset Formula $\forall a,b\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\varphi(a\bullet_{G}b)=\varphi(a)\bullet_{H}\varphi(b)$
+\end_inset
+
+:
 \end_layout
 
+\begin_deeper
+\begin_layout Itemize
+\begin_inset Formula $\mathds{1}_{H}=\varphi(\mathds{1}_{G})\bullet_{H}(\neg_{H}\varphi(\mathds{1}_{G}))=\varphi(\mathds{1}_{G}\bullet_{G}\mathds{1}_{G})\bullet_{H}(\neg_{H}\varphi(\mathds{1}_{G}))=\varphi(\mathds{1}_{G})\bullet_{H}\varphi(\mathds{1}_{G})\bullet_{H}(\neg_{H}\varphi(\mathds{1}_{G}))==\varphi(\mathds{1}_{G})\bullet_{H}\mathds{1}_{H}=\varphi(\mathds{1}_{G})$
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+\begin_inset Formula $\forall a\in G$
+\end_inset
+
+,
+ 
+\begin_inset Formula $\varphi(a)\bullet_{H}\varphi(\neg_{G}a)=\varphi(a\bullet_{G}(\neg_{G}a))=\varphi(\mathds{1}_{G})=\mathds{1}_{H}$
+\end_inset
+
+ and the inverse is unique,
+ 
+\begin_inset Formula $\neg_{H}\varphi(a)=\varphi(\neg_{G}a)$
+\end_inset
+
+.
+\end_layout
+
+\end_deeper
 \begin_layout Standard
 The 
 \emph on
